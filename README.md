@@ -37,7 +37,7 @@ Works with **Claude Code**, **Cursor**, **Antigravity (AGY)**, **Windsurf**, **C
 ### Installation
 
 ```bash
-git clone https://github.com/omere/Token-Saver.git
+git clone https://github.com/Farukes/Token-Saver.git
 cd Token-Saver
 pip install -e .
 ```
