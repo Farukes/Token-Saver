@@ -1,8 +1,8 @@
 # 🔋 Token-Saver
 
-[![CI](https://github.com/omere/Token-Saver/actions/workflows/ci.yml/badge.svg)](https://github.com/omere/Token-Saver/actions/workflows/ci.yml)
+[![CI](https://github.com/Farukes/Token-Saver/actions/workflows/ci.yml/badge.svg)](https://github.com/Farukes/Token-Saver/actions/workflows/ci.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
 [![Zero Telemetry](https://img.shields.io/badge/telemetry-0%25%20(100%25%20local)-success.svg)](#-enterprise-privacy--security-guarantee)
 
 **MCP server that saves 70-95% tokens for AI coding assistants — without losing functionality.**
@@ -258,6 +258,8 @@ ruff check .
 
 ---
 
-## 📄 License
+## 📄 License & Intellectual Property
 
-Distributed under the MIT License. See [LICENSE](LICENSE) for details.
+Copyright © 2026 Ömer Faruk Eskitürk. All rights reserved.
+
+Proprietary software. Unauthorized copying, reverse engineering, redistribution, or modification of this source code and documentation is strictly prohibited. See [LICENSE](LICENSE) for details.
