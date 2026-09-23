@@ -9,7 +9,11 @@ from __future__ import annotations
 
 import difflib
 import hashlib
-from dataclasses import dataclass, field
+import os
+from dataclasses import dataclass
+from pathlib import Path
+
+from token_saver.cache.persistent_cache import PersistentCache
 
 
 @dataclass
@@ -22,18 +26,21 @@ class CacheEntry:
 
 
 class SessionCache:
-    """In-memory session cache for file content.
+    """Session cache with L1 in-memory and L2 persistent SQLite backing.
 
     Tracks file content by SHA-256 hash. When a file is re-read:
     - If unchanged: returns a compact '[CACHED] unchanged' message (~3 tokens)
-    - If changed: returns a unified diff of the changes (~50-200 tokens)
+    - If changed: returns a unified diff if smaller than full file (~50-200 tokens)
+    - If tiny file: returns full content to avoid diff header overhead (guardrail)
 
-    This replaces sending the full file content again (~thousands of tokens).
+    Replaces sending the full file content repeatedly across sessions.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, persistent: bool = True, db_path: str | Path | None = None) -> None:
         self._cache: dict[str, CacheEntry] = {}
         self._stats = CacheStats()
+        self._persistent = persistent
+        self._persistent_cache = PersistentCache(db_path) if persistent else None
 
     def get(self, file_path: str, current_content: str) -> CacheResult:
         """Check cache and return appropriate result.
@@ -48,13 +55,28 @@ class SessionCache:
         current_hash = self._compute_hash(current_content)
         normalized_path = self._normalize_path(file_path)
 
+        # Check L2 persistent cache on memory miss
+        if normalized_path not in self._cache and self._persistent_cache:
+            persisted = self._persistent_cache.get_entry(normalized_path)
+            if persisted is not None:
+                p_hash, p_content, p_reads = persisted
+                self._cache[normalized_path] = CacheEntry(
+                    content=p_content,
+                    hash=p_hash,
+                    read_count=p_reads,
+                )
+
         if normalized_path not in self._cache:
             # First read — cache it and return full content
-            self._cache[normalized_path] = CacheEntry(
+            entry = CacheEntry(
                 content=current_content,
                 hash=current_hash,
                 read_count=1,
             )
+            self._cache[normalized_path] = entry
+            if self._persistent_cache:
+                self._persistent_cache.set_entry(normalized_path, current_hash, current_content, 1)
+
             self._stats.total_reads += 1
             self._stats.cache_misses += 1
             return CacheResult(
@@ -71,7 +93,12 @@ class SessionCache:
         if entry.hash == current_hash:
             # Unchanged — return compact reference
             self._stats.cache_hits += 1
-            compact = f"[CACHED] {file_path} — unchanged since last read (read #{entry.read_count})"
+            if self._persistent_cache:
+                self._persistent_cache.set_entry(
+                    normalized_path, entry.hash, entry.content, entry.read_count
+                )
+            base_name = os.path.basename(file_path)
+            compact = f"[CACHED] {base_name} — unchanged since last read (read #{entry.read_count})"
             return CacheResult(
                 status=CacheStatus.UNCHANGED,
                 content=compact,
@@ -79,13 +106,28 @@ class SessionCache:
                 optimized_tokens=len(compact) // 4,
             )
 
-        # Changed — compute and return diff
+        # Changed — compute diff
         self._stats.cache_diffs += 1
         diff = self._compute_diff(entry.content, current_content, file_path)
 
         # Update cache with new content
         entry.content = current_content
         entry.hash = current_hash
+        if self._persistent_cache:
+            self._persistent_cache.set_entry(
+                normalized_path, current_hash, current_content, entry.read_count
+            )
+
+        # Guardrail (Tiny File Anomaly Guard):
+        # If the diff (including headers) is larger than or equal to the file itself,
+        # return full content to guarantee Token-Saver never inflates token cost.
+        if len(diff) >= len(current_content) and len(current_content) > 0:
+            return CacheResult(
+                status=CacheStatus.CHANGED,
+                content=current_content,
+                original_tokens=len(current_content) // 4,
+                optimized_tokens=len(current_content) // 4,
+            )
 
         return CacheResult(
             status=CacheStatus.CHANGED,
@@ -95,14 +137,18 @@ class SessionCache:
         )
 
     def invalidate(self, file_path: str) -> None:
-        """Remove a file from the cache."""
+        """Remove a file from both memory and persistent cache."""
         normalized = self._normalize_path(file_path)
         self._cache.pop(normalized, None)
+        if self._persistent_cache:
+            self._persistent_cache.invalidate(normalized)
 
     def clear(self) -> None:
-        """Clear the entire cache."""
+        """Clear both memory and persistent cache."""
         self._cache.clear()
         self._stats = CacheStats()
+        if self._persistent_cache:
+            self._persistent_cache.clear()
 
     def get_stats(self) -> CacheStats:
         """Get cache statistics."""
@@ -120,25 +166,52 @@ class SessionCache:
 
         return os.path.normpath(os.path.abspath(file_path))
 
-    @staticmethod
-    def _compute_diff(old_content: str, new_content: str, file_path: str) -> str:
-        """Compute a unified diff between old and new content."""
+    @classmethod
+    def _compute_diff(cls, old_content: str, new_content: str, file_path: str) -> str:
+        """Compute an AST-aware semantic diff between old and new content."""
+        import os
+
+        base_name = os.path.basename(file_path)
         old_lines = old_content.splitlines(keepends=True)
         new_lines = new_content.splitlines(keepends=True)
 
         diff = difflib.unified_diff(
             old_lines,
             new_lines,
-            fromfile=f"a/{file_path}",
-            tofile=f"b/{file_path}",
-            n=3,  # 3 lines of context
+            fromfile=f"a/{base_name}",
+            tofile=f"b/{base_name}",
+            n=2,
         )
 
         diff_text = "".join(diff)
         if not diff_text:
-            return f"[CACHED] {file_path} — no visible changes"
+            return f"[CACHED] {base_name} — no visible changes"
 
-        return f"[DIFF] Changes in {file_path}:\n{diff_text}"
+        # AST Semantic Awareness: identify which symbols were altered
+        semantic_header = ""
+        try:
+            from token_saver.tools.symbol_index import SymbolIndexer
+            from token_saver.utils.file_utils import detect_language
+
+            lang = detect_language(file_path)
+            if lang:
+                old_syms = {
+                    s.name: s.content_hash
+                    for s in SymbolIndexer.extract_symbols_from_code(old_content, lang, base_name)
+                }
+                new_syms = {
+                    s.name: s.content_hash
+                    for s in SymbolIndexer.extract_symbols_from_code(new_content, lang, base_name)
+                }
+                changed_syms = [
+                    name for name, chash in new_syms.items() if name not in old_syms or old_syms[name] != chash
+                ]
+                if changed_syms:
+                    semantic_header = f"[SEMANTIC FOCUS: {', '.join(changed_syms[:5])}]\n"
+        except Exception:
+            pass
+
+        return f"[DIFF] Changes in {base_name}:\n{semantic_header}{diff_text}"
 
 
 class CacheStatus:

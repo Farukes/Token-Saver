@@ -29,6 +29,7 @@ dependencies = [
     "fastmcp>=2.0",
     "tree-sitter>=0.21,<0.22",
     "tree-sitter-languages>=1.10",
+    "tomli>=1.1.0; python_version < '3.11'",
 ]
 
 [project.optional-dependencies]
@@ -54,11 +55,15 @@ packages = ["src/token_saver"]
 
 [tool.ruff]
 target-version = "py310"
-line-length = 100
+line-length = 120
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "W"]
+ignore = ["E501"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+filterwarnings = [
+    "ignore:Language\\(path, name\\) is deprecated:FutureWarning",
+]

@@ -1,0 +1,32 @@
+# Token-Saver Project Configuration File
+# Edit this file to configure caching, ignore patterns, and output optimization.
+
+[general]
+# Files and patterns to ignore from caching and exploration (secrets are guarded by default)
+ignore_patterns = [
+    "*.env*",
+    "*.pem",
+    "*.key",
+    "secrets/*",
+    "*credentials*",
+    "*id_rsa*",
+    "*.pfx",
+    "*.p12",
+]
+max_cacheable_bytes = 5242880 # 5 MB
+
+[cache]
+ttl_days = 30
+max_entries = 5000
+
+[repo_map]
+default_budget = 1000
+
+[output]
+# When true, steers AI models toward surgical diffs and zero-fluff responses.
+# Set to false if you prefer unrestricted, verbose explanations and whole-file output.
+compact_mode = true
+
+# Strictly forbids the model from outputting '// ... rest of code unchanged'
+# or omitting implementation details. Guarantees 100% complete, working code.
+prevent_truncation = true

@@ -31,13 +31,13 @@ def main() -> None:
     subparsers = parser.add_subparsers(dest="subcommand", help="Available subcommands")
 
     # Subcommand: server (default if no args)
-    server_parser = subparsers.add_parser("server", help="Start the MCP server (stdio transport)")
+    subparsers.add_parser("server", help="Start the MCP server (stdio transport)")
 
     # Subcommand: stats
-    stats_parser = subparsers.add_parser("stats", help="Display cumulative token and financial savings dashboard")
+    subparsers.add_parser("stats", help="Display cumulative token and financial savings dashboard")
 
     # Subcommand: reset-stats
-    reset_parser = subparsers.add_parser("reset-stats", help="Reset cumulative telemetry metrics")
+    subparsers.add_parser("reset-stats", help="Reset cumulative telemetry metrics")
 
     # Subcommand: run
     run_parser = subparsers.add_parser("run", help="Execute a shell command with intelligent output filtering")
@@ -53,18 +53,78 @@ def main() -> None:
     )
 
     # Subcommand: unhook
-    unhook_parser = subparsers.add_parser("unhook", help="Safely remove all installed shell hooks")
+    subparsers.add_parser("unhook", help="Safely remove all installed shell hooks")
 
     # Subcommand: on / enable
-    on_parser = subparsers.add_parser("on", help="Activate Token-Saver globally for AGY CLI")
+    subparsers.add_parser("on", help="Activate Token-Saver globally for AGY CLI")
 
     # Subcommand: off / disable
-    off_parser = subparsers.add_parser("off", help="Deactivate Token-Saver globally from AGY CLI")
+    subparsers.add_parser("off", help="Deactivate Token-Saver globally from AGY CLI")
 
     # Subcommand: setup-commands
-    setup_parser = subparsers.add_parser(
+    subparsers.add_parser(
         "setup-commands",
         help="Install /token-saver slash command definitions across AGY CLI and Claude Code",
+    )
+
+    # Subcommand: output (toggle compact output on/off/status)
+    output_parser = subparsers.add_parser(
+        "output",
+        help="Manage AI output mode: 'token-saver output on' or 'token-saver output off'",
+    )
+    output_parser.add_argument(
+        "state",
+        nargs="?",
+        choices=["on", "off", "status"],
+        default="status",
+        help="Output mode action: 'on' (compact surgical diffs), 'off' (default output), or 'status'",
+    )
+    output_parser.add_argument(
+        "--path",
+        default=".",
+        help="Target project directory (default: current directory)",
+    )
+
+    # Subcommand: init-rules
+    rules_parser = subparsers.add_parser(
+        "init-rules",
+        help="Install agent steering rules into AGENTS.md, .cursorrules, .windsurfrules, and CLAUDE.md",
+    )
+    rules_parser.add_argument(
+        "--path",
+        default=".",
+        help="Target project directory (default: current directory)",
+    )
+    rules_parser.add_argument(
+        "--compact",
+        dest="compact_output",
+        action="store_true",
+        default=None,
+        help="Enforce compact surgical output rules",
+    )
+    rules_parser.add_argument(
+        "--no-compact",
+        dest="compact_output",
+        action="store_false",
+        help="Disable compact output restrictions in agent rules",
+    )
+
+    # Subcommand: cache-prune
+    prune_parser = subparsers.add_parser(
+        "cache-prune",
+        help="Prune expired or excess entries from L2 SQLite cache",
+    )
+    prune_parser.add_argument(
+        "--max-entries",
+        type=int,
+        default=5000,
+        help="Maximum cache entries to retain (default: 5000)",
+    )
+    prune_parser.add_argument(
+        "--ttl-days",
+        type=int,
+        default=30,
+        help="Evict entries older than N days (default: 30)",
     )
 
     # If called with no arguments, default to launching the MCP server
@@ -114,20 +174,40 @@ def main() -> None:
         from token_saver.hooks.manager import HookManager
         results = HookManager.enable_all()
         for name, ok, msg in results:
-            status = "🟢" if ok else "❌"
+            if "skipped" in msg.lower():
+                status = "⚪"
+            else:
+                status = "🟢" if ok else "❌"
             print(f"{status} {name}: {msg}")
 
     elif args.subcommand in ("off", "disable"):
         from token_saver.hooks.manager import HookManager
         results = HookManager.disable_all()
         for name, ok, msg in results:
-            status = "🔴" if ok else "❌"
+            if "skipped" in msg.lower():
+                status = "⚪"
+            else:
+                status = "🔴" if ok else "❌"
             print(f"{status} {name}: {msg}")
-
 
     elif args.subcommand in ("setup-commands", "install-commands"):
         from token_saver.hooks.manager import HookManager
-        results = HookManager.install_all_slash_commands()
+        results = HookManager.install_all_slash_commands(only_installed=True)
+        all_ok = True
+        for name, ok, msg in results:
+            if "skipped" in msg.lower():
+                status = "⚪"
+            else:
+                status = "✅" if ok else "❌"
+                if not ok:
+                    all_ok = False
+            print(f"{status} {name}: {msg}")
+        if not all_ok:
+            sys.exit(1)
+
+    elif args.subcommand == "init-rules":
+        from token_saver.rules.manager import RulesManager
+        results = RulesManager.install_rules(args.path, compact_output=args.compact_output)
         all_ok = True
         for name, ok, msg in results:
             status = "✅" if ok else "❌"
@@ -136,6 +216,44 @@ def main() -> None:
                 all_ok = False
         if not all_ok:
             sys.exit(1)
+
+    elif args.subcommand == "output":
+        from token_saver.rules.manager import RulesManager
+        if args.state == "on":
+            ok, msg, files = RulesManager.set_output_mode(args.path, enabled=True)
+            if ok:
+                print("🟢 Output Optimization: ON (Compact Mode Active)")
+                print("   • Enforces surgical diffs and targeted block replacements.")
+                print("   • ZERO TRUNCATION MANDATE active (no lazy comments).")
+                print(f"   • Updated files: {', '.join(files)}")
+            else:
+                print(f"❌ Error: {msg}")
+                sys.exit(1)
+        elif args.state == "off":
+            ok, msg, files = RulesManager.set_output_mode(args.path, enabled=False)
+            if ok:
+                print("⚪ Output Optimization: OFF (Default Output Restored)")
+                print("   • AI assistant will use standard, unrestricted output.")
+                print("   • Output format returned to default.")
+                print(f"   • Updated files: {', '.join(files)}")
+            else:
+                print(f"❌ Error: {msg}")
+                sys.exit(1)
+        else:
+            active = RulesManager.get_output_mode(args.path)
+            state_str = "🟢 ON (Compact Mode Active)" if active else "⚪ OFF (Default Output)"
+            print(f"Output Optimization Status: {state_str}")
+            print("\nUsage:")
+            print("  token-saver output on   -> Activate compact surgical diffs & zero-truncation")
+            print("  token-saver output off  -> Revert to default normal/verbose output")
+
+    elif args.subcommand == "cache-prune":
+        from token_saver.cache.persistent_cache import PersistentCache
+        p = PersistentCache()
+        before = p.count_entries()
+        deleted = p.prune(max_entries=args.max_entries, max_age_days=args.ttl_days)
+        after = p.count_entries()
+        print(f"L2 Cache Pruned: {deleted} entries removed. ({before} -> {after} entries remaining)")
 
 
 

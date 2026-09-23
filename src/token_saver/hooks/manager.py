@@ -14,6 +14,17 @@ import subprocess
 import sys
 from pathlib import Path
 
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+if hasattr(sys.stderr, "reconfigure"):
+    try:
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 HOOK_MARKER_START = "# >>> token-saver-hook >>>"
 HOOK_MARKER_END = "# <<< token-saver-hook <<<"
 
@@ -241,6 +252,18 @@ npm() {{ if [ "$1" = "test" ]; then token-saver run "npm $@"; else command npm "
                 else:
                     config_path.write_text(bak_content, encoding="utf-8")
                 bak_path.unlink(missing_ok=True)
+
+                # Clean up empty parent directories if created by token-saver
+                parent = config_path.parent
+                try:
+                    if parent.exists() and not any(parent.iterdir()):
+                        parent.rmdir()
+                        grandparent = parent.parent
+                        if grandparent.exists() and not any(grandparent.iterdir()):
+                            grandparent.rmdir()
+                except Exception:
+                    pass
+
                 return True, f"Restored original config for {config_path.name}"
             except Exception as e:
                 return False, f"Failed restoring backup for {config_path}: {e}"
@@ -261,6 +284,89 @@ npm() {{ if [ "$1" = "test" ]; then token-saver run "npm $@"; else command npm "
         return True, f"Token-Saver was already inactive in {config_path.name}"
 
     @classmethod
+    def is_cli_installed(cls, name: str) -> bool:
+        """Check if a specific AI coding CLI or assistant is installed on the host system."""
+        import shutil
+        home = Path.home()
+
+        if name == "Antigravity (AGY)":
+            return bool(
+                shutil.which("agy")
+                or shutil.which("antigravity")
+                or (home / ".gemini").is_dir()
+            )
+
+        if name == "Claude Code":
+            if shutil.which("claude") or shutil.which("claude.cmd"):
+                return True
+            claude_dir = home / ".claude"
+            if claude_dir.is_dir():
+                files = [p.name for p in claude_dir.iterdir() if p.name != "commands"]
+                if files:
+                    return True
+            claude_cfg = home / ".claude.json"
+            claude_bak = home / ".claude.json.ts_bak"
+            if claude_cfg.exists():
+                if claude_bak.exists():
+                    try:
+                        if claude_bak.read_text(encoding="utf-8").strip() == "__NON_EXISTENT__":
+                            return False
+                    except Exception:
+                        pass
+                return True
+            return False
+
+        if name == "Cursor":
+            if shutil.which("cursor") or shutil.which("cursor.cmd"):
+                return True
+            if os.name == "nt":
+                if (home / "AppData" / "Roaming" / "Cursor").is_dir() or (home / "AppData" / "Local" / "Programs" / "cursor").is_dir():
+                    return True
+            elif sys.platform == "darwin":
+                if Path("/Applications/Cursor.app").is_dir() or (home / "Library" / "Application Support" / "Cursor").is_dir():
+                    return True
+            else:
+                if (home / ".config" / "Cursor").is_dir():
+                    return True
+            cursor_cfg = home / ".cursor" / "mcp.json"
+            cursor_bak = home / ".cursor" / "mcp.json.ts_bak"
+            if cursor_cfg.exists():
+                if cursor_bak.exists():
+                    try:
+                        if cursor_bak.read_text(encoding="utf-8").strip() == "__NON_EXISTENT__":
+                            return False
+                    except Exception:
+                        pass
+                return True
+            return False
+
+        if name == "Windsurf":
+            if shutil.which("windsurf") or shutil.which("windsurf.cmd"):
+                return True
+            if os.name == "nt":
+                if (home / "AppData" / "Roaming" / "Windsurf").is_dir() or (home / "AppData" / "Local" / "Programs" / "Windsurf").is_dir() or (home / "AppData" / "Roaming" / "Codeium").is_dir():
+                    return True
+            elif sys.platform == "darwin":
+                if Path("/Applications/Windsurf.app").is_dir() or (home / "Library" / "Application Support" / "Windsurf").is_dir():
+                    return True
+            else:
+                if (home / ".config" / "Windsurf").is_dir():
+                    return True
+            windsurf_cfg = home / ".codeium" / "windsurf" / "mcp_config.json"
+            windsurf_bak = home / ".codeium" / "windsurf" / "mcp_config.json.ts_bak"
+            if windsurf_cfg.exists():
+                if windsurf_bak.exists():
+                    try:
+                        if windsurf_bak.read_text(encoding="utf-8").strip() == "__NON_EXISTENT__":
+                            return False
+                    except Exception:
+                        pass
+                return True
+            return False
+
+        return False
+
+    @classmethod
     def get_supported_cli_configs(cls) -> dict[str, Path]:
         """Return paths to all supported AI coding assistant configuration files."""
         home = Path.home()
@@ -272,17 +378,20 @@ npm() {{ if [ "$1" = "test" ]; then token-saver run "npm $@"; else command npm "
         }
 
     @classmethod
-    def enable_all(cls) -> list[tuple[str, bool, str]]:
-        """Universally activate Token-Saver across all detected AI coding CLIs with backups."""
+    def enable_all(cls, only_installed: bool = True) -> list[tuple[str, bool, str]]:
+        """Universally activate Token-Saver across detected AI coding CLIs with backups."""
         results = []
         configs = cls.get_supported_cli_configs()
 
         for name, path in configs.items():
+            if only_installed and not cls.is_cli_installed(name):
+                results.append((name, False, "Not installed (skipped — no config created)"))
+                continue
             ok, msg = cls._apply_mcp_config_with_backup(path)
             results.append((name, ok, msg))
 
-        # Also install slash commands for AGY and Claude Code
-        cls.install_all_slash_commands()
+        # Also install slash commands
+        cls.install_all_slash_commands(only_installed=only_installed)
         return results
 
     @classmethod
@@ -292,8 +401,26 @@ npm() {{ if [ "$1" = "test" ]; then token-saver run "npm $@"; else command npm "
         configs = cls.get_supported_cli_configs()
 
         for name, path in configs.items():
+            bak_path = path.with_name(path.name + ".ts_bak")
+            if not path.exists() and not bak_path.exists():
+                continue
             ok, msg = cls._revert_mcp_config_with_backup(path)
             results.append((name, ok, msg))
+
+        # Also clean up uninstalled Claude slash command if present
+        home = Path.home()
+        claude_cmd = home / ".claude" / "commands" / "token-saver.md"
+        if claude_cmd.exists() and not cls.is_cli_installed("Claude Code"):
+            try:
+                claude_cmd.unlink()
+                cmd_dir = claude_cmd.parent
+                if cmd_dir.exists() and not any(cmd_dir.iterdir()):
+                    cmd_dir.rmdir()
+                claude_dir = home / ".claude"
+                if claude_dir.exists() and not any(claude_dir.iterdir()):
+                    claude_dir.rmdir()
+            except Exception:
+                pass
 
         return results
 
@@ -326,7 +453,7 @@ name: token-saver
 description: >-
   Instant slash command controller for the Token-Saver token optimization engine.
   Use immediately when user types /token-saver, /token-saver on, /token-saver off,
-  /token-saver stats, or requests to toggle token-saver state.
+  /token-saver output on, /token-saver output off, /token-saver stats, or requests to toggle token-saver state.
 ---
 
 # Token-Saver Slash Command Controller
@@ -341,12 +468,16 @@ When this command is invoked with an argument:
    Execute shell command: `token-saver off`
    Report confirmation that Token-Saver is deactivated.
 
-3. **If argument is 'stats' or 'telemetry':**
+3. **If argument starts with 'output':**
+   Execute shell command: `token-saver output <arg>` (e.g. `token-saver output on` or `token-saver output off`)
+   Report confirmation of the output mode change.
+
+4. **If argument is 'stats' or 'telemetry':**
    Execute shell command: `token-saver stats`
    Display the savings dashboard.
 
-4. **If no argument or 'help':**
-   Show options: `/token-saver on`, `/token-saver off`, `/token-saver stats`.
+5. **If no argument or 'help':**
+   Show options: `/token-saver on`, `/token-saver off`, `/token-saver output on`, `/token-saver output off`, `/token-saver stats`.
 """
         try:
             skill_file.write_text(content, encoding="utf-8")
@@ -363,7 +494,7 @@ When this command is invoked with an argument:
         command_file = claude_dir / "token-saver.md"
 
         content = """---
-description: Manage Token-Saver token optimization engine (on, off, stats)
+description: Manage Token-Saver token optimization engine (on, off, output on/off, stats)
 ---
 
 Execute the requested Token-Saver operation:
@@ -372,8 +503,9 @@ $ARGUMENTS
 Instructions:
 1. If argument is "on" or "enable", run `token-saver on` and confirm activation.
 2. If argument is "off" or "disable", run `token-saver off` and confirm deactivation.
-3. If argument is "stats", run `token-saver stats` and show the telemetry dashboard.
-4. If empty or help, show usage instructions.
+3. If argument starts with "output", run `token-saver output <args>` and report status.
+4. If argument is "stats", run `token-saver stats` and show the telemetry dashboard.
+5. If empty or help, show usage instructions.
 """
         try:
             command_file.write_text(content, encoding="utf-8")
@@ -382,14 +514,18 @@ Instructions:
             return False, f"Failed to install Claude Code slash command: {e}"
 
     @classmethod
-    def install_all_slash_commands(cls) -> list[tuple[str, bool, str]]:
-        """Install slash command definitions across all supported AI coding CLIs."""
+    def install_all_slash_commands(cls, only_installed: bool = False) -> list[tuple[str, bool, str]]:
+        """Install slash command definitions across supported AI coding CLIs."""
         results = []
-        ok1, msg1 = cls.install_agy_slash_command()
-        results.append(("Antigravity (AGY)", ok1, msg1))
+        if not only_installed or cls.is_cli_installed("Antigravity (AGY)"):
+            ok1, msg1 = cls.install_agy_slash_command()
+            results.append(("Antigravity (AGY)", ok1, msg1))
 
-        ok2, msg2 = cls.install_claude_code_slash_command()
-        results.append(("Claude Code", ok2, msg2))
+        if not only_installed or cls.is_cli_installed("Claude Code"):
+            ok2, msg2 = cls.install_claude_code_slash_command()
+            results.append(("Claude Code", ok2, msg2))
+        else:
+            results.append(("Claude Code", False, "Not installed (skipped)"))
 
         return results
 

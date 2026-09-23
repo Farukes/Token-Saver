@@ -28,6 +28,14 @@ htmlcov/
 .mypy_cache/
 .ruff_cache/
 
+# Local Scratch and Backups
+scratch/
+*.ts_bak
+*.db
+*.db-wal
+*.db-shm
+telemetry.json
+
 # OS
 .DS_Store
 Thumbs.db

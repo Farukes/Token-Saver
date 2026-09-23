@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import re
 
 # Regex that matches ALL ANSI escape sequences (colors, cursor, etc.)

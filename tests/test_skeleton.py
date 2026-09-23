@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import pytest
 from unittest.mock import patch
 
 from token_saver.tools.skeleton import _build_skeleton, _find_symbol, get_code_skeleton, get_symbol
@@ -15,7 +14,7 @@ class MyClass:
         self.z = "hello"
         for i in range(10):
             print(i)
-        
+
     def do_something(self, y: str) -> bool:
         \"\"\"
         This does something.
@@ -52,7 +51,7 @@ def test_find_symbol_python():
     symbol = _find_symbol(PYTHON_SAMPLE, "python", "do_something")
     assert "def do_something(self, y: str) -> bool:" in symbol
     assert "print(y)" in symbol
-    
+
     symbol_class = _find_symbol(PYTHON_SAMPLE, "python", "MyClass")
     assert "class MyClass:" in symbol_class
     assert "def __init__" in symbol_class
@@ -66,7 +65,7 @@ def test_nonexistent_file(mock_exists):
     mock_exists.return_value = False
     res = get_code_skeleton("missing.py")
     assert "not found" in res.lower()
-    
+
     res2 = get_symbol("missing.py", "foo")
     assert "not found" in res2.lower()
 
@@ -77,13 +76,13 @@ def test_token_savings(mock_detect, mock_read, mock_exists):
     mock_exists.return_value = True
     mock_read.return_value = PYTHON_SAMPLE
     mock_detect.return_value = "python"
-    
+
     res = get_code_skeleton("test.py")
-    
+
     # We just want to check the token savings line is in output and it's > 0 (ideally >= 50 but our sample is small)
     assert "# Token-Saver:" in res
     assert "saved" in res
-    
+
     # Check savings > 50%
     # Extract pct
     pct_str = res.split("(")[-1].split("%")[0]

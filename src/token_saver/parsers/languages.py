@@ -7,6 +7,7 @@ for 130+ programming languages via tree-sitter-languages.
 from __future__ import annotations
 
 import sys
+import warnings
 from functools import lru_cache
 from typing import TYPE_CHECKING
 
@@ -22,9 +23,11 @@ def get_language(lang_name: str) -> tree_sitter.Language | None:
     Returns None if the language is not available.
     """
     try:
-        from tree_sitter_languages import get_language as _get_lang
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=FutureWarning, module="tree_sitter")
+            from tree_sitter_languages import get_language as _get_lang
 
-        return _get_lang(lang_name)
+            return _get_lang(lang_name)
     except Exception:
         print(f"[token-saver] Language not available: {lang_name}", file=sys.stderr)
         return None
@@ -37,9 +40,11 @@ def get_parser(lang_name: str) -> tree_sitter.Parser | None:
     Returns None if the language is not available.
     """
     try:
-        from tree_sitter_languages import get_parser as _get_parser
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=FutureWarning, module="tree_sitter")
+            from tree_sitter_languages import get_parser as _get_parser
 
-        return _get_parser(lang_name)
+            return _get_parser(lang_name)
     except Exception:
         print(f"[token-saver] Parser not available: {lang_name}", file=sys.stderr)
         return None

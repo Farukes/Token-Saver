@@ -5,7 +5,8 @@ from typing import Any
 
 from token_saver.parsers.languages import parse_code
 from token_saver.utils.file_utils import detect_language, read_file_text
-from token_saver.utils.token_counter import estimate_tokens, format_savings
+from token_saver.utils.token_counter import estimate_tokens
+
 
 def _build_skeleton(source_code: str, language: str) -> str:
     """Builds a skeleton of the source code by replacing function/method bodies with '...'."""
@@ -14,13 +15,13 @@ def _build_skeleton(source_code: str, language: str) -> str:
         return source_code
 
     root_node = tree.root_node
-    
+
     # We will collect byte ranges to replace with '...'
     replace_ranges = []
-    
+
     def walk(node):
         node_type = node.type
-        
+
         # Identify function-like bodies to replace
         if language == "python":
             if node_type == "function_definition":
@@ -36,21 +37,51 @@ def _build_skeleton(source_code: str, language: str) -> str:
                     if first_stmt and first_stmt.type == "expression_statement":
                         if first_stmt.children and first_stmt.children[0].type == "string":
                             start_byte = first_stmt.end_byte
-                    
+
                     if start_byte < body.end_byte:
                         replace_ranges.append((start_byte, body.end_byte, " ...\n"))
-        
-        elif language in ["javascript", "typescript", "tsx", "jsx", "go", "java", "c", "cpp", "rust", "c_sharp"]:
-            # Generic body replacement for C-family languages
-            if node_type in ["function_declaration", "method_definition", "arrow_function", "method_declaration", "function_definition", "function_item"]:
+
+        elif language == "ruby":
+            if node_type in ["method", "singleton_method"]:
                 body = None
                 for child in node.children:
-                    if child.type in ["statement_block", "block", "compound_statement"]:
+                    if child.type == "body_statement":
                         body = child
                         break
-                
-                if body:
-                    # Keep the braces if possible
+                if body and body.start_byte < body.end_byte:
+                    replace_ranges.append((body.start_byte, body.end_byte, "\n    ...\n  "))
+
+        elif language in [
+            "javascript",
+            "typescript",
+            "tsx",
+            "jsx",
+            "go",
+            "java",
+            "c",
+            "cpp",
+            "rust",
+            "c_sharp",
+            "php",
+            "kotlin",
+        ]:
+            # Generic body replacement for C-family and block-based languages
+            if node_type in [
+                "function_declaration",
+                "method_definition",
+                "arrow_function",
+                "method_declaration",
+                "function_definition",
+                "function_item",
+            ]:
+                body = None
+                for child in node.children:
+                    if child.type in ["statement_block", "block", "compound_statement", "function_body"]:
+                        body = child
+                        break
+
+                if body and body.start_byte < body.end_byte - 1:
+                    # Keep braces if possible
                     replace_ranges.append((body.start_byte + 1, body.end_byte - 1, "\n  ...\n"))
 
         # Traverse children
@@ -58,13 +89,13 @@ def _build_skeleton(source_code: str, language: str) -> str:
             walk(child)
 
     walk(root_node)
-    
+
     if not replace_ranges:
         return source_code
 
     # Sort ranges by start_byte
     replace_ranges.sort(key=lambda x: x[0])
-    
+
     # Resolve overlapping ranges (keep the outermost)
     filtered_ranges = []
     for r in replace_ranges:
@@ -81,14 +112,14 @@ def _build_skeleton(source_code: str, language: str) -> str:
     source_bytes = source_code.encode('utf-8')
     result_bytes = bytearray()
     last_end = 0
-    
+
     for start, end, replacement in filtered_ranges:
         result_bytes.extend(source_bytes[last_end:start])
         result_bytes.extend(replacement.encode('utf-8'))
         last_end = end
-        
+
     result_bytes.extend(source_bytes[last_end:])
-    
+
     return result_bytes.decode('utf-8')
 
 def _find_symbol(source_code: str, language: str, symbol_name: str) -> str:
@@ -98,19 +129,43 @@ def _find_symbol(source_code: str, language: str, symbol_name: str) -> str:
         return ""
 
     root_node = tree.root_node
-    
+
     def walk(node):
         # Look for identifiers that match the symbol name
-        if node.type in ["function_definition", "class_definition", "function_declaration", "class_declaration", "method_definition", "method_declaration", "function_item", "struct_item"]:
+        if node.type in [
+            "function_definition",
+            "class_definition",
+            "function_declaration",
+            "class_declaration",
+            "method_definition",
+            "method_declaration",
+            "function_item",
+            "struct_item",
+            "method",
+            "singleton_method",
+            "class",
+            "module",
+        ]:
             name_node = None
             for child in node.children:
-                if child.type in ["identifier", "type_identifier", "property_identifier", "name"]:
+                if child.type in [
+                    "identifier",
+                    "type_identifier",
+                    "property_identifier",
+                    "name",
+                    "simple_identifier",
+                    "constant",
+                ]:
                     name_node = child
                     break
-            
-            if name_node and source_code.encode('utf-8')[name_node.start_byte:name_node.end_byte].decode('utf-8') == symbol_name:
-                return source_code.encode('utf-8')[node.start_byte:node.end_byte].decode('utf-8')
-        
+
+            if (
+                name_node
+                and source_code.encode("utf-8")[name_node.start_byte : name_node.end_byte].decode("utf-8")
+                == symbol_name
+            ):
+                return source_code.encode("utf-8")[node.start_byte : node.end_byte].decode("utf-8")
+
         for child in node.children:
             res = walk(child)
             if res:
@@ -128,21 +183,21 @@ def get_code_skeleton(file_path: str) -> str:
     """
     if not os.path.exists(file_path):
         return f"Error: File {file_path} not found."
-        
+
     content = read_file_text(file_path)
     language = detect_language(file_path)
-    
+
     if not language:
         return content
-        
+
     skeleton = _build_skeleton(content, language)
-    
+
     orig_tokens = estimate_tokens(content)
     skel_tokens = estimate_tokens(skeleton)
     savings_pct = 0
     if orig_tokens > 0:
         savings_pct = int(((orig_tokens - skel_tokens) / orig_tokens) * 100)
-        
+
     skeleton += f"\n# Token-Saver: {orig_tokens} → {skel_tokens} tokens ({savings_pct}% saved)"
     try:
         from token_saver.telemetry.stats import tracker
@@ -158,22 +213,22 @@ def get_symbol(file_path: str, symbol_name: str) -> str:
     """
     if not os.path.exists(file_path):
         return f"Error: File {file_path} not found."
-        
+
     content = read_file_text(file_path)
     language = detect_language(file_path)
-    
+
     if not language:
         return f"Error: Could not detect language for {file_path}."
-        
+
     return _find_symbol(content, language, symbol_name)
 
 def register_skeleton_tools(mcp: Any) -> None:
     """Registers skeleton tools with the FastMCP application."""
-    
+
     @mcp.tool(description="Extracts a structural skeleton from a source file, replacing bodies with '...'. Use this INSTEAD of reading full files to understand structure.")
     def tool_get_code_skeleton(file_path: str) -> str:
         return get_code_skeleton(file_path)
-        
+
     @mcp.tool(description="Extracts the FULL implementation of a specific function, method, or class from a file by name.")
     def tool_get_symbol(file_path: str, symbol_name: str) -> str:
         return get_symbol(file_path, symbol_name)

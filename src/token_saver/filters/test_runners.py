@@ -1,21 +1,32 @@
 from __future__ import annotations
+
 import re
+
 
 def filter_pytest(output: str) -> str:
     """Summarize passing tests, show only failures with tracebacks."""
+    # Check if this is an unhandled collection error or raw Python traceback
+    if "Traceback (most recent call last):" in output and "=== FAILURES ===" not in output and "=== ERRORS ===" not in output:
+        return output.strip()
+
     lines = output.split('\n')
     filtered = []
-    
+
     in_failures = False
     passed_count = 0
     failed_count = 0
-    
+
     for line in lines:
-        if "=== FAILURES ===" in line or "=== ERRORS ===" in line or "=== short test summary info ===" in line:
+        if (
+            "=== FAILURES ===" in line
+            or "=== ERRORS ===" in line
+            or "=== short test summary info ===" in line
+            or line.startswith("ERROR collecting ")
+        ):
             in_failures = True
             filtered.append(line)
             continue
-            
+
         if in_failures:
             filtered.append(line)
         else:
@@ -27,30 +38,32 @@ def filter_pytest(output: str) -> str:
                 filtered.append(line)
             elif "test session starts" in line or line.startswith("platform ") or line.startswith("rootdir:"):
                 filtered.append(line)
-    
+            elif line.startswith("E   ") or "Error:" in line or "Exception:" in line:
+                filtered.append(line)
+
     # Try to find the summary line to get stats if we missed them
     if not in_failures:
         filtered.append(f"pytest: {failed_count} FAILED, {passed_count} passed")
-        
+
     return '\n'.join(filtered)
 
 def filter_jest_vitest(output: str) -> str:
     """Summarize test suites, show only failures for jest/vitest."""
     lines = output.split('\n')
     filtered = []
-    
+
     for line in lines:
         if line.strip().startswith('✓') or line.strip().startswith('PASS') or '✓' in line:
             continue
         filtered.append(line)
-        
+
     return '\n'.join(filtered)
 
 def filter_go_test(output: str) -> str:
     """Summarize passing, show only failures for go test."""
     lines = output.split('\n')
     filtered = []
-    
+
     for line in lines:
         if line.strip().startswith('=== RUN') or line.strip().startswith('--- PASS:') or line.strip() == 'PASS':
             continue
@@ -58,7 +71,7 @@ def filter_go_test(output: str) -> str:
             filtered.append(line)
             continue
         filtered.append(line)
-            
+
     return '\n'.join(filtered)
 
 def filter_generic_test(output: str) -> str:

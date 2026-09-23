@@ -29,6 +29,10 @@ jobs:
         pip install -e ".[dev]"
         pip install tree-sitter-languages
 
+    - name: Lint with ruff
+      run: |
+        ruff check .
+
     - name: Run tests
       run: |
         python -m pytest tests/ -v

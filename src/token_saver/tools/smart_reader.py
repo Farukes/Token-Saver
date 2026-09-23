@@ -1,10 +1,12 @@
 from __future__ import annotations
 
-from token_saver.cache.session_cache import SessionCache, CacheStatus
+from token_saver.cache.session_cache import CacheStatus, SessionCache
+from token_saver.config import load_config
 from token_saver.utils.file_utils import read_file_text
 from token_saver.utils.token_counter import format_savings
 
 _cache = SessionCache()
+_config = load_config()
 
 def read_file_smart(file_path: str, force_full: bool = False) -> str:
     """Intelligently read a file with session-level caching.
@@ -21,6 +23,15 @@ def read_file_smart(file_path: str, force_full: bool = False) -> str:
     Returns:
         The full content, a short cached message, or a unified diff.
     """
+    if not force_full and _config.is_ignored(file_path):
+        import os
+        base_name = os.path.basename(file_path)
+        return (
+            f"[TOKEN-SAVER SECURITY] '{base_name}' matches security ignore patterns "
+            f"(credentials/secrets/exclusions). Pass force_full=True if you explicitly "
+            f"need to read this file."
+        )
+
     try:
         content = read_file_text(file_path)
     except Exception as e:
@@ -30,10 +41,10 @@ def read_file_smart(file_path: str, force_full: bool = False) -> str:
         return content
 
     result = _cache.get(file_path, content)
-    
+
     if result.status == CacheStatus.FIRST_READ:
         return result.content
-        
+
     savings = format_savings(content, result.content)
     try:
         from token_saver.telemetry.stats import tracker

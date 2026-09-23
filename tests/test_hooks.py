@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 from pathlib import Path
 from unittest.mock import patch
 
@@ -47,3 +46,35 @@ def test_hook_install_and_uninstall(tmp_path: Path):
         content_after = test_profile.read_text(encoding="utf-8")
         assert HOOK_MARKER_START not in content_after
         assert "function pytest" not in content_after
+
+
+def test_enable_all_skips_uninstalled_clis(tmp_path: Path):
+    fake_home = tmp_path / "fake_home"
+    fake_home.mkdir()
+
+    # Patch home and simulate that only AGY is installed, Claude/Cursor/Windsurf are not
+    with patch("pathlib.Path.home", return_value=fake_home):
+        def fake_is_installed(name):
+            return name == "Antigravity (AGY)"
+
+        with patch.object(HookManager, "is_cli_installed", side_effect=fake_is_installed):
+            results = HookManager.enable_all(only_installed=True)
+
+            agy_res = next(r for r in results if r[0] == "Antigravity (AGY)")
+            claude_res = next(r for r in results if r[0] == "Claude Code")
+            cursor_res = next(r for r in results if r[0] == "Cursor")
+            windsurf_res = next(r for r in results if r[0] == "Windsurf")
+
+            assert agy_res[1] is True
+            assert (fake_home / ".gemini" / "config" / "mcp_config.json").exists()
+
+            # Claude, Cursor, Windsurf must NOT be created
+            assert "skipped" in claude_res[2].lower()
+            assert not (fake_home / ".claude.json").exists()
+
+            assert "skipped" in cursor_res[2].lower()
+            assert not (fake_home / ".cursor").exists()
+
+            assert "skipped" in windsurf_res[2].lower()
+            assert not (fake_home / ".codeium").exists()
+
