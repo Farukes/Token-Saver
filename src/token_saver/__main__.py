@@ -172,6 +172,7 @@ def main() -> None:
 
     elif args.subcommand in ("on", "enable"):
         from token_saver.hooks.manager import HookManager
+        from token_saver.rules.manager import RulesManager
         results = HookManager.enable_all()
         for name, ok, msg in results:
             if "skipped" in msg.lower():
@@ -179,9 +180,13 @@ def main() -> None:
             else:
                 status = "🟢" if ok else "❌"
             print(f"{status} {name}: {msg}")
+        rule_results = RulesManager.install_rules(".")
+        for name, ok, msg in rule_results:
+            print(f"🟢 Rules: {msg}")
 
     elif args.subcommand in ("off", "disable"):
         from token_saver.hooks.manager import HookManager
+        from token_saver.rules.manager import RulesManager
         results = HookManager.disable_all()
         for name, ok, msg in results:
             if "skipped" in msg.lower():
@@ -189,6 +194,9 @@ def main() -> None:
             else:
                 status = "🔴" if ok else "❌"
             print(f"{status} {name}: {msg}")
+        rule_results = RulesManager.remove_rules(".")
+        for name, ok, msg in rule_results:
+            print(f"🔴 Rules: {msg}")
 
     elif args.subcommand in ("setup-commands", "install-commands"):
         from token_saver.hooks.manager import HookManager
