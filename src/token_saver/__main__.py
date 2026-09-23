@@ -55,6 +55,12 @@ def main() -> None:
     # Subcommand: unhook
     unhook_parser = subparsers.add_parser("unhook", help="Safely remove all installed shell hooks")
 
+    # Subcommand: on / enable
+    on_parser = subparsers.add_parser("on", help="Activate Token-Saver globally for AGY CLI")
+
+    # Subcommand: off / disable
+    off_parser = subparsers.add_parser("off", help="Deactivate Token-Saver globally from AGY CLI")
+
     # If called with no arguments, default to launching the MCP server
     if len(sys.argv) == 1:
         from token_saver.server import mcp
@@ -97,6 +103,21 @@ def main() -> None:
         print(msg)
         if not success:
             sys.exit(1)
+
+    elif args.subcommand in ("on", "enable"):
+        from token_saver.hooks.manager import HookManager
+        success, msg = HookManager.enable_agy()
+        print(msg)
+        if not success:
+            sys.exit(1)
+
+    elif args.subcommand in ("off", "disable"):
+        from token_saver.hooks.manager import HookManager
+        success, msg = HookManager.disable_agy()
+        print(msg)
+        if not success:
+            sys.exit(1)
+
 
 
 if __name__ == "__main__":

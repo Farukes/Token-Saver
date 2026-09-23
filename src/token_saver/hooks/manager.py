@@ -177,3 +177,68 @@ npm() {{ if [ "$1" = "test" ]; then token-saver run "npm $@"; else command npm "
         if removed_from:
             return True, f"Successfully removed hooks from: {', '.join(removed_from)}"
         return True, "No active hooks were found to remove."
+
+    @classmethod
+    def get_agy_config_path(cls) -> Path:
+        """Return the path to AGY CLI global mcp_config.json."""
+        home = Path.home()
+        return home / ".gemini" / "config" / "mcp_config.json"
+
+    @classmethod
+    def enable_agy(cls) -> tuple[bool, str]:
+        """Activate Token-Saver in AGY CLI global configuration."""
+        import json
+        config_path = cls.get_agy_config_path()
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+
+        config: dict = {}
+        if config_path.exists() and config_path.stat().st_size > 0:
+            try:
+                with open(config_path, "r", encoding="utf-8") as f:
+                    config = json.load(f)
+            except Exception:
+                config = {}
+
+        if "mcpServers" not in config:
+            config["mcpServers"] = {}
+
+        config["mcpServers"]["token-saver"] = {
+            "command": "python",
+            "args": ["-m", "token_saver"],
+            "env": {
+                "PYTHONUNBUFFERED": "1"
+            }
+        }
+
+        try:
+            with open(config_path, "w", encoding="utf-8") as f:
+                json.dump(config, f, indent=2)
+            return True, f"Token-Saver successfully activated for AGY CLI! ({config_path})"
+        except Exception as e:
+            return False, f"Failed to update AGY config: {e}"
+
+    @classmethod
+    def disable_agy(cls) -> tuple[bool, str]:
+        """Deactivate Token-Saver from AGY CLI global configuration."""
+        import json
+        config_path = cls.get_agy_config_path()
+        if not config_path.exists():
+            return True, "AGY config does not exist, nothing to disable."
+
+        try:
+            with open(config_path, "r", encoding="utf-8") as f:
+                config = json.load(f)
+        except Exception:
+            config = {}
+
+        if "mcpServers" in config and "token-saver" in config["mcpServers"]:
+            del config["mcpServers"]["token-saver"]
+            try:
+                with open(config_path, "w", encoding="utf-8") as f:
+                    json.dump(config, f, indent=2)
+                return True, f"Token-Saver successfully deactivated from AGY CLI! ({config_path})"
+            except Exception as e:
+                return False, f"Failed to write AGY config: {e}"
+
+        return True, "Token-Saver was already inactive in AGY config."
+
