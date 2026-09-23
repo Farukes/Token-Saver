@@ -338,8 +338,11 @@ def get_repo_map(root_path: str = ".", max_tokens: int = 1000, focus_files: list
         focus_files = []
         
     root = Path(root_path).resolve()
-    file_infos = []
-    
+    raw_file_data: list[tuple[str, str, str, int, list[SymbolInfo], int]] = []
+    symbol_to_file: dict[str, str] = {}
+    total_raw_tokens = 0
+
+    # Pass 1: Parse files, extract symbols, map definitions
     for file_path_str in walk_source_files(str(root)):
         file_path = Path(file_path_str)
         try:
@@ -347,37 +350,59 @@ def get_repo_map(root_path: str = ".", max_tokens: int = 1000, focus_files: list
         except ValueError:
             rel_path = file_path.as_posix()
             
-        # Detect language
         language = detect_language(str(file_path))
         if not language:
             continue
             
-        # Read text
         text = read_file_text(str(file_path))
         if not text:
             continue
             
         line_count = text.count('\n') + 1
+        total_raw_tokens += len(text) // 4
             
-        # Parse code
         tree = parse_code(text, language)
         if not tree:
             continue
             
-        # Extract symbols
         symbols = extract_symbols(tree.root_node, language, text.encode('utf-8'))
-        
-        # Extract imports
         import_count = extract_import_count(tree.root_node, language)
         
-        # Calculate score
+        # Map defined top-level symbols to this file
+        for sym in symbols:
+            if len(sym.name) > 2 and sym.name not in ("main", "init", "__init__"):
+                symbol_to_file[sym.name] = rel_path
+                
+        raw_file_data.append((rel_path, str(file_path), language, line_count, symbols, import_count))
+
+    if not raw_file_data:
+        return f"📁 Repository Map (0 files, budget: {max_tokens} tokens)\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nNo supported source files found."
+
+    # Pass 2: Calculate cross-file dependency edges (Call Graph Centrality)
+    inbound_references: dict[str, int] = {f[0]: 0 for f in raw_file_data}
+    for rel_path, _, _, _, _, _ in raw_file_data:
+        for sym_name, def_file in symbol_to_file.items():
+            if def_file != rel_path:
+                # If this file mentions another file's symbol, increment defined file's in-degree
+                # We do a fast name lookup in text
+                pass  # fast scan below
+
+    for rel_path, full_path, language, line_count, symbols, import_count in raw_file_data:
+        file_text = read_file_text(full_path)
+        for sym_name, def_file in symbol_to_file.items():
+            if def_file != rel_path and sym_name in file_text:
+                inbound_references[def_file] = inbound_references.get(def_file, 0) + 1
+
+    file_infos: list[FileInfo] = []
+    for rel_path, full_path, language, line_count, symbols, import_count in raw_file_data:
         top_level_symbols = len(symbols)
         base_score = top_level_symbols * 10
         import_score = import_count * 5
-        focus_boost = 100 if rel_path in focus_files or str(file_path) in focus_files else 0
+        focus_boost = 100 if rel_path in focus_files or full_path in focus_files else 0
         length_penalty = -0.001 * line_count
+        call_graph_centrality = inbound_references.get(rel_path, 0) * 12
         
-        score = base_score + import_score + focus_boost + length_penalty
+        score = base_score + import_score + focus_boost + length_penalty + call_graph_centrality
         
         file_infos.append(FileInfo(
             path=rel_path,
@@ -386,11 +411,17 @@ def get_repo_map(root_path: str = ".", max_tokens: int = 1000, focus_files: list
             import_count=import_count,
             score=score
         ))
-        
-    if not file_infos:
-        return f"📁 Repository Map (0 files, budget: {max_tokens} tokens)\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nNo supported source files found."
-        
-    return format_repo_map(file_infos, str(root), max_tokens)
+
+    output = format_repo_map(file_infos, str(root), max_tokens)
+
+    try:
+        from token_saver.telemetry.stats import tracker
+        map_tokens = len(output) // 4
+        tracker.record_savings("repo_map", total_raw_tokens, map_tokens)
+    except Exception:
+        pass
+
+    return output
 
 
 def get_directory_tree(root_path: str = ".", max_depth: int = 4) -> str:

@@ -55,6 +55,11 @@ def filter_output_logic(raw_output: str, output_type: str = "auto", exit_code: i
         pct = int((orig_tokens - new_tokens) / orig_tokens * 100)
     
     footer = f"\n[Token-Saver: {orig_tokens} → {new_tokens} tokens ({pct}% saved)]"
+    try:
+        from token_saver.telemetry.stats import tracker
+        tracker.record_savings("command", orig_tokens, new_tokens)
+    except Exception:
+        pass
     return filtered + footer
 
 def register_output_pruner_tools(mcp):

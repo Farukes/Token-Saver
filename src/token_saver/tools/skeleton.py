@@ -144,6 +144,11 @@ def get_code_skeleton(file_path: str) -> str:
         savings_pct = int(((orig_tokens - skel_tokens) / orig_tokens) * 100)
         
     skeleton += f"\n# Token-Saver: {orig_tokens} → {skel_tokens} tokens ({savings_pct}% saved)"
+    try:
+        from token_saver.telemetry.stats import tracker
+        tracker.record_savings("skeleton", orig_tokens, skel_tokens)
+    except Exception:
+        pass
     return skeleton
 
 def get_symbol(file_path: str, symbol_name: str) -> str:

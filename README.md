@@ -119,6 +119,32 @@ Pure filtering tool — apply test/build/git filters to any text without executi
 ### `cache_stats`
 View session cache performance metrics.
 
+## 💻 CLI Commands & Transparent Interception
+
+Token-Saver also works directly in your terminal as a standalone developer CLI:
+
+```bash
+# View cumulative savings dashboard (tokens saved, money saved, operations)
+token-saver stats
+
+# Run any shell command through intelligent filtering
+token-saver run "pytest tests/ -v"
+token-saver run "npm test"
+
+# Temporary bypass: see 100% of raw output when you need full logs
+RAW=1 token-saver run "pytest"
+token-saver run "pytest --raw"
+
+# Install transparent shell hooks (so pytest/npm are automatically filtered)
+token-saver hook
+
+# Cleanly and safely uninstall all shell hooks
+token-saver unhook
+
+# Reset metrics counter
+token-saver reset-stats
+```
+
 ## 🌍 Supported Languages
 
 Token-Saver uses Tree-sitter for parsing and supports **130+ programming languages** including:

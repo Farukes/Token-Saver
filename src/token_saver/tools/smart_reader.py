@@ -35,6 +35,11 @@ def read_file_smart(file_path: str, force_full: bool = False) -> str:
         return result.content
         
     savings = format_savings(content, result.content)
+    try:
+        from token_saver.telemetry.stats import tracker
+        tracker.record_savings("cache", result.original_tokens, result.optimized_tokens)
+    except Exception:
+        pass
     return f"{result.content}\n\nToken savings: {savings}"
 
 
