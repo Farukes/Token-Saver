@@ -112,17 +112,18 @@ def main() -> None:
 
     elif args.subcommand in ("on", "enable"):
         from token_saver.hooks.manager import HookManager
-        success, msg = HookManager.enable_agy()
-        print(msg)
-        if not success:
-            sys.exit(1)
+        results = HookManager.enable_all()
+        for name, ok, msg in results:
+            status = "🟢" if ok else "❌"
+            print(f"{status} {name}: {msg}")
 
     elif args.subcommand in ("off", "disable"):
         from token_saver.hooks.manager import HookManager
-        success, msg = HookManager.disable_agy()
-        print(msg)
-        if not success:
-            sys.exit(1)
+        results = HookManager.disable_all()
+        for name, ok, msg in results:
+            status = "🔴" if ok else "❌"
+            print(f"{status} {name}: {msg}")
+
 
     elif args.subcommand in ("setup-commands", "install-commands"):
         from token_saver.hooks.manager import HookManager

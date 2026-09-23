@@ -178,18 +178,26 @@ npm() {{ if [ "$1" = "test" ]; then token-saver run "npm $@"; else command npm "
             return True, f"Successfully removed hooks from: {', '.join(removed_from)}"
         return True, "No active hooks were found to remove."
 
-    @classmethod
-    def get_agy_config_path(cls) -> Path:
-        """Return the path to AGY CLI global mcp_config.json."""
-        home = Path.home()
-        return home / ".gemini" / "config" / "mcp_config.json"
-
-    @classmethod
-    def enable_agy(cls) -> tuple[bool, str]:
-        """Activate Token-Saver in AGY CLI global configuration."""
+    @staticmethod
+    def _apply_mcp_config_with_backup(config_path: Path) -> tuple[bool, str]:
+        """Apply Token-Saver MCP configuration while safely creating a backup of original state."""
         import json
-        config_path = cls.get_agy_config_path()
         config_path.parent.mkdir(parents=True, exist_ok=True)
+        bak_path = config_path.with_name(config_path.name + ".ts_bak")
+
+        # Save a backup of the original file if not already backed up
+        if config_path.exists() and not bak_path.exists():
+            try:
+                content = config_path.read_text(encoding="utf-8")
+                bak_path.write_text(content, encoding="utf-8")
+            except Exception:
+                pass
+        elif not config_path.exists() and not bak_path.exists():
+            # Mark that the file did not exist originally
+            try:
+                bak_path.write_text("__NON_EXISTENT__", encoding="utf-8")
+            except Exception:
+                pass
 
         config: dict = {}
         if config_path.exists() and config_path.stat().st_size > 0:
@@ -213,34 +221,97 @@ npm() {{ if [ "$1" = "test" ]; then token-saver run "npm $@"; else command npm "
         try:
             with open(config_path, "w", encoding="utf-8") as f:
                 json.dump(config, f, indent=2)
-            return True, f"Token-Saver successfully activated for AGY CLI! ({config_path})"
+            return True, f"Activated in {config_path}"
         except Exception as e:
-            return False, f"Failed to update AGY config: {e}"
+            return False, f"Failed writing {config_path}: {e}"
+
+    @staticmethod
+    def _revert_mcp_config_with_backup(config_path: Path) -> tuple[bool, str]:
+        """Revert MCP configuration back to its exact pre-activation state using backup."""
+        import json
+        bak_path = config_path.with_name(config_path.name + ".ts_bak")
+
+        # Case 1: If backup exists, restore it completely
+        if bak_path.exists():
+            try:
+                bak_content = bak_path.read_text(encoding="utf-8")
+                if bak_content == "__NON_EXISTENT__":
+                    if config_path.exists():
+                        config_path.unlink()
+                else:
+                    config_path.write_text(bak_content, encoding="utf-8")
+                bak_path.unlink(missing_ok=True)
+                return True, f"Restored original config for {config_path.name}"
+            except Exception as e:
+                return False, f"Failed restoring backup for {config_path}: {e}"
+
+        # Case 2: No backup file, just cleanly remove token-saver entry
+        if config_path.exists():
+            try:
+                with open(config_path, "r", encoding="utf-8") as f:
+                    config = json.load(f)
+                if "mcpServers" in config and "token-saver" in config["mcpServers"]:
+                    del config["mcpServers"]["token-saver"]
+                    with open(config_path, "w", encoding="utf-8") as f:
+                        json.dump(config, f, indent=2)
+                    return True, f"Deactivated token-saver from {config_path.name}"
+            except Exception as e:
+                return False, f"Failed modifying {config_path}: {e}"
+
+        return True, f"Token-Saver was already inactive in {config_path.name}"
+
+    @classmethod
+    def get_supported_cli_configs(cls) -> dict[str, Path]:
+        """Return paths to all supported AI coding assistant configuration files."""
+        home = Path.home()
+        return {
+            "Antigravity (AGY)": home / ".gemini" / "config" / "mcp_config.json",
+            "Claude Code": home / ".claude.json",
+            "Cursor": home / ".cursor" / "mcp.json",
+            "Windsurf": home / ".codeium" / "windsurf" / "mcp_config.json",
+        }
+
+    @classmethod
+    def enable_all(cls) -> list[tuple[str, bool, str]]:
+        """Universally activate Token-Saver across all detected AI coding CLIs with backups."""
+        results = []
+        configs = cls.get_supported_cli_configs()
+
+        for name, path in configs.items():
+            ok, msg = cls._apply_mcp_config_with_backup(path)
+            results.append((name, ok, msg))
+
+        # Also install slash commands for AGY and Claude Code
+        cls.install_all_slash_commands()
+        return results
+
+    @classmethod
+    def disable_all(cls) -> list[tuple[str, bool, str]]:
+        """Universally revert all AI coding CLIs back to their exact pre-activation settings."""
+        results = []
+        configs = cls.get_supported_cli_configs()
+
+        for name, path in configs.items():
+            ok, msg = cls._revert_mcp_config_with_backup(path)
+            results.append((name, ok, msg))
+
+        return results
+
+    @classmethod
+    def get_agy_config_path(cls) -> Path:
+        """Return the path to AGY CLI global mcp_config.json."""
+        return cls.get_supported_cli_configs()["Antigravity (AGY)"]
+
+    @classmethod
+    def enable_agy(cls) -> tuple[bool, str]:
+        """Activate Token-Saver in AGY CLI global configuration."""
+        return cls._apply_mcp_config_with_backup(cls.get_agy_config_path())
 
     @classmethod
     def disable_agy(cls) -> tuple[bool, str]:
         """Deactivate Token-Saver from AGY CLI global configuration."""
-        import json
-        config_path = cls.get_agy_config_path()
-        if not config_path.exists():
-            return True, "AGY config does not exist, nothing to disable."
+        return cls._revert_mcp_config_with_backup(cls.get_agy_config_path())
 
-        try:
-            with open(config_path, "r", encoding="utf-8") as f:
-                config = json.load(f)
-        except Exception:
-            config = {}
-
-        if "mcpServers" in config and "token-saver" in config["mcpServers"]:
-            del config["mcpServers"]["token-saver"]
-            try:
-                with open(config_path, "w", encoding="utf-8") as f:
-                    json.dump(config, f, indent=2)
-                return True, f"Token-Saver successfully deactivated from AGY CLI! ({config_path})"
-            except Exception as e:
-                return False, f"Failed to write AGY config: {e}"
-
-        return True, "Token-Saver was already inactive in AGY config."
 
     @classmethod
     def install_agy_slash_command(cls) -> tuple[bool, str]:
