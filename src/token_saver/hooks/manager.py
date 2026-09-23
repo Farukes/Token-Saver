@@ -242,3 +242,84 @@ npm() {{ if [ "$1" = "test" ]; then token-saver run "npm $@"; else command npm "
 
         return True, "Token-Saver was already inactive in AGY config."
 
+    @classmethod
+    def install_agy_slash_command(cls) -> tuple[bool, str]:
+        """Install global slash command skill for Antigravity (AGY) CLI."""
+        home = Path.home()
+        skill_dir = home / ".gemini" / "config" / "skills" / "token-saver"
+        skill_dir.mkdir(parents=True, exist_ok=True)
+        skill_file = skill_dir / "SKILL.md"
+
+        content = """---
+name: token-saver
+description: >-
+  Instant slash command controller for the Token-Saver token optimization engine.
+  Use immediately when user types /token-saver, /token-saver on, /token-saver off,
+  /token-saver stats, or requests to toggle token-saver state.
+---
+
+# Token-Saver Slash Command Controller
+
+When this command is invoked with an argument:
+
+1. **If argument is 'on' or 'enable':**
+   Execute shell command: `token-saver on`
+   Report confirmation that Token-Saver is active.
+
+2. **If argument is 'off' or 'disable':**
+   Execute shell command: `token-saver off`
+   Report confirmation that Token-Saver is deactivated.
+
+3. **If argument is 'stats' or 'telemetry':**
+   Execute shell command: `token-saver stats`
+   Display the savings dashboard.
+
+4. **If no argument or 'help':**
+   Show options: `/token-saver on`, `/token-saver off`, `/token-saver stats`.
+"""
+        try:
+            skill_file.write_text(content, encoding="utf-8")
+            return True, f"Installed /token-saver command for AGY CLI at {skill_file}"
+        except Exception as e:
+            return False, f"Failed to install AGY slash command: {e}"
+
+    @classmethod
+    def install_claude_code_slash_command(cls) -> tuple[bool, str]:
+        """Install native slash command definition for Claude Code."""
+        home = Path.home()
+        claude_dir = home / ".claude" / "commands"
+        claude_dir.mkdir(parents=True, exist_ok=True)
+        command_file = claude_dir / "token-saver.md"
+
+        content = """---
+description: Manage Token-Saver token optimization engine (on, off, stats)
+---
+
+Execute the requested Token-Saver operation:
+$ARGUMENTS
+
+Instructions:
+1. If argument is "on" or "enable", run `token-saver on` and confirm activation.
+2. If argument is "off" or "disable", run `token-saver off` and confirm deactivation.
+3. If argument is "stats", run `token-saver stats` and show the telemetry dashboard.
+4. If empty or help, show usage instructions.
+"""
+        try:
+            command_file.write_text(content, encoding="utf-8")
+            return True, f"Installed /token-saver command for Claude Code at {command_file}"
+        except Exception as e:
+            return False, f"Failed to install Claude Code slash command: {e}"
+
+    @classmethod
+    def install_all_slash_commands(cls) -> list[tuple[str, bool, str]]:
+        """Install slash command definitions across all supported AI coding CLIs."""
+        results = []
+        ok1, msg1 = cls.install_agy_slash_command()
+        results.append(("Antigravity (AGY)", ok1, msg1))
+
+        ok2, msg2 = cls.install_claude_code_slash_command()
+        results.append(("Claude Code", ok2, msg2))
+
+        return results
+
+

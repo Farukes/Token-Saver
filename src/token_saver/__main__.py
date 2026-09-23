@@ -61,6 +61,12 @@ def main() -> None:
     # Subcommand: off / disable
     off_parser = subparsers.add_parser("off", help="Deactivate Token-Saver globally from AGY CLI")
 
+    # Subcommand: setup-commands
+    setup_parser = subparsers.add_parser(
+        "setup-commands",
+        help="Install /token-saver slash command definitions across AGY CLI and Claude Code",
+    )
+
     # If called with no arguments, default to launching the MCP server
     if len(sys.argv) == 1:
         from token_saver.server import mcp
@@ -116,6 +122,18 @@ def main() -> None:
         success, msg = HookManager.disable_agy()
         print(msg)
         if not success:
+            sys.exit(1)
+
+    elif args.subcommand in ("setup-commands", "install-commands"):
+        from token_saver.hooks.manager import HookManager
+        results = HookManager.install_all_slash_commands()
+        all_ok = True
+        for name, ok, msg in results:
+            status = "✅" if ok else "❌"
+            print(f"{status} {name}: {msg}")
+            if not ok:
+                all_ok = False
+        if not all_ok:
             sys.exit(1)
 
 
