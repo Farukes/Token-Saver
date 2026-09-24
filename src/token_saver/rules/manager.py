@@ -61,12 +61,20 @@ class RulesManager:
         "CLAUDE.md",
     ]
 
+    RULE_FILE_MAPPING = {
+        "AGENTS.md": "Antigravity (AGY)",
+        ".cursorrules": "Cursor",
+        ".windsurfrules": "Windsurf",
+        "CLAUDE.md": "Claude Code",
+    }
+
     @classmethod
     def install_rules(
         cls,
         target_dir: Path | str = ".",
         compact_output: bool | None = None,
         prevent_truncation: bool | None = None,
+        only_installed: bool = False,
     ) -> list[tuple[str, bool, str]]:
         """Install or update Token-Saver steering rules in the specified project directory."""
         results = []
@@ -83,8 +91,26 @@ class RulesManager:
 
         rules_to_inject = generate_rules(compact_output=compact_output, prevent_truncation=prevent_truncation)
 
+        from token_saver.hooks.manager import HookManager
+
+        # Identify installed AI coding assistants if only_installed is True
+        installed_clis = set()
+        if only_installed:
+            for fname, cli_name in cls.RULE_FILE_MAPPING.items():
+                if HookManager.is_cli_installed(cli_name):
+                    installed_clis.add(cli_name)
+            # If no assistant is detected on host, default to universal AGENTS.md
+            if not installed_clis:
+                installed_clis.add("Antigravity (AGY)")
+
         for filename in cls.SUPPORTED_RULE_FILES:
             file_path = project_path / filename
+            cli_name = cls.RULE_FILE_MAPPING.get(filename, "")
+
+            # If only_installed is enabled, skip creating rule files for CLIs not on this system
+            if only_installed and not file_path.exists() and cli_name not in installed_clis:
+                results.append((filename, False, f"Skipped ({cli_name} is not installed)"))
+                continue
             try:
                 if file_path.exists():
                     current_content = file_path.read_text(encoding="utf-8")

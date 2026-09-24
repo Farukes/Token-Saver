@@ -119,6 +119,11 @@ def main() -> None:
         action="store_false",
         help="Disable compact output restrictions in agent rules",
     )
+    rules_parser.add_argument(
+        "--all",
+        action="store_true",
+        help="Generate rule files for all AI coding assistants (default: auto-detect installed assistants)",
+    )
 
     # Subcommand: cache-prune
     prune_parser = subparsers.add_parser(
@@ -310,13 +315,20 @@ def main() -> None:
 
     elif args.subcommand == "init-rules":
         from token_saver.rules.manager import RulesManager
-        results = RulesManager.install_rules(args.path, compact_output=args.compact_output)
+        results = RulesManager.install_rules(
+            args.path,
+            compact_output=args.compact_output,
+            only_installed=not args.all,
+        )
         all_ok = True
         for name, ok, msg in results:
-            status = "✅" if ok else "❌"
+            if "skipped" in msg.lower():
+                status = "⚪"
+            else:
+                status = "✅" if ok else "❌"
+                if not ok:
+                    all_ok = False
             print(f"{status} {name}: {msg}")
-            if not ok:
-                all_ok = False
         if not all_ok:
             sys.exit(1)
 
