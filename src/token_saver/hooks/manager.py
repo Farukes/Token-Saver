@@ -472,12 +472,16 @@ When this command is invoked with an argument:
    Execute shell command: `token-saver output <arg>` (e.g. `token-saver output on` or `token-saver output off`)
    Report confirmation of the output mode change.
 
-4. **If argument is 'stats' or 'telemetry':**
+4. **If argument is 'status':**
+   Execute shell command: `token-saver status`
+   Display the overall operational status report.
+
+5. **If argument is 'stats' or 'telemetry':**
    Execute shell command: `token-saver stats`
    Display the savings dashboard.
 
-5. **If no argument or 'help':**
-   Show options: `/token-saver on`, `/token-saver off`, `/token-saver output on`, `/token-saver output off`, `/token-saver stats`.
+6. **If no argument or 'help':**
+   Show options: `/token-saver status`, `/token-saver on`, `/token-saver off`, `/token-saver output on`, `/token-saver output off`, `/token-saver stats`.
 """
         try:
             skill_file.write_text(content, encoding="utf-8")

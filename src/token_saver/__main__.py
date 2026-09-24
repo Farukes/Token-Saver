@@ -36,6 +36,17 @@ def main() -> None:
     # Subcommand: stats
     subparsers.add_parser("stats", help="Display cumulative token and financial savings dashboard")
 
+    # Subcommand: status
+    status_parser = subparsers.add_parser(
+        "status",
+        help="Check comprehensive live operational status of Token-Saver across all AI CLIs and project rules",
+    )
+    status_parser.add_argument(
+        "--path",
+        default=".",
+        help="Target project directory to check rules for (default: current directory)",
+    )
+
     # Subcommand: reset-stats
     subparsers.add_parser("reset-stats", help="Reset cumulative telemetry metrics")
 
@@ -142,6 +153,90 @@ def main() -> None:
     elif args.subcommand == "stats":
         from token_saver.telemetry.stats import tracker
         print(tracker.render_dashboard())
+
+    elif args.subcommand == "status":
+        import json
+        from pathlib import Path
+
+        from token_saver.cache.persistent_cache import PersistentCache
+        from token_saver.hooks.manager import HookManager
+        from token_saver.rules.manager import RULES_MARKER_START, RulesManager
+
+        project_path = Path(args.path).resolve()
+        configs = HookManager.get_supported_cli_configs()
+
+        print("=" * 60)
+        print("🔋 TOKEN-SAVER SYSTEM STATUS REPORT")
+        print("=" * 60)
+
+        # 1. Check CLI MCP Integrations
+        active_clis = []
+        inactive_clis = []
+        for name, cfg_path in configs.items():
+            is_inst = HookManager.is_cli_installed(name)
+            is_active = False
+            if cfg_path.exists():
+                try:
+                    with open(cfg_path, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                        if "token-saver" in data.get("mcpServers", {}):
+                            is_active = True
+                except Exception:
+                    pass
+            if is_active:
+                active_clis.append(f"🟢 {name} (Active in {cfg_path.name})")
+            elif is_inst:
+                inactive_clis.append(f"🔴 {name} (Installed, but Token-Saver disabled)")
+            else:
+                inactive_clis.append(f"⚪ {name} (Not installed)")
+
+        overall_active = len(active_clis) > 0
+        overall_badge = "🟢 ACTIVE (Operational)" if overall_active else "🔴 INACTIVE (Turn on with 'token-saver on')"
+        print(f"Overall Engine Status : {overall_badge}\n")
+
+        print("AI Assistant Integrations:")
+        for line in active_clis + inactive_clis:
+            print(f"  • {line}")
+
+        # 2. Check Output Optimization Status
+        output_active = RulesManager.get_output_mode(project_path)
+        out_badge = "🟢 ON (Compact surgical diffs & zero-truncation)" if output_active else "⚪ OFF (Default full output)"
+        print(f"\nOutput Optimization   : {out_badge}")
+
+        # 3. Check Project Steering Rules
+        rule_files_found = []
+        for r_name in RulesManager.SUPPORTED_RULE_FILES:
+            r_path = project_path / r_name
+            if r_path.exists():
+                try:
+                    content = r_path.read_text(encoding="utf-8")
+                    if RULES_MARKER_START in content:
+                        rule_files_found.append(r_name)
+                except Exception:
+                    pass
+        if rule_files_found:
+            print(f"Project Steering Rules: 🟢 INSTALLED ({', '.join(rule_files_found)})")
+        else:
+            print("Project Steering Rules: 🔴 NOT INSTALLED (Run 'token-saver init-rules')")
+
+        # 4. Check L2 Persistent Cache
+        try:
+            cache = PersistentCache()
+            entries = cache.count_entries()
+            print(f"L2 Persistent Cache   : 🟢 ONLINE ({entries} cached entries in ~/.token-saver/cache.db)")
+        except Exception as e:
+            print(f"L2 Persistent Cache   : ⚠️ Error accessing DB: {e}")
+
+        print("=" * 60)
+        print("Useful Commands:")
+        print("  token-saver on         -> Enable Token-Saver globally")
+        print("  token-saver off        -> Disable Token-Saver globally")
+        print("  token-saver output on  -> Enable compact surgical output")
+        print("  token-saver output off -> Revert to standard verbose output")
+        print("  token-saver stats      -> View live token and financial savings")
+        print("=" * 60)
+        if not overall_active:
+            sys.exit(1)
 
     elif args.subcommand == "reset-stats":
         from token_saver.telemetry.stats import tracker
