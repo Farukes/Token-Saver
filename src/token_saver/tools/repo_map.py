@@ -307,7 +307,7 @@ def get_repo_map(root_path: str = ".", max_tokens: int = 1000, focus_files: list
     total_raw_tokens = 0
 
     # Pass 1: Parse files, extract symbols, map definitions
-    for file_path_str in walk_source_files(str(root)):
+    for file_path_str in walk_source_files(str(root), max_files=config.max_source_files):
         file_path = Path(file_path_str)
         try:
             rel_path = file_path.relative_to(root).as_posix()

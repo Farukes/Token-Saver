@@ -14,6 +14,8 @@ ignore_patterns = [
     "*.p12",
 ]
 max_cacheable_bytes = 5242880 # 5 MB
+# Maximum number of source files scanned per repository pass (increase for giant monorepos)
+max_source_files = 5000
 
 [cache]
 ttl_days = 30

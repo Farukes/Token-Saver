@@ -70,3 +70,39 @@ def test_smart_reader_security_guard(tmp_path):
     # When force_full=True is passed, reading is permitted
     result_forced = read_file_smart(str(secret_file), force_full=True)
     assert "API_KEY=sk_secret_12345" in result_forced
+
+
+def test_max_source_files_config(tmp_path):
+    config_file = tmp_path / "token-saver.toml"
+    config_file.write_text(
+        """
+[general]
+max_source_files = 15000
+""",
+        encoding="utf-8",
+    )
+    loaded = load_config(tmp_path)
+    assert loaded.max_source_files == 15000
+
+
+def test_walk_source_files_respects_custom_limit(tmp_path):
+    from token_saver.utils.file_utils import walk_source_files
+
+    for i in range(10):
+        (tmp_path / f"test_{i}.py").write_text("x = 1\n", encoding="utf-8")
+
+    # Limit to 3 files
+    files = walk_source_files(str(tmp_path), max_files=3)
+    assert len(files) == 3
+
+    # Limit via token-saver.toml
+    (tmp_path / "token-saver.toml").write_text(
+        """
+[general]
+max_source_files = 4
+""",
+        encoding="utf-8",
+    )
+    files_configured = walk_source_files(str(tmp_path))
+    assert len(files_configured) == 4
+

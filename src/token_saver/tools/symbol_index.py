@@ -232,7 +232,7 @@ class SymbolIndexer:
         all_symbols: list[IndexedSymbol] = []
         valid_rel_paths: set[str] = set()
 
-        for f_path_str in walk_source_files(str(root)):
+        for f_path_str in walk_source_files(str(root), max_files=config.max_source_files):
             p = Path(f_path_str)
             try:
                 rel = p.relative_to(root).as_posix()
@@ -416,7 +416,7 @@ def find_symbol_references(
     all_refs: list[SymbolReference] = []
     scanned_candidate_files = 0
 
-    for f_path_str in walk_source_files(str(root)):
+    for f_path_str in walk_source_files(str(root), max_files=config.max_source_files):
         p = Path(f_path_str)
         try:
             rel = p.relative_to(root).as_posix()

@@ -37,6 +37,7 @@ class TokenSaverConfig:
     repo_map_budget: int = 1000
     compact_output: bool = True
     prevent_truncation: bool = True
+    max_source_files: int = 5000
 
     def is_ignored(self, file_path: str | Path) -> bool:
         """Check whether a file path matches any ignore patterns."""
@@ -108,6 +109,18 @@ def _apply_dict_config(config: TokenSaverConfig, data: dict) -> None:
     if "max_cacheable_bytes" in general:
         try:
             config.max_cacheable_bytes = int(general["max_cacheable_bytes"])
+        except (ValueError, TypeError):
+            pass
+
+    files_cfg = data.get("files", general)
+    if "max_source_files" in files_cfg:
+        try:
+            config.max_source_files = int(files_cfg["max_source_files"])
+        except (ValueError, TypeError):
+            pass
+    elif "max_files" in files_cfg:
+        try:
+            config.max_source_files = int(files_cfg["max_files"])
         except (ValueError, TypeError):
             pass
 

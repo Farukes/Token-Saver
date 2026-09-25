@@ -149,22 +149,32 @@ def read_file_text(file_path: str) -> str:
 
 def walk_source_files(
     root: str,
-    max_files: int = 5000,
+    max_files: int | None = None,
 ) -> list[str]:
     """Walk a directory tree and collect source code file paths.
 
     Respects SKIP_DIRS and BINARY_EXTENSIONS filters.
-    Returns absolute paths, limited to max_files.
+    Returns absolute paths, limited to max_files or configured max_source_files.
     """
     root_path = Path(root).resolve()
     files: list[str] = []
+
+    if max_files is not None:
+        effective_limit = max_files
+    else:
+        try:
+            from token_saver.config import load_config
+
+            effective_limit = load_config(root_path).max_source_files
+        except Exception:
+            effective_limit = 5000
 
     for dirpath, dirnames, filenames in os.walk(root_path):
         # Filter out directories we should skip (modifies in-place)
         dirnames[:] = [d for d in dirnames if not should_skip_dir(d)]
 
         for filename in sorted(filenames):
-            if len(files) >= max_files:
+            if len(files) >= effective_limit:
                 return files
 
             file_path = os.path.join(dirpath, filename)
