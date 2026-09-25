@@ -411,6 +411,7 @@ impl McpServer {
         match name {
             "read_file_smart" => {
                 let file_path = args.get("file_path")
+                    .or_else(|| args.get("path"))
                     .and_then(|v| v.as_str())
                     .ok_or((-32602, "Missing 'file_path'".to_string()))?;
                 let force_full = args.get("force_full").and_then(|v| v.as_bool()).unwrap_or(false);
@@ -428,6 +429,7 @@ impl McpServer {
 
             "tool_get_code_skeleton" => {
                 let file_path = args.get("file_path")
+                    .or_else(|| args.get("path"))
                     .and_then(|v| v.as_str())
                     .ok_or((-32602, "Missing 'file_path'".to_string()))?;
                 Ok(get_code_skeleton_file(file_path))
@@ -435,6 +437,7 @@ impl McpServer {
 
             "tool_get_symbol" => {
                 let file_path = args.get("file_path")
+                    .or_else(|| args.get("path"))
                     .and_then(|v| v.as_str())
                     .ok_or((-32602, "Missing 'file_path'".to_string()))?;
                 let symbol_name = args.get("symbol_name")
@@ -477,6 +480,7 @@ impl McpServer {
 
             "filter_output" => {
                 let raw_output = args.get("raw_output")
+                    .or_else(|| args.get("output"))
                     .and_then(|v| v.as_str())
                     .ok_or((-32602, "Missing 'raw_output'".to_string()))?;
                 let output_type = args.get("output_type").and_then(|v| v.as_str()).unwrap_or("auto");
