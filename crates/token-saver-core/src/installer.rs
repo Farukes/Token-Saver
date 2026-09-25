@@ -74,6 +74,60 @@ pub fn get_supported_ide_configs() -> Vec<(&'static str, PathBuf)> {
     configs
 }
 
+/// Checks if Claude Code CLI is genuinely installed on the host.
+pub fn is_claude_code_installed() -> bool {
+    let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
+
+    // 1. Check if 'claude' CLI binary exists in PATH
+    #[cfg(target_os = "windows")]
+    let check_cmds = ["claude.cmd", "claude.exe", "claude.bat"];
+    #[cfg(not(target_os = "windows"))]
+    let check_cmds = ["claude"];
+
+    if let Ok(path_var) = std::env::var("PATH") {
+        for dir in std::env::split_paths(&path_var) {
+            for cmd in &check_cmds {
+                if dir.join(cmd).is_file() {
+                    return true;
+                }
+            }
+        }
+    }
+
+    // 2. Check if ~/.claude directory exists with actual files other than our own commands
+    let claude_dir = home.join(".claude");
+    if claude_dir.is_dir() {
+        if let Ok(entries) = fs::read_dir(&claude_dir) {
+            for entry in entries.flatten() {
+                if entry.file_name() != "commands" {
+                    return true;
+                }
+            }
+        }
+    }
+
+    // 3. Check if ~/.claude.json exists and has configuration other than token-saver
+    let cfg = home.join(".claude.json");
+    if cfg.is_file() {
+        if let Ok(content) = fs::read_to_string(&cfg) {
+            if let Ok(val) = serde_json::from_str::<Value>(&content) {
+                if let Some(obj) = val.as_object() {
+                    if obj.keys().any(|k| k != "mcpServers") {
+                        return true;
+                    }
+                    if let Some(servers) = obj.get("mcpServers").and_then(|s| s.as_object()) {
+                        if servers.keys().any(|k| k != "token-saver") {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    false
+}
+
 /// Automatically configures Token-Saver MCP in detected or all AI assistants.
 pub fn install_mcp_all(all_ides: bool, custom_exe: Option<&str>) -> Vec<McpInstallResult> {
     let exe_path = match custom_exe {
@@ -84,15 +138,21 @@ pub fn install_mcp_all(all_ides: bool, custom_exe: Option<&str>) -> Vec<McpInsta
             .to_string(),
     };
 
+    let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
     let configs = get_supported_ide_configs();
     let mut results = Vec::new();
 
     for (ide_name, cfg_path) in configs {
-        let parent_exists = cfg_path.parent().map(|p| p.exists()).unwrap_or(false);
         let file_exists = cfg_path.exists();
+        let is_detected = if ide_name == "Claude Code" {
+            is_claude_code_installed()
+        } else {
+            let parent_exists = cfg_path.parent().map(|p| p.exists() && p != &home).unwrap_or(false);
+            parent_exists || file_exists
+        };
 
         // If not all_ides, only configure if IDE directory or config file exists on host
-        if !all_ides && !parent_exists && !file_exists {
+        if !all_ides && !is_detected {
             results.push(McpInstallResult {
                 ide_name: ide_name.to_string(),
                 config_path: cfg_path,
@@ -343,8 +403,7 @@ pub fn install_all_slash_commands(only_installed: bool) -> Vec<(&'static str, bo
         results.push(("Antigravity (AGY)", ok, msg));
     }
 
-    let claude_config = home.join(".claude.json");
-    if !only_installed || claude_config.exists() {
+    if !only_installed || is_claude_code_installed() {
         let (ok, msg) = install_claude_code_slash_command();
         results.push(("Claude Code", ok, msg));
     } else {

@@ -76,16 +76,21 @@ pub fn build_system_status(tracker: &TelemetryTracker) -> serde_json::Value {
     });
 
     let ide_configs = token_saver_core::installer::get_supported_ide_configs();
+    let home = dirs::home_dir().unwrap_or_else(|| std::path::PathBuf::from("."));
     let mut any_active = false;
     let mut ides = Vec::new();
 
     for (name, path) in ide_configs {
-        let parent_exists = path.parent().map(|p| p.exists()).unwrap_or(false);
         let file_exists = path.exists();
-        let installed = file_exists || parent_exists;
+        let installed = if name == "Claude Code" {
+            token_saver_core::installer::is_claude_code_installed()
+        } else {
+            let parent_exists = path.parent().map(|p| p.exists() && p != &home).unwrap_or(false);
+            file_exists || parent_exists
+        };
         let mut active = false;
 
-        if file_exists {
+        if file_exists && installed {
             if let Ok(content) = std::fs::read_to_string(&path) {
                 if content.contains("token-saver") {
                     active = true;
