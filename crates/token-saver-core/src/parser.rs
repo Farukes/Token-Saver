@@ -11,6 +11,9 @@ pub enum SupportedLanguage {
     JavaScript,
     TypeScript,
     Go,
+    C,
+    Cpp,
+    Java,
 }
 
 impl SupportedLanguage {
@@ -21,6 +24,9 @@ impl SupportedLanguage {
             Self::JavaScript => "javascript",
             Self::TypeScript => "typescript",
             Self::Go => "go",
+            Self::C => "c",
+            Self::Cpp => "cpp",
+            Self::Java => "java",
         }
     }
 
@@ -31,6 +37,9 @@ impl SupportedLanguage {
             Self::JavaScript => tree_sitter_javascript::LANGUAGE.into(),
             Self::TypeScript => tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into(),
             Self::Go => tree_sitter_go::LANGUAGE.into(),
+            Self::C => tree_sitter_c::LANGUAGE.into(),
+            Self::Cpp => tree_sitter_cpp::LANGUAGE.into(),
+            Self::Java => tree_sitter_java::LANGUAGE.into(),
         }
     }
 
@@ -54,6 +63,9 @@ pub fn detect_language<P: AsRef<Path>>(path: P) -> Option<SupportedLanguage> {
         "js" | "mjs" | "cjs" | "jsx" => Some(SupportedLanguage::JavaScript),
         "ts" | "mts" | "cts" | "tsx" => Some(SupportedLanguage::TypeScript),
         "go" => Some(SupportedLanguage::Go),
+        "c" | "h" => Some(SupportedLanguage::C),
+        "cpp" | "cc" | "cxx" | "hpp" | "hxx" => Some(SupportedLanguage::Cpp),
+        "java" => Some(SupportedLanguage::Java),
         _ => None,
     }
 }
@@ -101,5 +113,19 @@ mod tests {
         let code = "package main\nfunc hello(name string) string {\n    return \"Hello \" + name\n}\n";
         let tree = parse_code(code, SupportedLanguage::Go).expect("Go parse should succeed");
         assert_eq!(tree.root_node().kind(), "source_file");
+    }
+
+    #[test]
+    fn test_parse_c() {
+        let code = "int main(void) { return 0; }\n";
+        let tree = parse_code(code, SupportedLanguage::C).expect("C parse should succeed");
+        assert_eq!(tree.root_node().kind(), "translation_unit");
+    }
+
+    #[test]
+    fn test_parse_java() {
+        let code = "class App { public static void main(String[] args) {} }\n";
+        let tree = parse_code(code, SupportedLanguage::Java).expect("Java parse should succeed");
+        assert_eq!(tree.root_node().kind(), "program");
     }
 }

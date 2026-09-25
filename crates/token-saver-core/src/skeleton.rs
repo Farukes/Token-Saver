@@ -84,14 +84,22 @@ pub fn build_skeleton(source_code: &str, lang: SupportedLanguage) -> String {
                     }
                 }
             }
-            SupportedLanguage::JavaScript | SupportedLanguage::TypeScript => {
+            SupportedLanguage::JavaScript
+            | SupportedLanguage::TypeScript
+            | SupportedLanguage::C
+            | SupportedLanguage::Cpp
+            | SupportedLanguage::Java => {
                 if matches!(
                     node_kind,
-                    "function_declaration" | "method_definition" | "arrow_function"
+                    "function_declaration"
+                        | "method_definition"
+                        | "arrow_function"
+                        | "method_declaration"
+                        | "function_definition"
                 ) {
                     let mut body = None;
                     for child in node.children(&mut node.walk()) {
-                        if matches!(child.kind(), "statement_block" | "compound_statement") {
+                        if matches!(child.kind(), "statement_block" | "compound_statement" | "block") {
                             body = Some(child);
                             break;
                         }

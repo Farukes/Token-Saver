@@ -6,6 +6,8 @@
 use std::process::{Command, Stdio};
 
 use crate::filters::ansi::strip_ansi;
+use crate::filters::build_tools::{detect_and_filter_build, filter_npm_yarn};
+use crate::filters::git::filter_git_output;
 use crate::filters::test_runners::{filter_cargo, filter_pytest};
 use crate::telemetry::TelemetryTracker;
 use crate::token_counter::estimate_tokens;
@@ -38,6 +40,8 @@ pub fn filter_output_logic(
     let mut filtered = match output_type {
         "pytest" => filter_pytest(&clean),
         "cargo" => filter_cargo(&clean),
+        "npm" | "yarn" | "pnpm" => filter_npm_yarn(&clean),
+        "git" => filter_git_output(&clean),
         "generic" => clean.clone(),
         _ => {
             // Auto-detect
@@ -45,6 +49,10 @@ pub fn filter_output_logic(
                 filter_pytest(&clean)
             } else if clean.contains("running ") && clean.contains("test result:") {
                 filter_cargo(&clean)
+            } else if let Some(b) = detect_and_filter_build(&clean) {
+                b
+            } else if clean.contains("git ") || clean.contains("On branch ") || clean.contains("Untracked files:") {
+                filter_git_output(&clean)
             } else {
                 clean.clone()
             }

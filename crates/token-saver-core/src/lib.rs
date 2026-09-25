@@ -4,10 +4,12 @@
 pub mod cache;
 pub mod config;
 pub mod filters;
+pub mod hooks;
 pub mod models;
 pub mod output_pruner;
 pub mod parser;
 pub mod repo_map;
+pub mod rules;
 pub mod skeleton;
 pub mod smart_reader;
 pub mod symbols;

@@ -40,6 +40,7 @@ pub fn extract_import_count(source_code: &str, lang: SupportedLanguage) -> usize
                 | "import_declaration"
                 | "use_declaration"
                 | "using_directive"
+                | "preproc_include"
         ) {
             *count += 1;
         }
