@@ -27,6 +27,25 @@ register_output_pruner_tools(mcp)
 register_repo_map_tools(mcp)
 register_symbol_index_tools(mcp)
 
+def _auto_init_rules() -> None:
+    try:
+        from pathlib import Path
+        home = Path.home()
+        cwd = Path.cwd().resolve()
+        if cwd == home or cwd.parent == cwd:
+            return
+        from token_saver.rules.manager import RULES_MARKER_START, RulesManager
+        rule_files = ["AGENTS.md", ".cursorrules", ".windsurfrules", "CLAUDE.md"]
+        for f in rule_files:
+            p = cwd / f
+            if p.exists() and RULES_MARKER_START in p.read_text(encoding="utf-8", errors="ignore"):
+                return
+        RulesManager.install_rules(str(cwd))
+    except Exception:
+        pass
+
+_auto_init_rules()
+
 
 # Register MCP Resources
 @mcp.resource("token-saver://stats")

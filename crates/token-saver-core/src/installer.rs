@@ -48,7 +48,10 @@ pub fn get_supported_ide_configs() -> Vec<(&'static str, PathBuf)> {
     // 4. Claude Code
     configs.push(("Claude Code", home.join(".claude.json")));
 
-    // 5. VS Code (Cline / Roo Code)
+    // 5. Antigravity (AGY)
+    configs.push(("Antigravity (AGY)", home.join(".gemini").join("config").join("mcp_config.json")));
+
+    // 6. VS Code (Cline / Roo Code)
     #[cfg(target_os = "windows")]
     if let Ok(appdata) = std::env::var("APPDATA") {
         let code_storage = PathBuf::from(appdata).join("Code").join("User").join("globalStorage");
