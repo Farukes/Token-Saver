@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import asdict, dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -48,8 +48,8 @@ class TelemetryData:
     total_files_cached: int = 0
     total_skeletons_generated: int = 0
     total_repo_maps_generated: int = 0
-    first_used_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
-    last_used_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+    first_used_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    last_used_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
     # Granular categories
     skeleton: CategoryStats = field(default_factory=CategoryStats)
@@ -147,7 +147,7 @@ class TelemetryTracker:
         self.data.total_original_tokens += original_tokens
         self.data.total_optimized_tokens += optimized_tokens
         self.data.total_tokens_saved += saved
-        self.data.last_used_at = datetime.utcnow().isoformat()
+        self.data.last_used_at = datetime.now(timezone.utc).isoformat()
 
         # Update legacy counters
         if category == "command":
