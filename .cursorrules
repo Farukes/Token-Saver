@@ -1,3 +1,6 @@
+
+
+
 # >>> token-saver-rules >>>
 ## 🔋 Token-Saver AI Optimization Guidelines (STRICT ENFORCEMENT)
 CRITICAL MANDATE: Do NOT use native file viewers (view_file, cat) or raw terminal commands when Token-Saver MCP tools are available. Bypassing Token-Saver wastes hundreds of thousands of tokens and triggers conversation context window compaction.

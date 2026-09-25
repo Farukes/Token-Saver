@@ -181,7 +181,47 @@ pub async fn start_ui_server(port: u16) -> Result<(), Box<dyn std::error::Error>
                 });
                 ("200 OK", "application/json", json!({ "ok": true, "msg": "Server shutting down" }).to_string())
             }
-            ("POST", "/api/toggle-ide") | ("POST", "/api/toggle-all") | ("POST", "/api/toggle-output") => {
+            ("POST", "/api/toggle-output") => {
+                let compact = !request.contains("\"compact\":false") && !request.contains("\"compact\": false");
+                token_saver_core::rules::install_rules(std::path::Path::new("."), true, compact);
+                let status_json = build_system_status(&tracker);
+                ("200 OK", "application/json", json!({
+                    "ok": true,
+                    "msg": format!("Output mode set to: {}", if compact { "Compact Surgical" } else { "Standard Verbose" }),
+                    "status": status_json
+                }).to_string())
+            }
+            ("POST", "/api/toggle-all") => {
+                let enable = !request.contains("\"enable\":false") && !request.contains("\"enable\": false");
+                if enable {
+                    token_saver_core::installer::install_mcp_all(false, None);
+                    token_saver_core::rules::install_rules(std::path::Path::new("."), true, true);
+                } else {
+                    token_saver_core::installer::uninstall_mcp_all();
+                    token_saver_core::rules::remove_rules(std::path::Path::new("."));
+                }
+                let status_json = build_system_status(&tracker);
+                ("200 OK", "application/json", json!({
+                    "ok": true,
+                    "msg": if enable { "Activated Token-Saver across detected IDEs" } else { "Deactivated Token-Saver across all IDEs" },
+                    "status": status_json
+                }).to_string())
+            }
+            ("POST", "/api/toggle-rules") => {
+                let enable = !request.contains("\"enable\":false") && !request.contains("\"enable\": false");
+                if enable {
+                    token_saver_core::rules::install_rules(std::path::Path::new("."), true, true);
+                } else {
+                    token_saver_core::rules::remove_rules(std::path::Path::new("."));
+                }
+                let status_json = build_system_status(&tracker);
+                ("200 OK", "application/json", json!({
+                    "ok": true,
+                    "msg": if enable { "Steering rules installed" } else { "Steering rules removed" },
+                    "status": status_json
+                }).to_string())
+            }
+            ("POST", "/api/toggle-ide") => {
                 let status_json = build_system_status(&tracker);
                 ("200 OK", "application/json", json!({ "ok": true, "msg": "Settings updated", "status": status_json }).to_string())
             }

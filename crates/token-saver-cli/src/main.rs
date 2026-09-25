@@ -25,60 +25,81 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Show live performance and savings dashboard
-    Stats,
-    /// Reset all cumulative telemetry counters
-    ResetStats,
+    /// Turn on Token-Saver globally across all detected IDEs & project
+    #[command(alias = "enable", alias = "install-mcp")]
+    On,
+
+    /// Turn off Token-Saver globally and cleanly revert settings
+    #[command(alias = "disable", alias = "uninstall-mcp")]
+    Off,
+
     /// Check operational status across AI assistants and IDEs
     Status,
-    /// Activate Token-Saver globally for detected IDEs and inject steering rules
-    #[command(alias = "enable")]
-    On,
-    /// Deactivate Token-Saver globally and revert settings
-    #[command(alias = "disable")]
-    Off,
+
+    /// Show live performance and token savings dashboard
+    Stats,
+
+    /// Launch the interactive Web Dashboard in your browser
+    Ui {
+        #[arg(short, long, default_value_t = 4141)]
+        port: u16,
+    },
+
+    // --- Secondary & Technical Commands (hidden from default help to avoid clutter) ---
+    /// Reset all cumulative telemetry counters
+    #[command(hide = true)]
+    ResetStats,
+
     /// Automatically configure Token-Saver MCP server in Claude Desktop, Cursor, Windsurf, VS Code
-    #[command(alias = "enable-mcp")]
+    #[command(hide = true, alias = "enable-mcp")]
     InstallMcp {
         #[arg(long)]
         all: bool,
     },
+
     /// Safely remove Token-Saver MCP configuration from all assistants
-    #[command(alias = "disable-mcp")]
+    #[command(hide = true, alias = "disable-mcp")]
     UninstallMcp,
+
     /// Manage AI output mode (compact surgical diffs vs default output)
+    #[command(hide = true)]
     Output {
         #[arg(default_value = "status")]
         state: String,
         #[arg(short, long, default_value = ".")]
         dir: String,
     },
+
     /// Inject or update Token-Saver steering rules into project rule files
-    #[command(alias = "inject", alias = "install-rules")]
+    #[command(hide = true, alias = "inject", alias = "install-rules")]
     InitRules {
         #[arg(short, long, default_value = ".")]
         dir: String,
         #[arg(long)]
         clean: bool,
     },
+
     /// Run MCP Server over stdio
-    #[command(alias = "server")]
+    #[command(hide = true, alias = "server")]
     Mcp,
+
     /// Install transparent CLI interceptor hooks into shell profiles (PowerShell/Bash/Zsh)
+    #[command(hide = true)]
     Hook,
+
     /// Remove transparent CLI interceptor hooks from shell profiles
+    #[command(hide = true)]
     Unhook,
+
     /// Run a shell command with intelligent token-saving output pruning
+    #[command(hide = true)]
     Run {
         #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
         command: Vec<String>,
     },
-    /// Launch the on-demand Web Dashboard in your browser
-    Ui {
-        #[arg(short, long, default_value_t = 4141)]
-        port: u16,
-    },
+
     /// Prune expired or excess entries from L2 SQLite cache
+    #[command(hide = true)]
     CachePrune {
         #[arg(long, default_value_t = 5000)]
         max_entries: usize,
