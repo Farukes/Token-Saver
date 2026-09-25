@@ -140,3 +140,36 @@ def test_mcp_revert_restores_exact_original_state(tmp_path: Path):
     assert not (fresh_file.with_name(fresh_file.name + ".ts_bak")).exists()
 
 
+def test_mcp_revert_preserves_newly_added_user_servers(tmp_path: Path):
+    """Test that if the user adds a new MCP server while Token-Saver was installed,
+    reverting Token-Saver removes ONLY token-saver and preserves the user's new server!
+    """
+    import json
+
+    config_file = tmp_path / "claude_desktop_config.json"
+
+    # Step 1: Token-Saver is installed on a fresh system
+    ok, msg = HookManager._apply_mcp_config_with_backup(config_file)
+    assert ok
+
+    # Step 2: While Token-Saver was running, the user manually adds GitHub MCP server
+    data = json.loads(config_file.read_text(encoding="utf-8"))
+    data["mcpServers"]["github"] = {
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-github"],
+    }
+    config_file.write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+    # Step 3: User uninstalls / unticks Token-Saver
+    revert_ok, revert_msg = HookManager._revert_mcp_config_with_backup(config_file)
+    assert revert_ok
+    assert "preserved" in revert_msg.lower()
+
+    # Step 4: Verify that token-saver was removed, but github is 100% PRESERVED!
+    assert config_file.exists()  # Must not be deleted!
+    after_data = json.loads(config_file.read_text(encoding="utf-8"))
+    assert "token-saver" not in after_data["mcpServers"]
+    assert "github" in after_data["mcpServers"]
+    assert after_data["mcpServers"]["github"]["command"] == "npx"
+
+

@@ -239,14 +239,70 @@ npm() {{ if [ "$1" = "test" ]; then token-saver run "npm $@"; else command npm "
 
     @staticmethod
     def _revert_mcp_config_with_backup(config_path: Path) -> tuple[bool, str]:
-        """Revert MCP configuration back to its exact pre-activation state using backup."""
+        """Revert MCP configuration back to pre-activation state, safely preserving any newly added user configurations."""
         import json
         bak_path = config_path.with_name(config_path.name + ".ts_bak")
 
-        # Case 1: If backup exists, restore it completely
+        # 1. Parse current config to inspect live state
+        current_config: dict = {}
+        has_valid_current = False
+        if config_path.exists() and config_path.stat().st_size > 0:
+            try:
+                with open(config_path, "r", encoding="utf-8") as f:
+                    current_config = json.load(f)
+                has_valid_current = True
+            except Exception:
+                has_valid_current = False
+
+        bak_content = None
         if bak_path.exists():
             try:
                 bak_content = bak_path.read_text(encoding="utf-8")
+            except Exception:
+                pass
+
+        # 2. Check if user modified or added other things while Token-Saver was installed
+        user_modified = False
+        mcp_servers = current_config.get("mcpServers", {}) if has_valid_current else {}
+        other_servers = {k: v for k, v in mcp_servers.items() if k != "token-saver"}
+        other_keys = {k: v for k, v in current_config.items() if k != "mcpServers"} if has_valid_current else {}
+
+        if bak_content and bak_content != "__NON_EXISTENT__":
+            try:
+                bak_json = json.loads(bak_content)
+                temp_current = json.loads(json.dumps(current_config))
+                if "mcpServers" in temp_current and "token-saver" in temp_current["mcpServers"]:
+                    del temp_current["mcpServers"]["token-saver"]
+                if temp_current != bak_json:
+                    user_modified = True
+            except Exception:
+                user_modified = True
+        elif bak_content == "__NON_EXISTENT__":
+            if other_servers or other_keys:
+                user_modified = True
+
+        # Case A: User modified the config (added new servers/keys) while Token-Saver was active
+        # MUST NEVER overwrite or delete user additions!
+        if user_modified and has_valid_current:
+            if "token-saver" in mcp_servers:
+                del mcp_servers["token-saver"]
+            if not mcp_servers and other_keys:
+                del current_config["mcpServers"]
+            else:
+                current_config["mcpServers"] = mcp_servers
+
+            try:
+                with open(config_path, "w", encoding="utf-8") as f:
+                    json.dump(current_config, f, indent=2)
+                bak_path.unlink(missing_ok=True)
+                server_count = len(other_servers)
+                return True, f"Deactivated token-saver from {config_path.name} (preserved {server_count} user servers/settings)"
+            except Exception as e:
+                return False, f"Failed updating {config_path}: {e}"
+
+        # Case B: User did not add or modify anything -> restore exact original state
+        if bak_content:
+            try:
                 if bak_content == "__NON_EXISTENT__":
                     if config_path.exists():
                         config_path.unlink()
@@ -269,18 +325,16 @@ npm() {{ if [ "$1" = "test" ]; then token-saver run "npm $@"; else command npm "
             except Exception as e:
                 return False, f"Failed restoring backup for {config_path}: {e}"
 
-        # Case 2: No backup file, just cleanly remove token-saver entry
-        if config_path.exists():
-            try:
-                with open(config_path, "r", encoding="utf-8") as f:
-                    config = json.load(f)
-                if "mcpServers" in config and "token-saver" in config["mcpServers"]:
-                    del config["mcpServers"]["token-saver"]
+        # Fallback if no backup file
+        if config_path.exists() and has_valid_current:
+            if "mcpServers" in current_config and "token-saver" in current_config["mcpServers"]:
+                del current_config["mcpServers"]["token-saver"]
+                try:
                     with open(config_path, "w", encoding="utf-8") as f:
-                        json.dump(config, f, indent=2)
+                        json.dump(current_config, f, indent=2)
                     return True, f"Deactivated token-saver from {config_path.name}"
-            except Exception as e:
-                return False, f"Failed modifying {config_path}: {e}"
+                except Exception as e:
+                    return False, f"Failed modifying {config_path}: {e}"
 
         return True, f"Token-Saver was already inactive in {config_path.name}"
 
