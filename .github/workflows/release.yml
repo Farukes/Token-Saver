@@ -20,18 +20,22 @@ jobs:
             target: x86_64-pc-windows-msvc
             bin_name: token-saver.exe
             archive_name: token-saver-windows-x64.zip
+            alias_name: ""
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             bin_name: token-saver
             archive_name: token-saver-linux-x64.tar.gz
+            alias_name: ""
           - os: macos-latest
             target: aarch64-apple-darwin
             bin_name: token-saver
-            archive_name: token-saver-darwin-arm64.tar.gz
-          - os: macos-13
+            archive_name: token-saver-macos-arm64.tar.gz
+            alias_name: token-saver-darwin-arm64.tar.gz
+          - os: macos-latest
             target: x86_64-apple-darwin
             bin_name: token-saver
-            archive_name: token-saver-darwin-x64.tar.gz
+            archive_name: token-saver-macos-x64.tar.gz
+            alias_name: token-saver-darwin-x64.tar.gz
 
     steps:
     - uses: actions/checkout@v4
@@ -56,12 +60,17 @@ jobs:
       if: runner.os != 'Windows'
       run: |
         tar -czvf "${{ matrix.archive_name }}" -C "target/${{ matrix.target }}/release" "${{ matrix.bin_name }}"
+        if [ -n "${{ matrix.alias_name }}" ]; then
+          cp "${{ matrix.archive_name }}" "${{ matrix.alias_name }}"
+        fi
 
     - name: Upload binary asset
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ matrix.archive_name }}
-        path: ${{ matrix.archive_name }}
+        name: binary-${{ matrix.target }}
+        path: |
+          ${{ matrix.archive_name }}
+          ${{ matrix.alias_name }}
         retention-days: 1
 
   build-python-dist:
@@ -82,11 +91,17 @@ jobs:
     - name: Build sdist and wheel
       run: python -m build
 
+    - name: Package Python zip
+      run: |
+        cd dist && zip -r ../token-saver-python.zip . && cd ..
+
     - name: Upload Python dists
       uses: actions/upload-artifact@v4
       with:
         name: python-dist
-        path: dist/*
+        path: |
+          dist/*
+          token-saver-python.zip
         retention-days: 1
 
   publish-github-release:
