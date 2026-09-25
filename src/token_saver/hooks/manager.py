@@ -365,18 +365,72 @@ npm() {{ if [ "$1" = "test" ]; then token-saver run "npm $@"; else command npm "
                 return True
             return False
 
+        if name == "Claude Desktop":
+            if os.name == "nt":
+                appdata = os.environ.get("APPDATA")
+                roaming = Path(appdata) if appdata else home / "AppData" / "Roaming"
+                if (roaming / "Claude").is_dir() or (home / "AppData" / "Local" / "Programs" / "Claude").is_dir():
+                    return True
+            elif sys.platform == "darwin":
+                if Path("/Applications/Claude.app").is_dir() or (home / "Library" / "Application Support" / "Claude").is_dir():
+                    return True
+            else:
+                if (home / ".config" / "Claude").is_dir():
+                    return True
+            cfg = cls.get_supported_cli_configs().get("Claude Desktop")
+            if cfg and cfg.exists():
+                return True
+            return False
+
+        if name == "VS Code (Cline)":
+            cfg = cls.get_supported_cli_configs().get("VS Code (Cline)")
+            if cfg and (cfg.parent.is_dir() or cfg.exists()):
+                return True
+            return False
+
+        if name == "VS Code (Roo)":
+            cfg = cls.get_supported_cli_configs().get("VS Code (Roo)")
+            if cfg and (cfg.parent.is_dir() or cfg.exists()):
+                return True
+            return False
+
         return False
 
     @classmethod
     def get_supported_cli_configs(cls) -> dict[str, Path]:
         """Return paths to all supported AI coding assistant configuration files."""
         home = Path.home()
-        return {
+        configs = {
             "Antigravity (AGY)": home / ".gemini" / "config" / "mcp_config.json",
             "Claude Code": home / ".claude.json",
             "Cursor": home / ".cursor" / "mcp.json",
             "Windsurf": home / ".codeium" / "windsurf" / "mcp_config.json",
         }
+
+        # Claude Desktop
+        if os.name == "nt":
+            appdata = os.environ.get("APPDATA")
+            roaming = Path(appdata) if appdata else home / "AppData" / "Roaming"
+            configs["Claude Desktop"] = roaming / "Claude" / "claude_desktop_config.json"
+        elif sys.platform == "darwin":
+            configs["Claude Desktop"] = home / "Library" / "Application Support" / "Claude" / "claude_desktop_config.json"
+        else:
+            configs["Claude Desktop"] = home / ".config" / "Claude" / "claude_desktop_config.json"
+
+        # VS Code (Cline / Roo)
+        if os.name == "nt":
+            appdata = os.environ.get("APPDATA")
+            roaming = Path(appdata) if appdata else home / "AppData" / "Roaming"
+            code_storage = roaming / "Code" / "User" / "globalStorage"
+        elif sys.platform == "darwin":
+            code_storage = home / "Library" / "Application Support" / "Code" / "User" / "globalStorage"
+        else:
+            code_storage = home / ".config" / "Code" / "User" / "globalStorage"
+
+        configs["VS Code (Cline)"] = code_storage / "saoudrizwan.claude-dev" / "settings" / "cline_mcp_settings.json"
+        configs["VS Code (Roo)"] = code_storage / "rooveterinaryinc.roo-cline" / "settings" / "cline_mcp_settings.json"
+
+        return configs
 
     @classmethod
     def enable_all(cls, only_installed: bool = True) -> list[tuple[str, bool, str]]:

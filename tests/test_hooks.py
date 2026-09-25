@@ -92,3 +92,51 @@ def test_mcp_config_uses_sys_executable(tmp_path: Path):
     assert data["mcpServers"]["token-saver"]["command"] == expected_python
 
 
+def test_mcp_revert_restores_exact_original_state(tmp_path: Path):
+    """Test that reverting MCP configuration restores the exact previous state bit-for-bit."""
+    import json
+
+    # Case 1: File already had another MCP server (e.g. postgres)
+    orig_config = {
+        "mcpServers": {
+            "postgres": {
+                "command": "npx",
+                "args": ["-y", "@modelcontextprotocol/server-postgres"],
+            }
+        }
+    }
+    config_file = tmp_path / "claude_desktop_config.json"
+    orig_text = json.dumps(orig_config, indent=2)
+    config_file.write_text(orig_text, encoding="utf-8")
+
+    # Step 1: Install / Enable Token-Saver
+    ok, msg = HookManager._apply_mcp_config_with_backup(config_file)
+    assert ok
+    installed_data = json.loads(config_file.read_text(encoding="utf-8"))
+    assert "token-saver" in installed_data["mcpServers"]
+    assert "postgres" in installed_data["mcpServers"]
+
+    # Step 2: Uninstall / Revert
+    revert_ok, revert_msg = HookManager._revert_mcp_config_with_backup(config_file)
+    assert revert_ok
+    # Must match original text exactly
+    restored_text = config_file.read_text(encoding="utf-8")
+    assert restored_text == orig_text
+    assert not (config_file.with_name(config_file.name + ".ts_bak")).exists()
+
+    # Case 2: File did not exist initially -> must be completely removed on revert
+    fresh_file = tmp_path / "new_app" / "mcp.json"
+    fresh_file.parent.mkdir(parents=True, exist_ok=True)
+    assert not fresh_file.exists()
+
+    ok2, msg2 = HookManager._apply_mcp_config_with_backup(fresh_file)
+    assert ok2
+    assert fresh_file.exists()
+
+    revert_ok2, revert_msg2 = HookManager._revert_mcp_config_with_backup(fresh_file)
+    assert revert_ok2
+    # File must be deleted, leaving zero trace
+    assert not fresh_file.exists()
+    assert not (fresh_file.with_name(fresh_file.name + ".ts_bak")).exists()
+
+

@@ -67,10 +67,27 @@ def main() -> None:
     subparsers.add_parser("unhook", help="Safely remove all installed shell hooks")
 
     # Subcommand: on / enable
-    subparsers.add_parser("on", help="Activate Token-Saver globally for AGY CLI")
+    subparsers.add_parser("on", help="Activate Token-Saver globally for AGY CLI and detected IDEs")
 
     # Subcommand: off / disable
-    subparsers.add_parser("off", help="Deactivate Token-Saver globally from AGY CLI")
+    subparsers.add_parser("off", help="Deactivate Token-Saver globally and revert all settings")
+
+    # Subcommand: install-mcp
+    install_mcp_parser = subparsers.add_parser(
+        "install-mcp",
+        help="Configure Token-Saver MCP server in Claude Desktop, Cursor, Windsurf, VS Code with safe backup",
+    )
+    install_mcp_parser.add_argument(
+        "--all",
+        action="store_true",
+        help="Configure for all supported IDEs even if not currently detected on system",
+    )
+
+    # Subcommand: uninstall-mcp
+    subparsers.add_parser(
+        "uninstall-mcp",
+        help="Safely remove Token-Saver MCP configuration and restore exact original state from backup",
+    )
 
     # Subcommand: setup-commands
     subparsers.add_parser(
@@ -297,6 +314,26 @@ def main() -> None:
         rule_results = RulesManager.remove_rules(".")
         for name, ok, msg in rule_results:
             print(f"🔴 Rules: {msg}")
+
+    elif args.subcommand in ("install-mcp", "enable-mcp"):
+        from token_saver.hooks.manager import HookManager
+        results = HookManager.enable_all(only_installed=not getattr(args, "all", False))
+        for name, ok, msg in results:
+            if "skipped" in msg.lower():
+                status = "⚪"
+            else:
+                status = "🟢" if ok else "❌"
+            print(f"{status} {name}: {msg}")
+
+    elif args.subcommand in ("uninstall-mcp", "disable-mcp"):
+        from token_saver.hooks.manager import HookManager
+        results = HookManager.disable_all()
+        for name, ok, msg in results:
+            if "skipped" in msg.lower():
+                status = "⚪"
+            else:
+                status = "🔴" if ok else "❌"
+            print(f"{status} {name}: {msg}")
 
     elif args.subcommand in ("setup-commands", "install-commands"):
         from token_saver.hooks.manager import HookManager
