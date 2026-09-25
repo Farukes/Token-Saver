@@ -221,8 +221,9 @@ npm() {{ if [ "$1" = "test" ]; then token-saver run "npm $@"; else command npm "
         if "mcpServers" not in config:
             config["mcpServers"] = {}
 
+        python_cmd = sys.executable if sys.executable else "python"
         config["mcpServers"]["token-saver"] = {
-            "command": "python",
+            "command": python_cmd,
             "args": ["-m", "token_saver"],
             "env": {
                 "PYTHONUNBUFFERED": "1"

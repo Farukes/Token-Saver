@@ -70,3 +70,102 @@ def calculate_tax(amount):
 
     out3 = find_symbol_global("NonExistentSymbol", str(tmp_path))
     assert "No symbols found" in out3
+
+
+def test_find_symbol_references(tmp_path):
+    from token_saver.tools.symbol_index import find_symbol_references
+
+    services_dir = tmp_path / "services"
+    services_dir.mkdir()
+    billing_file = services_dir / "billing.py"
+    billing_file.write_text(
+        """
+def calculate_discount(price, rate=0.1):
+    return price * (1.0 - rate)
+""",
+        encoding="utf-8",
+    )
+
+    checkout_file = services_dir / "checkout.py"
+    checkout_file.write_text(
+        """
+from services.billing import calculate_discount
+
+def process_checkout(cart):
+    discounted = calculate_discount(cart.total)
+    return discounted
+""",
+        encoding="utf-8",
+    )
+
+    api_file = tmp_path / "main.py"
+    api_file.write_text(
+        """
+from services.checkout import process_checkout
+
+def run_app():
+    pass
+""",
+        encoding="utf-8",
+    )
+
+    result = find_symbol_references("calculate_discount", str(tmp_path))
+    assert "[REFERENCES]" in result
+    assert "calculate_discount" in result
+    assert "services/billing.py" in result
+    assert "services/checkout.py" in result
+    assert "[IMPORT]" in result or "[CALL]" in result
+
+    # Nonexistent reference
+    nonexistent = find_symbol_references("unknown_method_xyz", str(tmp_path))
+    assert "No references or definitions found" in nonexistent
+
+
+def test_persistent_symbol_cache_project_isolation(tmp_path):
+    from token_saver.cache.persistent_cache import PersistentCache
+
+    db_file = tmp_path / "test_cache.db"
+    cache = PersistentCache(db_path=db_file)
+
+    proj_a = str(tmp_path / "project_a")
+    proj_b = str(tmp_path / "project_b")
+
+    cache.set_file_symbols(
+        project_root=proj_a,
+        file_path="src/auth.py",
+        file_hash="hash_a",
+        mtime=12345.0,
+        symbols=[{"name": "login_user", "kind": "function", "line": 10, "signature": "def login_user():"}],
+    )
+
+    cache.set_file_symbols(
+        project_root=proj_b,
+        file_path="src/auth.py",
+        file_hash="hash_b",
+        mtime=54321.0,
+        symbols=[{"name": "login_user", "kind": "function", "line": 20, "signature": "def login_user(token):"}],
+    )
+
+    # Search in proj_a
+    matches_a = cache.search_symbols(proj_a, "login_user", exact=True)
+    assert len(matches_a) == 1
+    assert matches_a[0]["line"] == 10
+    assert matches_a[0]["signature"] == "def login_user():"
+
+    # Search in proj_b
+    matches_b = cache.search_symbols(proj_b, "login_user", exact=True)
+    assert len(matches_b) == 1
+    assert matches_b[0]["line"] == 20
+    assert matches_b[0]["signature"] == "def login_user(token):"
+
+    # Search something only in proj_a
+    cache.set_file_symbols(
+        project_root=proj_a,
+        file_path="src/secret.py",
+        file_hash="hash_s",
+        mtime=100.0,
+        symbols=[{"name": "vault_key", "kind": "variable", "line": 1, "signature": "vault_key = 'x'"}],
+    )
+    assert len(cache.search_symbols(proj_a, "vault_key")) == 1
+    assert len(cache.search_symbols(proj_b, "vault_key")) == 0
+

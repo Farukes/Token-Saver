@@ -78,3 +78,17 @@ def test_enable_all_skips_uninstalled_clis(tmp_path: Path):
             assert "skipped" in windsurf_res[2].lower()
             assert not (fake_home / ".codeium").exists()
 
+
+def test_mcp_config_uses_sys_executable(tmp_path: Path):
+    import json
+    import sys
+
+    config_path = tmp_path / "mcp_config.json"
+    ok, msg = HookManager._apply_mcp_config_with_backup(config_path)
+    assert ok
+    data = json.loads(config_path.read_text(encoding="utf-8"))
+    assert "token-saver" in data["mcpServers"]
+    expected_python = sys.executable if sys.executable else "python"
+    assert data["mcpServers"]["token-saver"]["command"] == expected_python
+
+

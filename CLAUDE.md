@@ -24,6 +24,7 @@ CRITICAL MANDATE: Do NOT use native file viewers (view_file, cat) or raw termina
    - ALWAYS use `read_file_smart` instead of native file viewers. It caches file contents and returns compact diffs on edits.
 2. **Codebase Exploration & Symbol Search (MANDATORY):**
    - ALWAYS use `find_symbol_global` to locate functions, classes, or methods instantly across the codebase.
+   - ALWAYS use `find_symbol_references` before editing or refactoring code to check blast radius (all callers, usages, and imports).
    - ALWAYS use `tool_get_code_skeleton` to inspect classes, signatures, and docstrings before reading full file implementations.
    - ALWAYS use `get_repo_map_tool` to explore repository architecture instead of listing and reading multiple files.
 3. **Terminal & Test Execution (MANDATORY):**
