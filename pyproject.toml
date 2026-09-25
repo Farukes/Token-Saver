@@ -7,7 +7,7 @@ name = "token-saver"
 version = "1.0.0"
 description = "MCP server that saves 70-95% tokens for AI coding assistants without losing functionality"
 readme = "README.md"
-license = {text = "Proprietary"}
+license = {text = "BSL-1.1"}
 requires-python = ">=3.10"
 authors = [
     {name = "Ömer Faruk Eskitürk", email = "omereskiturk2@gmail.com"},

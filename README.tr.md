@@ -9,7 +9,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](https://www.python.org/downloads/)
 [![Kurumsal Yerel Motor: Rust](https://img.shields.io/badge/Kurumsal%20Yerel%20Motor-Rust%20v1.0.0-orange.svg)](#-kurumsal-ve-y%C3%BCksek-performansl%C4%B1-yerel-motor-rust-s%C3%BCr%C3%BCm%C3%BC)
 [![Token Tasarrufu](https://img.shields.io/badge/Token%20Tasarrufu-%2589%20ile%20%2596-brightgreen.svg)](#-kan%C4%B1tlanm%C4%B1%C5%9F-performans-ve-stres-testi-sonu%C3%A7lar%C4%B1)
-[![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
+[![Lisans: BSL 1.1](https://img.shields.io/badge/Lisans-BSL%201.1-blue.svg)](LICENSE)
 [![Zero Telemetry](https://img.shields.io/badge/telemetri-0%25%20(100%25%20yerel)-success.svg)](#-kurumsal-gizlilik-ve-g%C3%BCvenlik-garantisi)
 
 **Yapay zeka kodlama asistanları için işlevsellikten ödün vermeden %70-95 token tasarrufu sağlayan MCP sunucusu.**
@@ -398,10 +398,10 @@ Token-Saver, her iki uygulamada da %100 işlevsel eşliği garanti eden çift te
 ```bash
 # Python (Topluluk Sürümü & MCP SDK)
 pip install -e ".[dev]"
-pytest tests/ -v           # 64 test başarılı
+pytest tests/ -v           # 65 test başarılı
 
 # Rust (Kurumsal Yerel Motor)
-cargo test --workspace    # 31 test başarılı
+cargo test --workspace    # 35 test başarılı
 ```
 
 ---
@@ -410,4 +410,9 @@ cargo test --workspace    # 31 test başarılı
 
 Copyright © 2026 Ömer Faruk Eskitürk. Tüm hakları saklıdır.
 
-Özel mülk yazılımdır. Bu kaynak kodun ve belgelerin izinsiz kopyalanması, tersine mühendisliği, yeniden dağıtılması veya değiştirilmesi kesinlikle yasaktır. Ayrıntılar için [LICENSE](LICENSE) dosyasına bakın.
+Bu yazılım **Business Source License 1.1 (BSL 1.1)** altında lisanslanmıştır ve süresi dolduğunda otomatik olarak **Apache License, Version 2.0** lisansına dönüşür:
+- **Ücretsiz Kullanım:** Kişisel, eğitim, araştırma, değerlendirme ve şirket içi dahili kullanım için tamamen ücretsizdir.
+- **Ticari Kısıtlamalar:** Lisans sahibine rakip olacak şekilde ücretli bir ticari SaaS, bulut servisi veya ücretli dağıtım olarak barındırılamaz/satılamaz.
+- **Apache 2.0 Geçişi:** 01.01.2030 tarihinde otomatik olarak %100 açık kaynaklı Apache 2.0 lisansına dönüşür.
+
+Yasal şartların tamamı için [LICENSE](LICENSE) dosyasına bakın.

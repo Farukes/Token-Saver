@@ -9,7 +9,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](https://www.python.org/downloads/)
 [![Enterprise Native: Rust](https://img.shields.io/badge/Enterprise%20Native-Rust%20v1.0.0-orange.svg)](#-enterprise--high-performance-native-engine-rust-edition)
 [![Token Reduction](https://img.shields.io/badge/Token%20Savings-89%25%20to%2096%25-brightgreen.svg)](#-proven-performance--stress-test-benchmark)
-[![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
+[![License: BSL 1.1](https://img.shields.io/badge/License-BSL%201.1-blue.svg)](LICENSE)
 [![Zero Telemetry](https://img.shields.io/badge/telemetry-0%25%20(100%25%20local)-success.svg)](#-enterprise-privacy--security-guarantee)
 
 **MCP server that saves 70-95% tokens for AI coding assistants — without losing functionality.**
@@ -398,10 +398,10 @@ Token-Saver maintains dual test suites ensuring 100% parity across both implemen
 ```bash
 # Python (Community Edition & MCP SDK)
 pip install -e ".[dev]"
-pytest tests/ -v           # 64 tests passing
+pytest tests/ -v           # 65 tests passing
 
 # Rust (Enterprise Native Engine)
-cargo test --workspace    # 31 tests passing
+cargo test --workspace    # 35 tests passing
 ```
 
 ---
@@ -410,4 +410,9 @@ cargo test --workspace    # 31 tests passing
 
 Copyright © 2026 Ömer Faruk Eskitürk. All rights reserved.
 
-Proprietary software. Unauthorized copying, reverse engineering, redistribution, or modification of this source code and documentation is strictly prohibited. See [LICENSE](LICENSE) for details.
+Licensed under the **Business Source License 1.1 (BSL 1.1)** with an automatic transition to the **Apache License, Version 2.0**.
+- **Free Use:** Free for all personal, educational, research, evaluation, and internal business use.
+- **Commercial Restrictions:** Cannot be hosted or provided as a paid commercial service or SaaS competing with the Licensor.
+- **Sunset to Apache 2.0:** Converts automatically to 100% open-source Apache 2.0 on 2030-01-01.
+
+See [LICENSE](LICENSE) for full legal terms.

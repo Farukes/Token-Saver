@@ -1,28 +1,41 @@
-Copyright (c) 2026 Ömer Faruk Eskitürk. All rights reserved.
+Business Source License 1.1
 
-PROPRIETARY & CONFIDENTIAL LICENSE
+Parameters
 
-This software, including its source code, documentation, algorithms, and associated
-files (collectively, the "Software"), is the exclusive intellectual property of
-Ömer Faruk Eskitürk.
+Licensor:
+Ömer Faruk Eskitürk
 
-1. RESERVATION OF RIGHTS:
-All rights, title, and interest in and to the Software, including all copyrights,
-patents, trade secrets, trademarks, and other intellectual property rights, are
-expressly reserved by the copyright holder.
+Software:
+Token-Saver
 
-2. RESTRICTIONS:
-Without the prior express written permission of the copyright holder, no person
-or entity may:
-- Copy, reproduce, redistribute, republish, or transmit the Software or any portion thereof.
-- Modify, adapt, alter, translate, or create derivative works based upon the Software.
-- Reverse engineer, decompile, disassemble, or attempt to derive the source code.
-- Sell, rent, lease, license, sublicense, or commercially exploit the Software.
+Change Date:
+2030-01-01
 
-3. DISCLAIMER OF WARRANTY:
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER
-IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN
-CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+Change License:
+Apache License, Version 2.0
+
+Additional Use Grant:
+You may make use of the Software, unmodified or modified, for all personal, educational, research, evaluation, and internal business operations without charge, provided that you do not provide the Software, or any substantial portion of its core token optimization functionality, as a commercial hosted service, cloud service, or paid software distribution that competes directly with the Licensor.
+
+Notice:
+The Business Source License 1.1 (the "License") is not an Open Source Initiative (OSI) approved license. However, the Licensed Work will automatically transition to an OSI-approved license (Apache License, Version 2.0) on the Change Date.
+
+================================================================================
+
+License Text
+
+The Licensor hereby grants you the right to copy, modify, create derivative works, redistribute, and make non-production and production use of the Software, but only for the purposes and subject to the restrictions in the Additional Use Grant.
+
+Effective on the Change Date, or the fourth anniversary of the first publicly available distribution of a specific version of the Software under this License, whichever comes first, the Licensor hereby grants you rights under the terms of the Change License, and the restrictions of the Additional Use Grant shall no longer apply.
+
+1. COPYING, MODIFICATION, AND REDISTRIBUTION:
+You may copy, modify, and redistribute the Software in source code or binary form, provided that you comply with the terms of the Additional Use Grant, and that you retain all copyright, trademark, and other proprietary notices in the Software, as well as this License text.
+
+2. CHANGE LICENSE TRANSITION:
+On the Change Date, the Software shall automatically and irrevocably transition to the Change License (Apache License, Version 2.0). All copies and derivative works made on or after the Change Date shall be governed exclusively by the Change License.
+
+3. TRADEMARKS:
+The name "Token-Saver", associated logos, and brand identity are trademarks of Ömer Faruk Eskitürk. This License does not grant any rights to use these trademarks in connection with any distribution, service, or commercial offering without prior written authorization.
+
+4. DISCLAIMER OF WARRANTY:
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THE SOFTWARE IS PROVIDED "AS IS" AND "AS AVAILABLE", WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING, WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. IN NO EVENT SHALL THE LICENSOR BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
