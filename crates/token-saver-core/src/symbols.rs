@@ -3,10 +3,14 @@
 //! Enables instant repository-wide symbol lookup and blast radius analysis
 //! without reading dozens of files or triggering context window compaction.
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::path::Path;
+use std::sync::{LazyLock, Mutex};
+use std::time::{Duration, Instant};
 use sha2::{Digest, Sha256};
 use walkdir::WalkDir;
+
+static LAST_INDEX_TIME: LazyLock<Mutex<HashMap<String, Instant>>> = LazyLock::new(|| Mutex::new(HashMap::new()));
 
 use crate::cache::persistent_cache::PersistentCache;
 use crate::config::TokenSaverConfig;
@@ -259,6 +263,18 @@ fn is_skip_dir(entry: &walkdir::DirEntry) -> bool {
 pub fn index_repository(root_path: &Path) -> Vec<IndexedSymbol> {
     let root = root_path.canonicalize().unwrap_or_else(|_| root_path.to_path_buf());
     let root_str = root.to_string_lossy().to_string();
+
+    {
+        if let Ok(mut last_map) = LAST_INDEX_TIME.lock() {
+            if let Some(last_time) = last_map.get(&root_str) {
+                if last_time.elapsed() < Duration::from_secs(3) {
+                    return Vec::new();
+                }
+            }
+            last_map.insert(root_str.clone(), Instant::now());
+        }
+    }
+
     let config = TokenSaverConfig::load_from_dir(&root);
     let cache = match PersistentCache::new() {
         Ok(c) => c,
