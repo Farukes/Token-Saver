@@ -31,6 +31,23 @@ pub fn read_file_smart(
         );
     }
 
+    // Binary file safeguard
+    if let Some(ext) = p.extension().and_then(|e| e.to_str()).map(|s| s.to_lowercase()) {
+        const BINARY_EXTS: &[&str] = &[
+            "png", "jpg", "jpeg", "gif", "bmp", "ico", "svg", "webp",
+            "mp3", "mp4", "wav", "avi", "mov", "mkv", "webm",
+            "zip", "tar", "gz", "bz2", "xz", "7z", "rar",
+            "exe", "dll", "so", "dylib", "bin", "o", "a",
+            "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx",
+            "woff", "woff2", "ttf", "otf", "eot",
+            "pyc", "pyo", "class", "jar",
+            "db", "sqlite", "sqlite3",
+        ];
+        if BINARY_EXTS.contains(&ext.as_str()) {
+            return format!("[TOKEN-SAVER] Binary file '{}' skipped to prevent context window corruption.", p.display());
+        }
+    }
+
     let content = match std::fs::read_to_string(p) {
         Ok(c) => c,
         Err(e) => return format!("Error reading file {file_path}: {e}"),
