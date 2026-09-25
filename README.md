@@ -249,8 +249,17 @@ token-saver hook
 # Cleanly and safely uninstall all shell hooks
 token-saver unhook
 
-# Install steering rules across all AI assistant configurations
-token-saver init-rules
+# 🟢 Enable Token-Saver globally across all detected IDEs
+token-saver on
+
+# ⚪ Disable Token-Saver globally and revert settings cleanly
+token-saver off
+
+# 📝 Inject steering rules into the current project (AGENTS.md, .cursorrules)
+token-saver init
+
+# 🧹 Remove steering rules from the current project
+token-saver init --clean
 
 # Install /token-saver slash commands for AGY CLI and Claude Code
 token-saver setup-commands

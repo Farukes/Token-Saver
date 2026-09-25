@@ -52,42 +52,10 @@ impl McpServer {
     pub fn new() -> Self {
         let current_dir = std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."));
         let config = TokenSaverConfig::load_from_dir(&current_dir);
-        let server = Self {
+        Self {
             cache: SessionCache::new(),
             tracker: TelemetryTracker::new(),
             config,
-        };
-        server.auto_init_rules_if_needed(&current_dir);
-        server
-    }
-
-    pub fn auto_init_rules_if_needed(&self, target_dir: &Path) {
-        if let Some(home) = dirs::home_dir() {
-            if target_dir == home {
-                return;
-            }
-        }
-        if target_dir.parent().is_none() {
-            return;
-        }
-        if !target_dir.exists() {
-            return;
-        }
-
-        let rule_files = ["AGENTS.md", ".cursorrules", ".windsurfrules", "CLAUDE.md"];
-        let already_installed = rule_files.iter().any(|f| {
-            let p = target_dir.join(f);
-            if p.exists() {
-                if let Ok(content) = std::fs::read_to_string(&p) {
-                    return content.contains(token_saver_core::rules::RULES_MARKER_START);
-                }
-            }
-            false
-        });
-
-        if !already_installed {
-            eprintln!("[token-saver] Auto-initializing steering rules in {:?}", target_dir);
-            let _ = token_saver_core::rules::install_rules(target_dir, true, true);
         }
     }
 
@@ -157,20 +125,6 @@ impl McpServer {
     fn handle_method(&mut self, method: &str, params: Option<Value>) -> Result<Value, (i32, String)> {
         match method {
             "initialize" => {
-                let mut target_dir = std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."));
-                if let Some(ref p) = params {
-                    if let Some(rp) = p.get("rootPath").and_then(|v| v.as_str()) {
-                        target_dir = std::path::PathBuf::from(rp);
-                    } else if let Some(uri) = p.get("rootUri").and_then(|v| v.as_str()) {
-                        if let Some(stripped) = uri.strip_prefix("file:///") {
-                            target_dir = std::path::PathBuf::from(stripped);
-                        } else if let Some(stripped) = uri.strip_prefix("file://") {
-                            target_dir = std::path::PathBuf::from(stripped);
-                        }
-                    }
-                }
-                self.auto_init_rules_if_needed(&target_dir);
-
                 Ok(json!({
                     "protocolVersion": "2024-11-05",
                     "capabilities": {

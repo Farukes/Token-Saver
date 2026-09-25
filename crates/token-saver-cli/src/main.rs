@@ -25,13 +25,22 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Turn on Token-Saver globally across all detected IDEs & project
+    /// Turn on Token-Saver globally across all detected IDEs
     #[command(alias = "enable", alias = "install-mcp")]
     On,
 
     /// Turn off Token-Saver globally and cleanly revert settings
     #[command(alias = "disable", alias = "uninstall-mcp")]
     Off,
+
+    /// Inject Token-Saver steering rules into project (AGENTS.md, .cursorrules)
+    #[command(alias = "init-rules", alias = "inject")]
+    Init {
+        #[arg(short, long, default_value = ".")]
+        dir: String,
+        #[arg(long, help = "Remove steering rules instead of injecting them")]
+        clean: bool,
+    },
 
     /// Check operational status across AI assistants and IDEs
     Status,
@@ -68,15 +77,6 @@ enum Commands {
         state: String,
         #[arg(short, long, default_value = ".")]
         dir: String,
-    },
-
-    /// Inject or update Token-Saver steering rules into project rule files
-    #[command(hide = true, alias = "inject", alias = "install-rules")]
-    InitRules {
-        #[arg(short, long, default_value = ".")]
-        dir: String,
-        #[arg(long)]
-        clean: bool,
     },
 
     /// Run MCP Server over stdio
@@ -147,13 +147,12 @@ async fn main() {
             }
             println!("============================================================");
             println!("Useful Commands:");
-            println!("  token-saver on          -> Enable Token-Saver globally & inject rules");
-            println!("  token-saver off         -> Disable Token-Saver globally & revert settings");
-            println!("  token-saver install-mcp -> 1-Click auto-configure MCP in Claude/Cursor/Windsurf");
-            println!("  token-saver output on   -> Enable compact surgical diffs");
-            println!("  token-saver output off  -> Revert to standard output");
-            println!("  token-saver ui          -> Open Web Dashboard in browser");
-            println!("  token-saver stats       -> View live token and financial savings");
+            println!("  token-saver on     -> Enable Token-Saver globally across detected IDEs");
+            println!("  token-saver off    -> Disable Token-Saver globally & revert settings");
+            println!("  token-saver init   -> Inject steering rules into current project (AGENTS.md, .cursorrules)");
+            println!("  token-saver ui     -> Open Web Dashboard in browser");
+            println!("  token-saver stats  -> View live token and financial savings");
+            println!("  token-saver status -> Check operational status across AI assistants");
             println!("============================================================");
         }
         Some(Commands::On) => {
@@ -170,13 +169,10 @@ async fn main() {
                 println!("  {icon} {}: {}", r.ide_name, r.message);
             }
 
-            println!("\n📝 Injecting steering rules into project...");
-            let rule_results = install_rules(Path::new("."), true, true);
-            for r in rule_results {
-                let icon = if r.success { "🟢" } else { "❌" };
-                println!("  {icon} {}: {}", r.file_name, r.message);
-            }
-            println!("\n✨ Token-Saver is now GLOBALLY ACTIVE!");
+            println!("\n✨ Token-Saver is now GLOBALLY ACTIVE across detected IDEs!");
+            println!("💡 Repositories remain clean by default.");
+            println!("   To inject steering rules into this specific project, run:");
+            println!("     token-saver init");
         }
         Some(Commands::Off) => {
             println!("🔌 Deactivating Token-Saver MCP from AI assistants...");
@@ -185,13 +181,7 @@ async fn main() {
                 let icon = if r.success { "⚪" } else { "❌" };
                 println!("  {icon} {}: {}", r.ide_name, r.message);
             }
-
-            println!("\n📝 Cleaning steering rules from project...");
-            let rule_results = remove_rules(Path::new("."));
-            for r in rule_results {
-                println!("  🔴 {}: {}", r.file_name, r.message);
-            }
-            println!("\n⚪ Token-Saver has been deactivated.");
+            println!("\n⚪ Token-Saver has been deactivated globally.");
         }
         Some(Commands::InstallMcp { all }) => {
             println!("🔌 Configuring Token-Saver MCP across AI assistants...");
@@ -237,7 +227,7 @@ async fn main() {
                 }
             }
         }
-        Some(Commands::InitRules { dir, clean }) => {
+        Some(Commands::Init { dir, clean }) => {
             let target_path = Path::new(dir);
             if *clean {
                 let results = remove_rules(target_path);

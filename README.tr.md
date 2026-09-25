@@ -249,8 +249,17 @@ token-saver hook
 # Tüm kabuk kancalarını güvenli ve temiz bir şekilde kaldırın
 token-saver unhook
 
-# Tüm yapay zeka asistanı yapılandırmalarına yönlendirme kurallarını yükleyin
-token-saver init-rules
+# 🟢 Token-Saver'ı algılanan tüm IDE'lerde genel olarak etkinleştirin
+token-saver on
+
+# ⚪ Token-Saver'ı genel olarak devre dışı bırakın ve ayarları geri alın
+token-saver off
+
+# 📝 Mevcut projeye yönlendirme kurallarını ekleyin (AGENTS.md, .cursorrules)
+token-saver init
+
+# 🧹 Mevcut projeden yönlendirme kurallarını temizleyin
+token-saver init --clean
 
 # AGY CLI ve Claude Code için /token-saver slash komutlarını kurun
 token-saver setup-commands

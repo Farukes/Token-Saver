@@ -130,9 +130,10 @@ def main() -> None:
         help="Target project directory (default: current directory)",
     )
 
-    # Subcommand: init-rules
+    # Subcommand: init / init-rules
     rules_parser = subparsers.add_parser(
-        "init-rules",
+        "init",
+        aliases=["init-rules"],
         help="Install agent steering rules into AGENTS.md, .cursorrules, .windsurfrules, and CLAUDE.md",
     )
     rules_parser.add_argument(
@@ -157,6 +158,11 @@ def main() -> None:
         "--all",
         action="store_true",
         help="Generate rule files for all AI coding assistants (default: auto-detect installed assistants)",
+    )
+    rules_parser.add_argument(
+        "--clean",
+        action="store_true",
+        help="Clean steering rules from target project directory instead of installing",
     )
 
     # Subcommand: cache-prune
@@ -306,7 +312,6 @@ def main() -> None:
 
     elif args.subcommand in ("on", "enable"):
         from token_saver.hooks.manager import HookManager
-        from token_saver.rules.manager import RulesManager
         results = HookManager.enable_all()
         for name, ok, msg in results:
             if "skipped" in msg.lower():
@@ -314,13 +319,13 @@ def main() -> None:
             else:
                 status = "🟢" if ok else "❌"
             print(f"{status} {name}: {msg}")
-        rule_results = RulesManager.install_rules(".")
-        for name, ok, msg in rule_results:
-            print(f"🟢 Rules: {msg}")
+        print("\n✨ Token-Saver is now GLOBALLY ACTIVE across detected IDEs!")
+        print("💡 Repositories remain clean by default.")
+        print("   To inject steering rules into this specific project, run:")
+        print("     token-saver init")
 
     elif args.subcommand in ("off", "disable"):
         from token_saver.hooks.manager import HookManager
-        from token_saver.rules.manager import RulesManager
         results = HookManager.disable_all()
         for name, ok, msg in results:
             if "skipped" in msg.lower():
@@ -328,9 +333,7 @@ def main() -> None:
             else:
                 status = "🔴" if ok else "❌"
             print(f"{status} {name}: {msg}")
-        rule_results = RulesManager.remove_rules(".")
-        for name, ok, msg in rule_results:
-            print(f"🔴 Rules: {msg}")
+        print("\n⚪ Token-Saver has been deactivated globally.")
 
     elif args.subcommand in ("install-mcp", "enable-mcp"):
         from token_saver.hooks.manager import HookManager
@@ -367,24 +370,29 @@ def main() -> None:
         if not all_ok:
             sys.exit(1)
 
-    elif args.subcommand == "init-rules":
+    elif args.subcommand in ("init", "init-rules"):
         from token_saver.rules.manager import RulesManager
-        results = RulesManager.install_rules(
-            args.path,
-            compact_output=args.compact_output,
-            only_installed=not args.all,
-        )
-        all_ok = True
-        for name, ok, msg in results:
-            if "skipped" in msg.lower():
-                status = "⚪"
-            else:
-                status = "✅" if ok else "❌"
-                if not ok:
-                    all_ok = False
-            print(f"{status} {name}: {msg}")
-        if not all_ok:
-            sys.exit(1)
+        if getattr(args, "clean", False):
+            results = RulesManager.remove_rules(args.path)
+            for name, ok, msg in results:
+                print(f"🔴 Rules: {msg}")
+        else:
+            results = RulesManager.install_rules(
+                args.path,
+                compact_output=args.compact_output,
+                only_installed=not args.all,
+            )
+            all_ok = True
+            for name, ok, msg in results:
+                if "skipped" in msg.lower():
+                    status = "⚪"
+                else:
+                    status = "✅" if ok else "❌"
+                    if not ok:
+                        all_ok = False
+                print(f"{status} {name}: {msg}")
+            if not all_ok:
+                sys.exit(1)
 
     elif args.subcommand == "output":
         from token_saver.rules.manager import RulesManager
