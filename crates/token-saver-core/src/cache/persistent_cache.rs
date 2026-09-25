@@ -167,6 +167,21 @@ impl PersistentCache {
         tx.commit()?;
         Ok(())
     }
+
+    pub fn get_file_meta(&self, project_root: &str, file_path: &str) -> Result<Option<(String, f64)>> {
+        let conn = self.connect()?;
+        let mut stmt = conn.prepare(
+            "SELECT file_hash, mtime FROM symbol_index WHERE project_root = ? AND file_path = ? LIMIT 1",
+        )?;
+        let mut rows = stmt.query(params![project_root, file_path])?;
+        if let Some(row) = rows.next()? {
+            let hash: String = row.get(0)?;
+            let mtime: f64 = row.get(1)?;
+            Ok(Some((hash, mtime)))
+        } else {
+            Ok(None)
+        }
+    }
 }
 
 #[cfg(test)]

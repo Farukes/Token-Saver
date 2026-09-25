@@ -297,6 +297,18 @@ pub fn index_repository(root_path: &Path) -> Vec<IndexedSymbol> {
             break;
         }
 
+        let mtime = std::fs::metadata(p)
+            .and_then(|m| m.modified())
+            .map(|t| t.duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_secs_f64())
+            .unwrap_or(0.0);
+
+        // Incremental cache check: skip file if mtime is unchanged
+        if let Ok(Some((_, cached_mtime))) = cache.get_file_meta(&root_str, &rel_path) {
+            if (cached_mtime - mtime).abs() < 0.001 {
+                continue;
+            }
+        }
+
         let content = match std::fs::read_to_string(p) {
             Ok(c) => c,
             Err(_) => continue,
@@ -305,11 +317,6 @@ pub fn index_repository(root_path: &Path) -> Vec<IndexedSymbol> {
         let mut hasher = Sha256::new();
         hasher.update(content.as_bytes());
         let file_hash = format!("{:x}", hasher.finalize())[..16].to_string();
-
-        let mtime = std::fs::metadata(p)
-            .and_then(|m| m.modified())
-            .map(|t| t.duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_secs_f64())
-            .unwrap_or(0.0);
 
         let symbols = extract_symbols_from_code(&content, lang, &rel_path);
         let _ = cache.set_file_symbols(&root_str, &rel_path, &file_hash, mtime, &symbols);
