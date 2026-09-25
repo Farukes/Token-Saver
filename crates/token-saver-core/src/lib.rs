@@ -5,6 +5,7 @@ pub mod cache;
 pub mod config;
 pub mod filters;
 pub mod hooks;
+pub mod installer;
 pub mod models;
 pub mod output_pruner;
 pub mod parser;

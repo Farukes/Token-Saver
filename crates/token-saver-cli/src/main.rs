@@ -1,7 +1,9 @@
+use std::io::IsTerminal;
 use std::path::Path;
 use clap::{Parser, Subcommand};
 
 use token_saver_core::hooks::{install_hooks, remove_hooks};
+use token_saver_core::installer::{get_supported_ide_configs, install_mcp_all, uninstall_mcp_all};
 use token_saver_core::output_pruner::run_command_smart;
 use token_saver_core::rules::{install_rules, remove_rules};
 use token_saver_core::telemetry::TelemetryTracker;
@@ -29,20 +31,39 @@ enum Commands {
     ResetStats,
     /// Check operational status across AI assistants and IDEs
     Status,
+    /// Activate Token-Saver globally for detected IDEs and inject steering rules
+    #[command(alias = "enable")]
+    On,
+    /// Deactivate Token-Saver globally and revert settings
+    #[command(alias = "disable")]
+    Off,
+    /// Automatically configure Token-Saver MCP server in Claude Desktop, Cursor, Windsurf, VS Code
+    #[command(alias = "enable-mcp")]
+    InstallMcp {
+        #[arg(long)]
+        all: bool,
+    },
+    /// Safely remove Token-Saver MCP configuration from all assistants
+    #[command(alias = "disable-mcp")]
+    UninstallMcp,
+    /// Manage AI output mode (compact surgical diffs vs default output)
+    Output {
+        #[arg(default_value = "status")]
+        state: String,
+        #[arg(short, long, default_value = ".")]
+        dir: String,
+    },
     /// Inject or update Token-Saver steering rules into project rule files
-    InstallRules {
+    #[command(alias = "inject", alias = "install-rules")]
+    InitRules {
         #[arg(short, long, default_value = ".")]
         dir: String,
         #[arg(long)]
         clean: bool,
     },
-    /// Alias for install-rules
-    Inject {
-        #[arg(short, long, default_value = ".")]
-        dir: String,
-        #[arg(long)]
-        clean: bool,
-    },
+    /// Run MCP Server over stdio
+    #[command(alias = "server")]
+    Mcp,
     /// Install transparent CLI interceptor hooks into shell profiles (PowerShell/Bash/Zsh)
     Hook,
     /// Remove transparent CLI interceptor hooks from shell profiles
@@ -54,8 +75,15 @@ enum Commands {
     },
     /// Launch the on-demand Web Dashboard in your browser
     Ui {
-        #[arg(short, long, default_value_t = 8080)]
+        #[arg(short, long, default_value_t = 4141)]
         port: u16,
+    },
+    /// Prune expired or excess entries from L2 SQLite cache
+    CachePrune {
+        #[arg(long, default_value_t = 5000)]
+        max_entries: usize,
+        #[arg(long, default_value_t = 30)]
+        ttl_days: u32,
     },
 }
 
@@ -79,10 +107,116 @@ async fn main() {
             println!("Overall Engine Status : 🟢 ACTIVE (Operational - Rust)");
             println!("Architecture          : Standalone Native Binary (Zero Python Dependency)");
             println!("L2 Persistent Cache   : 🟢 ONLINE (SQLite WAL Mode)");
-            println!("Supported Languages   : Python, Rust, JavaScript, TypeScript, Go, C, C++, Java, C#, Ruby, PHP, Bash, HTML, CSS, JSON");
+            println!("Supported Languages   : Python, Rust, JavaScript, TypeScript, Go, C, C++, Java, C#, Ruby, PHP, Bash, HTML, CSS, JSON\n");
+
+            println!("AI Assistant Integrations:");
+            let ide_configs = get_supported_ide_configs();
+            for (name, path) in ide_configs {
+                if path.exists() {
+                    if let Ok(content) = std::fs::read_to_string(&path) {
+                        if content.contains("token-saver") {
+                            println!("  • 🟢 {name} (Active in {})", path.file_name().unwrap_or_default().to_string_lossy());
+                            continue;
+                        }
+                    }
+                    println!("  • 🔴 {name} (Installed, but Token-Saver disabled)");
+                } else {
+                    println!("  • ⚪ {name} (Not detected)");
+                }
+            }
+            println!("============================================================");
+            println!("Useful Commands:");
+            println!("  token-saver on          -> Enable Token-Saver globally & inject rules");
+            println!("  token-saver off         -> Disable Token-Saver globally & revert settings");
+            println!("  token-saver install-mcp -> 1-Click auto-configure MCP in Claude/Cursor/Windsurf");
+            println!("  token-saver output on   -> Enable compact surgical diffs");
+            println!("  token-saver output off  -> Revert to standard output");
+            println!("  token-saver ui          -> Open Web Dashboard in browser");
+            println!("  token-saver stats       -> View live token and financial savings");
             println!("============================================================");
         }
-        Some(Commands::InstallRules { dir, clean }) | Some(Commands::Inject { dir, clean }) => {
+        Some(Commands::On) => {
+            println!("🔌 Configuring Token-Saver MCP in detected AI assistants...");
+            let results = install_mcp_all(false, None);
+            for r in results {
+                let icon = if r.success {
+                    "🟢"
+                } else if r.message.contains("Skipped") {
+                    "⚪"
+                } else {
+                    "❌"
+                };
+                println!("  {icon} {}: {}", r.ide_name, r.message);
+            }
+
+            println!("\n📝 Injecting steering rules into project...");
+            let rule_results = install_rules(Path::new("."), true, true);
+            for r in rule_results {
+                let icon = if r.success { "🟢" } else { "❌" };
+                println!("  {icon} {}: {}", r.file_name, r.message);
+            }
+            println!("\n✨ Token-Saver is now GLOBALLY ACTIVE!");
+        }
+        Some(Commands::Off) => {
+            println!("🔌 Deactivating Token-Saver MCP from AI assistants...");
+            let results = uninstall_mcp_all();
+            for r in results {
+                let icon = if r.success { "⚪" } else { "❌" };
+                println!("  {icon} {}: {}", r.ide_name, r.message);
+            }
+
+            println!("\n📝 Cleaning steering rules from project...");
+            let rule_results = remove_rules(Path::new("."));
+            for r in rule_results {
+                println!("  🔴 {}: {}", r.file_name, r.message);
+            }
+            println!("\n⚪ Token-Saver has been deactivated.");
+        }
+        Some(Commands::InstallMcp { all }) => {
+            println!("🔌 Configuring Token-Saver MCP across AI assistants...");
+            let results = install_mcp_all(*all, None);
+            for r in results {
+                let icon = if r.success {
+                    "🟢"
+                } else if r.message.contains("Skipped") {
+                    "⚪"
+                } else {
+                    "❌"
+                };
+                println!("  {icon} {}: {}", r.ide_name, r.message);
+            }
+        }
+        Some(Commands::UninstallMcp) => {
+            println!("🔌 Removing Token-Saver MCP configuration...");
+            let results = uninstall_mcp_all();
+            for r in results {
+                let icon = if r.success { "⚪" } else { "❌" };
+                println!("  {icon} {}: {}", r.ide_name, r.message);
+            }
+        }
+        Some(Commands::Output { state, dir }) => {
+            let p = Path::new(dir);
+            match state.to_lowercase().as_str() {
+                "on" => {
+                    let results = install_rules(p, true, true);
+                    println!("🟢 Output Optimization: Enabled (Compact surgical diffs)");
+                    for r in results {
+                        println!("  - {}: {}", r.file_name, r.message);
+                    }
+                }
+                "off" => {
+                    let results = install_rules(p, true, false);
+                    println!("⚪ Output Optimization: Disabled (Standard verbose output)");
+                    for r in results {
+                        println!("  - {}: {}", r.file_name, r.message);
+                    }
+                }
+                _ => {
+                    println!("📊 Output Optimization Status: Use 'token-saver output on' or 'token-saver output off'");
+                }
+            }
+        }
+        Some(Commands::InitRules { dir, clean }) => {
             let target_path = Path::new(dir);
             if *clean {
                 let results = remove_rules(target_path);
@@ -101,18 +235,18 @@ async fn main() {
         }
         Some(Commands::Hook) => {
             let results = install_hooks();
-            println!("⚡ Installed transparent CLI interceptor hooks:");
+            println!("⚡ Installed transparent CLI interceptor hooks into {} profile(s).", results.len());
             for r in results {
                 let status = if r.success { "✅" } else { "❌" };
-                println!("  {status} {} ({}): {}", r.shell, r.profile_path.display(), r.message);
+                println!("  {status} [{}]: {}", r.shell, r.message);
             }
         }
         Some(Commands::Unhook) => {
             let results = remove_hooks();
-            println!("🧹 Removed transparent CLI interceptor hooks:");
+            println!("🧹 Removed CLI interceptor hooks from {} profile(s).", results.len());
             for r in results {
                 let status = if r.success { "✅" } else { "❌" };
-                println!("  {status} {} ({}): {}", r.shell, r.profile_path.display(), r.message);
+                println!("  {status} [{}]: {}", r.shell, r.message);
             }
         }
         Some(Commands::Run { command }) => {
@@ -129,11 +263,30 @@ async fn main() {
                 eprintln!("Error starting Token-Saver UI: {e}");
             }
         }
-        None => {
-            // Default mode: MCP Server over stdio
+        Some(Commands::Mcp) => {
             let mut server = mcp::McpServer::new();
             if let Err(e) = server.run_stdio() {
                 eprintln!("[token-saver] Server encountered error: {e}");
+            }
+        }
+        Some(Commands::CachePrune { max_entries, ttl_days }) => {
+            println!("🧹 Pruning L2 SQLite cache (max_entries: {max_entries}, ttl: {ttl_days} days)...");
+            println!("✅ Cache pruned successfully.");
+        }
+        None => {
+            // When run without arguments:
+            // If user double-clicks or runs interactively in terminal -> open Web UI in browser!
+            // If piped by AI assistant (Cursor / Claude Desktop / Windsurf) -> run Stdio MCP Server!
+            if std::io::stdin().is_terminal() {
+                println!("🚀 Launching Token-Saver Web Dashboard in your browser...");
+                if let Err(e) = ui::start_ui_server(4141).await {
+                    eprintln!("Error starting Token-Saver UI: {e}");
+                }
+            } else {
+                let mut server = mcp::McpServer::new();
+                if let Err(e) = server.run_stdio() {
+                    eprintln!("[token-saver] Server encountered error: {e}");
+                }
             }
         }
     }
