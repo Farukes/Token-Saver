@@ -36,6 +36,10 @@ scratch/
 *.db-shm
 telemetry.json
 
+# Rust
+target/
+**/*.rs.bk
+
 # OS
 .DS_Store
 Thumbs.db

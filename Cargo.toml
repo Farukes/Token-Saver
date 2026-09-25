@@ -1,0 +1,20 @@
+[workspace]
+members = [
+    "crates/token-saver-core",
+    "crates/token-saver-cli",
+]
+resolver = "2"
+
+[workspace.package]
+version = "1.0.0-beta.1"
+edition = "2021"
+authors = ["Ömer Faruk Eskitürk"]
+license = "Proprietary"
+repository = "https://github.com/Farukes/Token-Saver"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
