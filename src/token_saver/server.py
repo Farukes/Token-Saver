@@ -17,7 +17,7 @@ from token_saver.tools.symbol_index import register_symbol_index_tools
 # Create the MCP server instance
 mcp = FastMCP(
     name="token-saver",
-    version="0.1.0",
+    version="1.0.0",
 )
 
 # Register all tool modules
