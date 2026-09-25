@@ -266,9 +266,15 @@ pub fn get_code_skeleton_file<P: AsRef<Path>>(file_path: P) -> String {
     if !p.exists() {
         return format!("Error: File {} not found.", p.display());
     }
+    if p.is_dir() {
+        return format!("Error: '{}' is a directory, not a file.", p.display());
+    }
 
-    let content = match std::fs::read_to_string(p) {
-        Ok(c) => c,
+    let content = match std::fs::read(p) {
+        Ok(bytes) => match String::from_utf8(bytes) {
+            Ok(s) => s,
+            Err(e) => String::from_utf8_lossy(e.as_bytes()).into_owned(),
+        },
         Err(e) => return format!("Error reading file {}: {}", p.display(), e),
     };
 
@@ -296,9 +302,15 @@ pub fn get_symbol_file<P: AsRef<Path>>(file_path: P, symbol_name: &str) -> Strin
     if !p.exists() {
         return format!("Error: File {} not found.", p.display());
     }
+    if p.is_dir() {
+        return format!("Error: '{}' is a directory, not a file.", p.display());
+    }
 
-    let content = match std::fs::read_to_string(p) {
-        Ok(c) => c,
+    let content = match std::fs::read(p) {
+        Ok(bytes) => match String::from_utf8(bytes) {
+            Ok(s) => s,
+            Err(e) => String::from_utf8_lossy(e.as_bytes()).into_owned(),
+        },
         Err(e) => return format!("Error reading file {}: {}", p.display(), e),
     };
 

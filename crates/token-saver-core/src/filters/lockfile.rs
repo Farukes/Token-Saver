@@ -61,8 +61,8 @@ pub fn find_package_in_lockfile(base_name: &str, content: &str, query: &str) -> 
         }
     }
 
-    // 2. Cargo.lock
-    if lower_name.contains("cargo.lock") {
+    // 2. Cargo.lock and poetry.lock (TOML [[package]] blocks)
+    if lower_name.contains("cargo.lock") || lower_name.contains("poetry.lock") {
         let mut blocks = Vec::new();
         let mut current_block = Vec::new();
         let mut in_target = false;

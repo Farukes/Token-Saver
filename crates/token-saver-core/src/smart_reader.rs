@@ -48,8 +48,27 @@ pub fn read_file_smart(
         }
     }
 
-    let content = match std::fs::read_to_string(p) {
-        Ok(c) => c,
+    if p.is_dir() {
+        return format!(
+            "[TOKEN-SAVER] '{file_path}' is a directory, not a file. Use 'get_directory_tree_tool' or 'get_repo_map_tool' to explore directory contents."
+        );
+    }
+
+    if let Ok(meta) = std::fs::metadata(p) {
+        if meta.len() as usize > config.max_cacheable_bytes && !force_full {
+            return format!(
+                "[TOKEN-SAVER] File '{file_path}' ({:.2} MB) exceeds maximum cacheable limit ({:.2} MB). Reading this entirely into context would consume massive tokens. Pass force_full=true if you explicitly need the raw content.",
+                meta.len() as f64 / (1024.0 * 1024.0),
+                config.max_cacheable_bytes as f64 / (1024.0 * 1024.0)
+            );
+        }
+    }
+
+    let content = match std::fs::read(p) {
+        Ok(bytes) => match String::from_utf8(bytes) {
+            Ok(s) => s,
+            Err(e) => String::from_utf8_lossy(e.as_bytes()).into_owned(),
+        },
         Err(e) => return format!("Error reading file {file_path}: {e}"),
     };
 
@@ -108,5 +127,34 @@ mod tests {
         let r2 = read_file_smart(p_str, false, None, &cache, &config, &tracker);
         assert!(r2.contains("unchanged since last read"));
         assert!(r2.contains("Token savings:"));
+    }
+
+    #[test]
+    fn test_smart_reader_directory() {
+        let temp = tempfile::tempdir().unwrap();
+        let cache = SessionCache::new();
+        let config = TokenSaverConfig::default();
+        let tracker = TelemetryTracker::new();
+
+        let dir_str = temp.path().to_str().unwrap();
+        let r = read_file_smart(dir_str, false, None, &cache, &config, &tracker);
+        assert!(r.contains("is a directory, not a file"));
+        assert!(r.contains("get_directory_tree_tool"));
+    }
+
+    #[test]
+    fn test_smart_reader_non_utf8() {
+        let temp = tempfile::tempdir().unwrap();
+        let file_path = temp.path().join("latin1.txt");
+        // Write byte 0xA9 (copyright in latin1) which is invalid UTF-8
+        std::fs::write(&file_path, [b'c', b'o', b'p', b'y', 0xA9]).unwrap();
+
+        let cache = SessionCache::new();
+        let config = TokenSaverConfig::default();
+        let tracker = TelemetryTracker::new();
+
+        let p_str = file_path.to_str().unwrap();
+        let r = read_file_smart(p_str, false, None, &cache, &config, &tracker);
+        assert!(r.contains("copy"));
     }
 }

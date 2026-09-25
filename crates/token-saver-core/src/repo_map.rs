@@ -105,8 +105,17 @@ pub fn get_repo_map(
             None => continue,
         };
 
-        let content = match std::fs::read_to_string(p) {
-            Ok(c) => c,
+        if let Ok(meta) = std::fs::metadata(p) {
+            if meta.len() as usize > config.max_cacheable_bytes {
+                continue;
+            }
+        }
+
+        let content = match std::fs::read(p) {
+            Ok(bytes) => match String::from_utf8(bytes) {
+                Ok(s) => s,
+                Err(e) => String::from_utf8_lossy(e.as_bytes()).into_owned(),
+            },
             Err(_) => continue,
         };
 
@@ -128,6 +137,10 @@ pub fn get_repo_map(
             symbols,
             import_count,
         ));
+
+        if raw_files.len() >= config.max_source_files {
+            break;
+        }
     }
 
     if raw_files.is_empty() {

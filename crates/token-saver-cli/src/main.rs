@@ -15,7 +15,7 @@ mod ui;
 #[command(
     name = "token-saver",
     author = "Ömer Faruk Eskitürk",
-    version = "1.0.0-beta.1",
+    version = env!("CARGO_PKG_VERSION"),
     about = "Zero-cost token optimization engine for AI coding assistants"
 )]
 struct Cli {

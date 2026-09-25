@@ -27,12 +27,22 @@ pub fn filter_output_logic(
 
     // Memory ceiling guard
     if clean_raw.len() > MAX_STREAM_BYTES {
-        let truncated_count = clean_raw.len() - (STREAM_HEAD_BYTES + STREAM_TAIL_BYTES);
-        let head = &clean_raw[..STREAM_HEAD_BYTES];
-        let tail = &clean_raw[clean_raw.len() - STREAM_TAIL_BYTES..];
-        clean_raw = format!(
-            "{head}\n\n... [Token-Saver Stream Guard: Truncated {truncated_count} bytes of runaway output to protect memory] ...\n\n{tail}"
-        );
+        let mut head_idx = STREAM_HEAD_BYTES.min(clean_raw.len());
+        while head_idx > 0 && !clean_raw.is_char_boundary(head_idx) {
+            head_idx -= 1;
+        }
+        let mut tail_idx = clean_raw.len().saturating_sub(STREAM_TAIL_BYTES);
+        while tail_idx < clean_raw.len() && !clean_raw.is_char_boundary(tail_idx) {
+            tail_idx += 1;
+        }
+        if head_idx < tail_idx {
+            let truncated_count = tail_idx - head_idx;
+            let head = &clean_raw[..head_idx];
+            let tail = &clean_raw[tail_idx..];
+            clean_raw = format!(
+                "{head}\n\n... [Token-Saver Stream Guard: Truncated {truncated_count} bytes of runaway output to protect memory] ...\n\n{tail}"
+            );
+        }
     }
 
     let clean = strip_ansi(&clean_raw);

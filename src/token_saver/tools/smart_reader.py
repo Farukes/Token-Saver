@@ -31,8 +31,28 @@ def read_file_smart(
     Returns:
         The full content, a short cached message, a unified diff, or a shielded summary.
     """
+    import os
+
+    if os.path.isdir(file_path):
+        return (
+            f"[TOKEN-SAVER] '{file_path}' is a directory, not a file. "
+            f"Use 'get_directory_tree_tool' or 'get_repo_map_tool' to explore directory contents."
+        )
+
+    if not force_full:
+        try:
+            if os.path.exists(file_path) and os.path.getsize(file_path) > _config.max_cacheable_bytes:
+                size_mb = os.path.getsize(file_path) / (1024 * 1024)
+                limit_mb = _config.max_cacheable_bytes / (1024 * 1024)
+                return (
+                    f"[TOKEN-SAVER] File '{file_path}' ({size_mb:.2f} MB) exceeds maximum cacheable limit ({limit_mb:.2f} MB). "
+                    f"Reading this entirely into context would consume massive tokens. "
+                    f"Pass force_full=True if you explicitly need the raw content."
+                )
+        except Exception:
+            pass
+
     if not force_full and _config.is_ignored(file_path):
-        import os
         base_name = os.path.basename(file_path)
         return (
             f"[TOKEN-SAVER SECURITY] '{base_name}' matches security ignore patterns "

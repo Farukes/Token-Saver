@@ -102,11 +102,12 @@ impl PersistentCache {
                 symbols.push(s?);
             }
         } else {
-            let pattern = format!("%{query}%");
+            let escaped = query.replace('\\', "\\\\").replace('%', "\\%").replace('_', "\\_");
+            let pattern = format!("%{escaped}%");
             let mut stmt = conn.prepare(
                 "SELECT name, kind, file_path, line, signature, file_hash
                  FROM symbol_index
-                 WHERE project_root = ? AND name LIKE ?
+                 WHERE project_root = ? AND name LIKE ? ESCAPE '\\'
                  LIMIT ?",
             )?;
             let rows = stmt.query_map(params![project_root, pattern, max_results], |row| {

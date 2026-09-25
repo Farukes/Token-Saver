@@ -79,7 +79,7 @@ impl TelemetryTracker {
     }
 
     fn save(&self, data: &TelemetryData) {
-        let tmp_path = self.file_path.with_extension("tmp");
+        let tmp_path = self.file_path.with_extension(format!("tmp.{}", std::process::id()));
         if let Ok(json_str) = serde_json::to_string_pretty(data) {
             if let Ok(mut f) = File::create(&tmp_path) {
                 if f.write_all(json_str.as_bytes()).is_ok() {

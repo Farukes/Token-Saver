@@ -134,7 +134,7 @@ impl McpServer {
                     },
                     "serverInfo": {
                         "name": "token-saver",
-                        "version": "1.0.0-beta.1"
+                        "version": env!("CARGO_PKG_VERSION")
                     }
                 }))
             }

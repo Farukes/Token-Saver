@@ -45,7 +45,9 @@ pub fn filter_pytest(output: &str) -> String {
         }
 
         // If it's repetitive passing progress, count and skip
-        if PYTEST_PROGRESS_RE.is_match(trimmed) && trimmed.ends_with(".PASSED") || trimmed.ends_with("[100%]") && !trimmed.contains("FAILED") {
+        if PYTEST_PROGRESS_RE.is_match(trimmed)
+            && (trimmed.ends_with(".PASSED") || (trimmed.ends_with("[100%]") && !trimmed.contains("FAILED")))
+        {
             passed_count += 1;
             continue;
         }

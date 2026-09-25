@@ -50,6 +50,16 @@ pub struct SessionCache {
     stats: Mutex<CacheStats>,
 }
 
+fn normalize_path_key(path: &str) -> String {
+    let clean = path.replace('\\', "/");
+    let trimmed = clean.strip_prefix("./").unwrap_or(&clean);
+    if let Ok(canon) = std::path::Path::new(path).canonicalize() {
+        canon.to_string_lossy().replace('\\', "/")
+    } else {
+        trimmed.to_string()
+    }
+}
+
 impl SessionCache {
     pub fn new() -> Self {
         Self::default()
@@ -61,7 +71,7 @@ impl SessionCache {
 
     pub fn get(&self, file_path: &str, current_content: &str) -> CacheResult {
         let mut map = self.entries.lock().unwrap();
-        let path_key = file_path.replace('\\', "/");
+        let path_key = normalize_path_key(file_path);
         let orig_tokens = crate::token_counter::estimate_tokens(current_content);
 
         // Compute fast 64-bit or sha256 hash
