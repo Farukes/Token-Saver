@@ -8,6 +8,7 @@ Provides granular category breakdowns (AST, Cache, RepoMap, Commands, Symbols).
 from __future__ import annotations
 
 import json
+import threading
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -92,11 +93,33 @@ class TelemetryData:
 
 
 class TelemetryTracker:
-    """Singleton tracker for recording and querying token savings."""
+    """Singleton tracker for recording and querying token savings with cross-process sync."""
 
     def __init__(self) -> None:
         self.file_path = _get_storage_path()
-        self.data = self._load()
+        self._lock = threading.Lock()
+        self._last_mtime: float = 0.0
+        self._data: TelemetryData = self._load()
+
+    @property
+    def data(self) -> TelemetryData:
+        """Always return the latest telemetry data synchronized with disk."""
+        with self._lock:
+            self._refresh_if_needed()
+            return self._data
+
+    def _refresh_if_needed(self) -> None:
+        try:
+            if not self.file_path.exists():
+                self._data = TelemetryData()
+                self._last_mtime = 0.0
+                return
+            mtime = self.file_path.stat().st_mtime
+            if mtime != self._last_mtime:
+                self._data = self._load()
+                self._last_mtime = mtime
+        except Exception:
+            pass
 
     def _load(self) -> TelemetryData:
         if not self.file_path.exists():
@@ -128,10 +151,18 @@ class TelemetryTracker:
 
     def _save(self) -> None:
         try:
-            with open(self.file_path, "w", encoding="utf-8") as f:
-                json.dump(asdict(self.data), f, indent=2)
+            temp_path = self.file_path.with_suffix(".tmp")
+            with open(temp_path, "w", encoding="utf-8") as f:
+                json.dump(asdict(self._data), f, indent=2)
+            temp_path.replace(self.file_path)
+            self._last_mtime = self.file_path.stat().st_mtime
         except Exception:
-            pass  # Non-fatal if telemetry writing fails
+            try:
+                with open(self.file_path, "w", encoding="utf-8") as f:
+                    json.dump(asdict(self._data), f, indent=2)
+                self._last_mtime = self.file_path.stat().st_mtime
+            except Exception:
+                pass
 
     def record_savings(
         self,
@@ -139,40 +170,45 @@ class TelemetryTracker:
         original_tokens: int,
         optimized_tokens: int,
     ) -> None:
-        """Record token savings for a specific operation."""
+        """Record token savings for a specific operation with multi-process consistency."""
         if original_tokens <= 0:
             return
 
-        saved = max(0, original_tokens - optimized_tokens)
-        self.data.total_original_tokens += original_tokens
-        self.data.total_optimized_tokens += optimized_tokens
-        self.data.total_tokens_saved += saved
-        self.data.last_used_at = datetime.now(timezone.utc).isoformat()
+        with self._lock:
+            # Re-read fresh state from disk to prevent clobbering external resets or concurrent processes
+            self._refresh_if_needed()
 
-        # Update legacy counters
-        if category == "command":
-            self.data.total_commands_filtered += 1
-        elif category == "cache":
-            self.data.total_files_cached += 1
-        elif category == "skeleton":
-            self.data.total_skeletons_generated += 1
-        elif category == "repo_map":
-            self.data.total_repo_maps_generated += 1
+            saved = max(0, original_tokens - optimized_tokens)
+            self._data.total_original_tokens += original_tokens
+            self._data.total_optimized_tokens += optimized_tokens
+            self._data.total_tokens_saved += saved
+            self._data.last_used_at = datetime.now(timezone.utc).isoformat()
 
-        # Update category stats
-        if hasattr(self.data, category):
-            cat_stat: CategoryStats = getattr(self.data, category)
-            cat_stat.original += original_tokens
-            cat_stat.optimized += optimized_tokens
-            cat_stat.saved += saved
-            cat_stat.count += 1
+            # Update legacy counters
+            if category == "command":
+                self._data.total_commands_filtered += 1
+            elif category == "cache":
+                self._data.total_files_cached += 1
+            elif category == "skeleton":
+                self._data.total_skeletons_generated += 1
+            elif category == "repo_map":
+                self._data.total_repo_maps_generated += 1
 
-        self._save()
+            # Update category stats
+            if hasattr(self._data, category):
+                cat_stat: CategoryStats = getattr(self._data, category)
+                cat_stat.original += original_tokens
+                cat_stat.optimized += optimized_tokens
+                cat_stat.saved += saved
+                cat_stat.count += 1
+
+            self._save()
 
     def reset(self) -> None:
         """Reset all telemetry metrics."""
-        self.data = TelemetryData()
-        self._save()
+        with self._lock:
+            self._data = TelemetryData()
+            self._save()
 
     def render_dashboard(self) -> str:
         """Format a detailed categorical terminal dashboard of metrics."""
