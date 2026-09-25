@@ -1,3 +1,7 @@
+<p align="right">
+  <a href="README.md"><b>English</b></a> | <a href="README.tr.md"><b>Türkçe</b></a>
+</p>
+
 # 🔋 Token-Saver
 
 [![CI](https://github.com/Farukes/Token-Saver/actions/workflows/ci.yml/badge.svg)](https://github.com/Farukes/Token-Saver/actions/workflows/ci.yml)
