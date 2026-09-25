@@ -12,13 +12,18 @@ def read_file_smart(
     file_path: str,
     force_full: bool = False,
     query: str | None = None,
+    start_line: int | None = None,
+    end_line: int | None = None,
 ) -> str:
-    """Intelligently read a file with session-level caching and lockfile protection.
+    """Intelligently read a file with session-level caching, targeted line slicing, and lockfile protection.
 
     Use this tool instead of native file reading for iterative editing workflows.
     It returns the full file content on the first read. On subsequent reads, if the
     file is unchanged, it returns a very short cached message. If changed, it returns
     a unified diff of the modifications, saving thousands of tokens.
+
+    Supports start_line and end_line (1-indexed, inclusive) to surgically inspect specific
+    code ranges without dumping entire large files into context.
 
     Auto-generated lockfiles (package-lock.json, Cargo.lock, poetry.lock, yarn.lock, etc.)
     and minified assets are automatically shielded to protect context windows from compaction.
@@ -27,6 +32,8 @@ def read_file_smart(
         file_path: Absolute or relative path to the file.
         force_full: If True, bypasses cache and lockfile shielding, returning raw full content.
         query: Optional package name or keyword to surgically query inside lockfiles or large assets.
+        start_line: Optional starting line number (1-indexed, inclusive).
+        end_line: Optional ending line number (1-indexed, inclusive).
 
     Returns:
         The full content, a short cached message, a unified diff, or a shielded summary.
@@ -64,6 +71,38 @@ def read_file_smart(
         content = read_file_text(file_path)
     except Exception as e:
         return f"Error reading file {file_path}: {e}"
+
+    # Line slicing support (targeted range extraction)
+    if start_line is not None or end_line is not None:
+        lines = content.splitlines()
+        total = len(lines)
+        if total == 0:
+            return f"[TOKEN-SAVER] File '{file_path}' is empty (0 lines)."
+
+        start = max(1, start_line) if start_line is not None else 1
+        end = min(total, end_line) if end_line is not None else total
+
+        if start > total:
+            return f"[TOKEN-SAVER] Requested start_line {start} exceeds total line count ({total}) in '{file_path}'."
+        if start > end:
+            return f"[TOKEN-SAVER] Invalid line range: start_line ({start}) cannot be greater than end_line ({end})."
+
+        slice_lines = [f"{i}: {line}" for i, line in enumerate(lines[start - 1 : end], start=start)]
+        header = f"[TOKEN-SAVER] Lines {start}-{end} of {total} in '{file_path}':\n"
+        sliced_content = header + "\n".join(slice_lines)
+
+        orig_tok = len(content) // 4
+        opt_tok = len(sliced_content) // 4
+        if orig_tok > opt_tok:
+            savings = format_savings(content, sliced_content)
+            try:
+                from token_saver.telemetry.stats import tracker
+
+                tracker.record_savings("slice", orig_tok, opt_tok)
+            except Exception:
+                pass
+            return f"{sliced_content}\n\nToken savings: {savings}"
+        return sliced_content
 
     if force_full:
         return content
@@ -105,9 +144,17 @@ def register_smart_reader_tools(mcp) -> None:
         file_path: str,
         force_full: bool = False,
         query: str | None = None,
+        start_line: int | None = None,
+        end_line: int | None = None,
     ) -> str:
-        """Intelligently read a file with session-level caching and lockfile protection."""
-        return _cache_read_impl(file_path, force_full=force_full, query=query)
+        """Intelligently read a file with session-level caching, targeted line slicing, and lockfile protection."""
+        return _cache_read_impl(
+            file_path,
+            force_full=force_full,
+            query=query,
+            start_line=start_line,
+            end_line=end_line,
+        )
 
     @mcp.tool()
     def cache_stats() -> str:

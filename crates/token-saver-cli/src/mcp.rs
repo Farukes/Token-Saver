@@ -286,13 +286,15 @@ impl McpServer {
         json!([
             {
                 "name": "read_file_smart",
-                "description": "Intelligently read a file with session-level caching and lockfile protection. Returns full content on first read, compact diffs on modifications, or cached notices if unchanged.",
+                "description": "Intelligently read a file with session-level caching, targeted line slicing, and lockfile protection. Returns full content on first read, compact diffs on modifications, or surgical line range slices with line numbers.",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
                         "file_path": { "type": "string", "description": "Absolute or relative path to the file." },
                         "force_full": { "type": "boolean", "default": false, "description": "If true, bypasses caching and lockfile shields." },
-                        "query": { "type": ["string", "null"], "default": null, "description": "Optional search term for querying within lockfiles." }
+                        "query": { "type": ["string", "null"], "default": null, "description": "Optional search term for querying within lockfiles." },
+                        "start_line": { "type": ["integer", "null"], "default": null, "description": "Optional starting line number (1-indexed, inclusive) to slice specific line ranges." },
+                        "end_line": { "type": ["integer", "null"], "default": null, "description": "Optional ending line number (1-indexed, inclusive) to slice specific line ranges." }
                     },
                     "required": ["file_path"]
                 }
@@ -416,11 +418,25 @@ impl McpServer {
                     .ok_or((-32602, "Missing 'file_path'".to_string()))?;
                 let force_full = args.get("force_full").and_then(|v| v.as_bool()).unwrap_or(false);
                 let query = args.get("query").and_then(|v| v.as_str());
+                let start_line = args.get("start_line")
+                    .or_else(|| args.get("offset"))
+                    .and_then(|v| v.as_u64())
+                    .map(|v| v as usize);
+                let end_line = args.get("end_line")
+                    .and_then(|v| v.as_u64())
+                    .map(|v| v as usize)
+                    .or_else(|| {
+                        args.get("limit")
+                            .and_then(|l| l.as_u64())
+                            .and_then(|lim| start_line.map(|s| s + lim as usize - 1))
+                    });
 
                 Ok(read_file_smart(
                     file_path,
                     force_full,
                     query,
+                    start_line,
+                    end_line,
                     &self.cache,
                     &self.config,
                     &self.tracker,

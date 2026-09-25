@@ -22,7 +22,7 @@ def generate_rules(compact_output: bool = True, prevent_truncation: bool = True)
         "CRITICAL MANDATE: Do NOT use native file viewers (view_file, cat) or raw terminal commands when Token-Saver MCP tools are available. Bypassing Token-Saver wastes hundreds of thousands of tokens and triggers conversation context window compaction.",
         "",
         "1. **File Reading & Inspections (MANDATORY):**",
-        "   - ALWAYS use `read_file_smart` instead of native file viewers. It caches file contents and returns compact diffs on edits.",
+        "   - ALWAYS use `read_file_smart` instead of native file viewers. It caches file contents, returns compact diffs on edits, and supports `start_line` and `end_line` parameters for targeted line range slicing.",
         "2. **Codebase Exploration & Symbol Search (MANDATORY):**",
         "   - ALWAYS use `find_symbol_global` to locate functions, classes, or methods instantly across the codebase.",
         "   - ALWAYS use `find_symbol_references` before editing or refactoring code to check blast radius (all callers, usages, and imports).",
@@ -34,6 +34,7 @@ def generate_rules(compact_output: bool = True, prevent_truncation: bool = True)
     if compact_output:
         lines.extend([
             "4. **Output Optimization & Code Quality Mandate (STRICT):**",
+            "   - Targeted File Slices: When inspecting specific functions or line ranges, pass `start_line` and `end_line` to `read_file_smart` to avoid dumping whole files into context.",
             "   - Surgical File Edits: When modifying code, use surgical replacement blocks targeting precise line ranges instead of rewriting entire unchanged files.",
         ])
         if prevent_truncation:

@@ -124,3 +124,31 @@ def test_large_file_cache_protection(tmp_path):
     assert res2.status == "unchanged"
     assert "[CACHED]" in res2.content
 
+
+def test_smart_reader_line_slicing(tmp_path):
+    mcp = MockMCP()
+    register_smart_reader_tools(mcp)
+    read_file_smart = mcp.tools["read_file_smart"]
+
+    test_file = tmp_path / "slice_test.txt"
+    lines = [f"line {i}" for i in range(1, 11)]
+    test_file.write_text("\n".join(lines), encoding="utf-8")
+    file_path = str(test_file)
+
+    # 1. Slice lines 3 to 6
+    res = read_file_smart(file_path, start_line=3, end_line=6)
+    assert "Lines 3-6 of 10" in res
+    assert "3: line 3" in res
+    assert "6: line 6" in res
+    assert "1: line 1" not in res
+    assert "8: line 8" not in res
+
+    # 2. Out of bounds start_line
+    res_err = read_file_smart(file_path, start_line=20, end_line=25)
+    assert "exceeds total line count" in res_err
+
+    # 3. Invalid range (start > end)
+    res_inv = read_file_smart(file_path, start_line=7, end_line=4)
+    assert "Invalid line range" in res_inv
+
+

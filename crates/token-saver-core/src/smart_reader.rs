@@ -11,11 +11,13 @@ use crate::filters::lockfile::process_lockfile;
 use crate::telemetry::TelemetryTracker;
 use crate::token_counter::format_savings;
 
-/// Intelligently reads a file with session caching and lockfile protection.
+/// Intelligently reads a file with session caching, line slicing, and lockfile protection.
 pub fn read_file_smart(
     file_path: &str,
     force_full: bool,
     query: Option<&str>,
+    start_line: Option<usize>,
+    end_line: Option<usize>,
     cache: &SessionCache,
     config: &TokenSaverConfig,
     tracker: &TelemetryTracker,
@@ -72,6 +74,42 @@ pub fn read_file_smart(
         Err(e) => return format!("Error reading file {file_path}: {e}"),
     };
 
+    // Line slicing support (targeted range extraction)
+    if start_line.is_some() || end_line.is_some() {
+        let lines: Vec<&str> = content.lines().collect();
+        let total = lines.len();
+        if total == 0 {
+            return format!("[TOKEN-SAVER] File '{file_path}' is empty (0 lines).");
+        }
+        let start = start_line.unwrap_or(1).max(1);
+        let end = end_line.unwrap_or(total).min(total);
+
+        if start > total {
+            return format!("[TOKEN-SAVER] Requested start_line {start} exceeds total line count ({total}) in '{file_path}'.");
+        }
+        if start > end {
+            return format!("[TOKEN-SAVER] Invalid line range: start_line ({start}) cannot be greater than end_line ({end}).");
+        }
+
+        let slice_lines: Vec<String> = lines[start - 1..end]
+            .iter()
+            .enumerate()
+            .map(|(idx, line)| format!("{}: {}", start + idx, line))
+            .collect();
+
+        let header = format!("[TOKEN-SAVER] Lines {start}-{end} of {total} in '{file_path}':\n");
+        let sliced_content = format!("{header}{}", slice_lines.join("\n"));
+
+        let orig_tok = (content.len() / 4) as u64;
+        let opt_tok = (sliced_content.len() / 4) as u64;
+        if orig_tok > opt_tok {
+            tracker.record_savings("slice", orig_tok, opt_tok);
+            let savings_msg = format_savings(&content, &sliced_content);
+            return format!("{sliced_content}\n\nToken savings: {savings_msg}");
+        }
+        return sliced_content;
+    }
+
     if force_full {
         return content;
     }
@@ -120,13 +158,44 @@ mod tests {
         let p_str = file_path.to_str().unwrap();
 
         // 1st read -> full content
-        let r1 = read_file_smart(p_str, false, None, &cache, &config, &tracker);
+        let r1 = read_file_smart(p_str, false, None, None, None, &cache, &config, &tracker);
         assert_eq!(r1, "Hello world\n");
 
         // 2nd read -> cached hit
-        let r2 = read_file_smart(p_str, false, None, &cache, &config, &tracker);
+        let r2 = read_file_smart(p_str, false, None, None, None, &cache, &config, &tracker);
         assert!(r2.contains("unchanged since last read"));
         assert!(r2.contains("Token savings:"));
+    }
+
+    #[test]
+    fn test_smart_reader_line_slicing() {
+        let temp = tempfile::tempdir().unwrap();
+        let file_path = temp.path().join("lines.txt");
+        let sample = "line 1\nline 2\nline 3\nline 4\nline 5\n";
+        std::fs::write(&file_path, sample).unwrap();
+
+        let cache = SessionCache::new();
+        let config = TokenSaverConfig::default();
+        let tracker = TelemetryTracker::new();
+
+        let p_str = file_path.to_str().unwrap();
+
+        // Slice lines 2 to 4
+        let r = read_file_smart(p_str, false, None, Some(2), Some(4), &cache, &config, &tracker);
+        assert!(r.contains("Lines 2-4 of 5"));
+        assert!(r.contains("2: line 2"));
+        assert!(r.contains("3: line 3"));
+        assert!(r.contains("4: line 4"));
+        assert!(!r.contains("1: line 1"));
+        assert!(!r.contains("5: line 5"));
+
+        // Out-of-bounds start line
+        let r_err = read_file_smart(p_str, false, None, Some(10), Some(12), &cache, &config, &tracker);
+        assert!(r_err.contains("exceeds total line count"));
+
+        // Invalid range (start > end)
+        let r_inv = read_file_smart(p_str, false, None, Some(4), Some(2), &cache, &config, &tracker);
+        assert!(r_inv.contains("Invalid line range"));
     }
 
     #[test]
@@ -137,7 +206,7 @@ mod tests {
         let tracker = TelemetryTracker::new();
 
         let dir_str = temp.path().to_str().unwrap();
-        let r = read_file_smart(dir_str, false, None, &cache, &config, &tracker);
+        let r = read_file_smart(dir_str, false, None, None, None, &cache, &config, &tracker);
         assert!(r.contains("is a directory, not a file"));
         assert!(r.contains("get_directory_tree_tool"));
     }
@@ -154,7 +223,7 @@ mod tests {
         let tracker = TelemetryTracker::new();
 
         let p_str = file_path.to_str().unwrap();
-        let r = read_file_smart(p_str, false, None, &cache, &config, &tracker);
+        let r = read_file_smart(p_str, false, None, None, None, &cache, &config, &tracker);
         assert!(r.contains("copy"));
     }
 }
