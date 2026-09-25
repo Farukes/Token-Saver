@@ -57,6 +57,7 @@ class TelemetryData:
     repo_map: CategoryStats = field(default_factory=CategoryStats)
     command: CategoryStats = field(default_factory=CategoryStats)
     symbol_search: CategoryStats = field(default_factory=CategoryStats)
+    lockfile: CategoryStats = field(default_factory=CategoryStats)
 
     @property
     def savings_pct(self) -> float:
@@ -67,6 +68,7 @@ class TelemetryData:
             + self.repo_map.original
             + self.command.original
             + self.symbol_search.original
+            + self.lockfile.original
         )
         effective_saved = (
             self.skeleton.saved
@@ -74,6 +76,7 @@ class TelemetryData:
             + self.repo_map.saved
             + self.command.saved
             + self.symbol_search.saved
+            + self.lockfile.saved
         )
         if effective_original > 0:
             return (effective_saved / effective_original) * 100
@@ -104,7 +107,7 @@ class TelemetryTracker:
 
             # Reconstruct CategoryStats objects
             cats = {}
-            for cat in ("skeleton", "cache", "repo_map", "command", "symbol_search"):
+            for cat in ("skeleton", "cache", "repo_map", "command", "symbol_search", "lockfile"):
                 if cat in content and isinstance(content[cat], dict):
                     cats[cat] = CategoryStats(**content.pop(cat))
 
@@ -114,6 +117,7 @@ class TelemetryTracker:
             content.pop("repo_map", None)
             content.pop("command", None)
             content.pop("symbol_search", None)
+            content.pop("lockfile", None)
 
             base = TelemetryData(**content)
             for cat, stat in cats.items():
@@ -191,6 +195,7 @@ class TelemetryTracker:
             "├────────────────────────────────────────────────────────────────────────┤",
             fmt_cat("AST Skeletonizer:", d.skeleton, "files"),
             fmt_cat("Smart File Cache:", d.cache, "reads"),
+            fmt_cat("Lockfile Shield:", d.lockfile, "shields"),
             fmt_cat("Repo Map Engine:", d.repo_map, "maps"),
             fmt_cat("Global Symbol Search:", d.symbol_search, "searches"),
             fmt_cat("Terminal Pruner:", d.command, "runs"),

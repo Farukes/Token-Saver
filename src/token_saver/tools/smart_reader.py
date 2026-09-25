@@ -8,20 +8,28 @@ from token_saver.utils.token_counter import format_savings
 _cache = SessionCache()
 _config = load_config()
 
-def read_file_smart(file_path: str, force_full: bool = False) -> str:
-    """Intelligently read a file with session-level caching.
+def read_file_smart(
+    file_path: str,
+    force_full: bool = False,
+    query: str | None = None,
+) -> str:
+    """Intelligently read a file with session-level caching and lockfile protection.
 
     Use this tool instead of native file reading for iterative editing workflows.
     It returns the full file content on the first read. On subsequent reads, if the
     file is unchanged, it returns a very short cached message. If changed, it returns
     a unified diff of the modifications, saving thousands of tokens.
 
+    Auto-generated lockfiles (package-lock.json, Cargo.lock, poetry.lock, yarn.lock, etc.)
+    and minified assets are automatically shielded to protect context windows from compaction.
+
     Args:
         file_path: Absolute or relative path to the file.
-        force_full: If True, bypasses the cache and returns the full content.
+        force_full: If True, bypasses cache and lockfile shielding, returning raw full content.
+        query: Optional package name or keyword to surgically query inside lockfiles or large assets.
 
     Returns:
-        The full content, a short cached message, or a unified diff.
+        The full content, a short cached message, a unified diff, or a shielded summary.
     """
     if not force_full and _config.is_ignored(file_path):
         import os
@@ -39,6 +47,12 @@ def read_file_smart(file_path: str, force_full: bool = False) -> str:
 
     if force_full:
         return content
+
+    # Lockfile & giant asset protection
+    if _config.is_lockfile(file_path):
+        from token_saver.filters.lockfile import process_lockfile
+
+        return process_lockfile(file_path, content, query=query)
 
     result = _cache.get(file_path, content)
 
@@ -67,9 +81,13 @@ def register_smart_reader_tools(mcp) -> None:
     """Register smart reader tools with the MCP server."""
 
     @mcp.tool()
-    def read_file_smart(file_path: str, force_full: bool = False) -> str:
-        """Intelligently read a file with session-level caching."""
-        return _cache_read_impl(file_path, force_full=force_full)
+    def read_file_smart(
+        file_path: str,
+        force_full: bool = False,
+        query: str | None = None,
+    ) -> str:
+        """Intelligently read a file with session-level caching and lockfile protection."""
+        return _cache_read_impl(file_path, force_full=force_full, query=query)
 
     @mcp.tool()
     def cache_stats() -> str:

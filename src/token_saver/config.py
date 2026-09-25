@@ -25,12 +25,31 @@ DEFAULT_IGNORE_PATTERNS = [
     "*.p12",
 ]
 
+DEFAULT_LOCKFILE_PATTERNS = [
+    "*package-lock.json",
+    "*npm-shrinkwrap.json",
+    "*yarn.lock",
+    "*pnpm-lock.yaml",
+    "*Cargo.lock",
+    "*poetry.lock",
+    "*Pipfile.lock",
+    "*pdm.lock",
+    "*composer.lock",
+    "*Gemfile.lock",
+    "*go.sum",
+    "*.min.js",
+    "*.min.css",
+    "*.map",
+]
+
 
 @dataclass
 class TokenSaverConfig:
     """Project-level configuration settings."""
 
     ignore_patterns: list[str] = field(default_factory=lambda: list(DEFAULT_IGNORE_PATTERNS))
+    lockfile_patterns: list[str] = field(default_factory=lambda: list(DEFAULT_LOCKFILE_PATTERNS))
+    lockfile_shield: bool = True
     max_cacheable_bytes: int = 5 * 1024 * 1024  # 5 MB
     cache_ttl_days: int = 30
     max_cache_entries: int = 5000
@@ -49,6 +68,21 @@ class TokenSaverConfig:
             if fnmatch.fnmatch(p_str, pat) or fnmatch.fnmatch(base_name, pat):
                 return True
             # Also check matching anywhere in path if pattern has wildcard or directory
+            if "/" in pat and fnmatch.fnmatch(p_str, f"*/{pat.lstrip('/')}"):
+                return True
+        return False
+
+    def is_lockfile(self, file_path: str | Path) -> bool:
+        """Check whether a file path matches lockfile or giant asset patterns."""
+        if not self.lockfile_shield:
+            return False
+        p_str = str(file_path).replace("\\", "/")
+        base_name = os.path.basename(p_str)
+
+        for pattern in self.lockfile_patterns:
+            pat = pattern.replace("\\", "/")
+            if fnmatch.fnmatch(p_str, pat) or fnmatch.fnmatch(base_name, pat):
+                return True
             if "/" in pat and fnmatch.fnmatch(p_str, f"*/{pat.lstrip('/')}"):
                 return True
         return False
@@ -150,3 +184,12 @@ def _apply_dict_config(config: TokenSaverConfig, data: dict) -> None:
         config.compact_output = bool(out_cfg["compact_output"])
     if "prevent_truncation" in out_cfg:
         config.prevent_truncation = bool(out_cfg["prevent_truncation"])
+
+    shield_cfg = data.get("lockfile", general)
+    if "lockfile_shield" in shield_cfg:
+        config.lockfile_shield = bool(shield_cfg["lockfile_shield"])
+    elif "shield_enabled" in shield_cfg:
+        config.lockfile_shield = bool(shield_cfg["shield_enabled"])
+    if "lockfile_patterns" in shield_cfg and isinstance(shield_cfg["lockfile_patterns"], list):
+        custom_lock = [str(x) for x in shield_cfg["lockfile_patterns"]]
+        config.lockfile_patterns = list(dict.fromkeys(DEFAULT_LOCKFILE_PATTERNS + custom_lock))
