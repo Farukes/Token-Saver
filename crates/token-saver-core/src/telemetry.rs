@@ -13,6 +13,7 @@ use crate::models::{CategoryStats, TelemetryData};
 pub struct TelemetryTracker {
     file_path: PathBuf,
     last_mtime: Mutex<Option<SystemTime>>,
+    last_size: Mutex<Option<u64>>,
     data: Mutex<TelemetryData>,
 }
 
@@ -32,6 +33,7 @@ impl TelemetryTracker {
         let tracker = Self {
             file_path,
             last_mtime: Mutex::new(None),
+            last_size: Mutex::new(None),
             data: Mutex::new(TelemetryData::default()),
         };
         tracker.refresh_if_needed();
@@ -42,6 +44,7 @@ impl TelemetryTracker {
         let tracker = Self {
             file_path,
             last_mtime: Mutex::new(None),
+            last_size: Mutex::new(None),
             data: Mutex::new(TelemetryData::default()),
         };
         tracker.refresh_if_needed();
@@ -53,19 +56,22 @@ impl TelemetryTracker {
             let mut data_lock = self.data.lock().unwrap();
             *data_lock = TelemetryData::default();
             *self.last_mtime.lock().unwrap() = None;
+            *self.last_size.lock().unwrap() = None;
             return;
         }
 
         if let Ok(meta) = self.file_path.metadata() {
-            if let Ok(mtime) = meta.modified() {
-                let mut last_mtime_lock = self.last_mtime.lock().unwrap();
-                if Some(mtime) != *last_mtime_lock {
-                    if let Ok(text) = std::fs::read_to_string(&self.file_path) {
-                        if let Ok(d) = serde_json::from_str::<TelemetryData>(&text) {
-                            let mut data_lock = self.data.lock().unwrap();
-                            *data_lock = d;
-                            *last_mtime_lock = Some(mtime);
-                        }
+            let mtime = meta.modified().ok();
+            let size = Some(meta.len());
+            let mut last_mtime_lock = self.last_mtime.lock().unwrap();
+            let mut last_size_lock = self.last_size.lock().unwrap();
+            if mtime != *last_mtime_lock || size != *last_size_lock {
+                if let Ok(text) = std::fs::read_to_string(&self.file_path) {
+                    if let Ok(d) = serde_json::from_str::<TelemetryData>(&text) {
+                        let mut data_lock = self.data.lock().unwrap();
+                        *data_lock = d;
+                        *last_mtime_lock = mtime;
+                        *last_size_lock = size;
                     }
                 }
             }
@@ -79,9 +85,8 @@ impl TelemetryTracker {
                 if f.write_all(json_str.as_bytes()).is_ok() {
                     let _ = std::fs::rename(&tmp_path, &self.file_path);
                     if let Ok(meta) = self.file_path.metadata() {
-                        if let Ok(mtime) = meta.modified() {
-                            *self.last_mtime.lock().unwrap() = Some(mtime);
-                        }
+                        *self.last_mtime.lock().unwrap() = meta.modified().ok();
+                        *self.last_size.lock().unwrap() = Some(meta.len());
                     }
                 }
             }
@@ -210,6 +215,8 @@ mod tests {
 
         tracker_b.reset();
         assert_eq!(tracker_b.get_data().total_tokens_saved, 0);
+
+        std::thread::sleep(std::time::Duration::from_millis(25));
 
         // Tracker A records after reset: must NOT resurrect old 800 tokens
         tracker_a.record_savings("skeleton", 500, 100);
