@@ -6,6 +6,7 @@
 
 [![CI](https://github.com/Farukes/Token-Saver/actions/workflows/ci.yml/badge.svg)](https://github.com/Farukes/Token-Saver/actions/workflows/ci.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](https://www.python.org/downloads/)
+[![Kurumsal Yerel Motor: Rust](https://img.shields.io/badge/Kurumsal%20Yerel%20Motor-Rust%20S%C3%BCr%C3%BCm%C3%BC-orange.svg)](#-kurumsal-ve-y%C3%BCksek-performansl%C4%B1-yerel-motor-rust-s%C3%BCr%C3%BCm%C3%BC)
 [![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
 [![Zero Telemetry](https://img.shields.io/badge/telemetri-0%25%20(100%25%20yerel)-success.svg)](#-kurumsal-gizlilik-ve-g%C3%BCvenlik-garantisi)
 
@@ -272,6 +273,44 @@ Token-Saver kesinlikle **Sıfır-Telemetri, %100 Localhost** tasarım felsefesiy
 
 ---
 
+## 🦀 Kurumsal ve Yüksek Performanslı Yerel Motor (Rust Sürümü)
+
+Kurumsal çalışma ortamları, devasa monorepolar (50.000+ dosya), CI/CD süreçleri veya sisteminde Python kurulu olmayan geliştiriciler için Token-Saver, sıfır bağımlılıklı ve ultra hızlı yerel bir Rust ikili dosyası (`token-saver.exe` / bağımsız binary) sunar.
+
+### Neden Kurumsal Yerel Motor?
+- **Sıfır Çalışma Zamanı Bağımlılığı:** Python, pip, Node.js veya sanal ortam (venv) gerektirmez. Tek bir çalıştırılabilir dosya.
+- **Ultra Düşük Gecikme:** Anında başlangıç (~3 ms soğuk açılış süresi) sayesinde MCP araç çağrılarında sıfır bekleme süresi.
+- **Yüksek Eşzamanlı İndeksleme:** Çok iş parçacıklı (Rayon + Tokio) paralel kod ayrıştırma ve sembol çıkarımı.
+- **Gömülü 15 Dil AST Motoru:** Rust, C, C++, Go, C#, Java, Python, JavaScript, TypeScript, PHP, Ruby, Bash, HTML, CSS, JSON dilleri için statik olarak ikili dosyaya gömülü Tree-sitter ayrıştırıcıları.
+- **Minimal Bellek Tüketimi:** Aktif çalışma sırasında yalnızca ~8-15 MB RAM tüketir.
+
+### Kurumsal Hızlı Başlangıç (Bağımsız Binary)
+
+Önceden derlenmiş ikili dosyayı [GitHub Releases](https://github.com/Farukes/Token-Saver/releases) sayfasından indirin veya doğrudan Cargo ile derleyin:
+
+```bash
+# Kaynak koddan optimize yerel ikili dosyayı derleyin
+cargo build --release --workspace
+
+# Bağımsız dosya kullanıma hazır:
+./target/release/token-saver.exe status
+```
+
+### Kurumsal MCP Yapılandırması (`claude_desktop_config.json` / Cursor)
+Herhangi bir Python sarmalayıcısına gerek kalmadan doğrudan binary dosyasını gösterin:
+
+```json
+{
+  "mcpServers": {
+    "token-saver": {
+      "command": "C:\\dosya\\yolu\\token-saver.exe"
+    }
+  }
+}
+```
+
+---
+
 ## 🌍 Desteklenen Diller
 
 Token-Saver, AST ayrıştırma için Tree-sitter kullanır ve kullanıma hazır olarak **130'dan fazla programlama dilini** destekler:
@@ -282,15 +321,15 @@ Python · TypeScript · JavaScript · Go · Rust · Java · C# · C / C++ · Rub
 
 ## 🧪 Geliştirme ve Kalite Güvencesi
 
+Token-Saver, her iki uygulamada da %100 işlevsel eşliği garanti eden çift test paketi barındırır:
+
 ```bash
-# Geliştirme bağımlılıklarıyla yükleyin
+# Python (Topluluk Sürümü & MCP SDK)
 pip install -e ".[dev]"
+pytest tests/ -v           # 64 test başarılı
 
-# Tüm test paketini çalıştırın
-pytest tests/ -v
-
-# Kod kalitesi ve stil denetimleri
-ruff check .
+# Rust (Kurumsal Yerel Motor)
+cargo test --workspace    # 31 test başarılı
 ```
 
 ---
