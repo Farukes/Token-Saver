@@ -89,6 +89,23 @@ def main() -> None:
         help="Safely remove Token-Saver MCP configuration and restore exact original state from backup",
     )
 
+    # Subcommand: ui
+    ui_parser = subparsers.add_parser(
+        "ui",
+        help="Launch the lightweight On-Demand Settings & Dashboard UI (Zero Background RAM)",
+    )
+    ui_parser.add_argument(
+        "--port",
+        type=int,
+        default=4141,
+        help="Port to bind the local dashboard server (default: 4141)",
+    )
+    ui_parser.add_argument(
+        "--no-open",
+        action="store_true",
+        help="Do not automatically open the browser or native app window",
+    )
+
     # Subcommand: setup-commands
     subparsers.add_parser(
         "setup-commands",
@@ -406,6 +423,10 @@ def main() -> None:
         deleted = p.prune(max_entries=args.max_entries, max_age_days=args.ttl_days)
         after = p.count_entries()
         print(f"L2 Cache Pruned: {deleted} entries removed. ({before} -> {after} entries remaining)")
+
+    elif args.subcommand == "ui":
+        from token_saver.ui.server import start_ui_server
+        start_ui_server(port=args.port, open_browser=not args.no_open)
 
 
 
