@@ -27,14 +27,36 @@ struct SessionEntry {
     read_count: usize,
 }
 
+#[derive(Debug, Clone, Default)]
+pub struct CacheStats {
+    pub total_reads: usize,
+    pub hits: usize,
+    pub diffs: usize,
+    pub first_reads: usize,
+}
+
+impl CacheStats {
+    pub fn summary(&self) -> String {
+        format!(
+            "Session Cache Stats:\n  Total Reads: {}\n  Hits (Unchanged): {}\n  Diffs (Modified): {}\n  First Reads: {}",
+            self.total_reads, self.hits, self.diffs, self.first_reads
+        )
+    }
+}
+
 #[derive(Debug, Default)]
 pub struct SessionCache {
     entries: Mutex<HashMap<String, SessionEntry>>,
+    stats: Mutex<CacheStats>,
 }
 
 impl SessionCache {
     pub fn new() -> Self {
         Self::default()
+    }
+
+    pub fn get_stats(&self) -> CacheStats {
+        self.stats.lock().unwrap().clone()
     }
 
     pub fn get(&self, file_path: &str, current_content: &str) -> CacheResult {
@@ -46,11 +68,15 @@ impl SessionCache {
         use sha2::{Digest, Sha256};
         let current_hash = format!("{:x}", Sha256::digest(current_content.as_bytes()));
 
+        let mut stats = self.stats.lock().unwrap();
+        stats.total_reads += 1;
+
         if let Some(entry) = map.get_mut(&path_key) {
             entry.read_count += 1;
             let read_no = entry.read_count;
 
             if entry.hash == current_hash {
+                stats.hits += 1;
                 // File unchanged
                 let file_name = std::path::Path::new(&path_key)
                     .file_name()
@@ -68,6 +94,7 @@ impl SessionCache {
                     read_count: read_no,
                 };
             } else {
+                stats.diffs += 1;
                 // File modified: generate unified diff
                 let diff = TextDiff::from_lines(entry.content.as_str(), current_content);
                 let unified = diff.unified_diff().header("original", "modified").to_string();
@@ -101,6 +128,7 @@ impl SessionCache {
         }
 
         // First read: insert into cache
+        stats.first_reads += 1;
         map.insert(
             path_key,
             SessionEntry {

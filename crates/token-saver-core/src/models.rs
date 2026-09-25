@@ -104,12 +104,23 @@ pub struct IndexedSymbol {
     pub content_hash: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum ReferenceKind {
     Call,
     Import,
     Inheritance,
     Usage,
+}
+
+impl std::fmt::Display for ReferenceKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Call => write!(f, "CALL"),
+            Self::Import => write!(f, "IMPORT"),
+            Self::Inheritance => write!(f, "INHERITANCE"),
+            Self::Usage => write!(f, "USAGE"),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -23,6 +23,8 @@ enum Commands {
     Status,
 }
 
+mod mcp;
+
 #[tokio::main]
 async fn main() {
     let cli = Cli::parse();
@@ -47,7 +49,10 @@ async fn main() {
         }
         None => {
             // Default mode: MCP Server over stdio
-            eprintln!("Token-Saver Native MCP stdio server starting...");
+            let mut server = mcp::McpServer::new();
+            if let Err(e) = server.run_stdio() {
+                eprintln!("[token-saver] Server encountered error: {e}");
+            }
         }
     }
 }

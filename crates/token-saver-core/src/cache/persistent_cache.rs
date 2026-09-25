@@ -64,6 +64,10 @@ impl PersistentCache {
             CREATE INDEX IF NOT EXISTS idx_sym_proj_name ON symbol_index(project_root, name);
             CREATE INDEX IF NOT EXISTS idx_sym_proj_file ON symbol_index(project_root, file_path);",
         )?;
+
+        // Auto-migration: ensure mtime column exists if table was created in earlier beta
+        let _ = conn.execute("ALTER TABLE symbol_index ADD COLUMN mtime REAL DEFAULT 0.0", []);
+
         Ok(())
     }
 
