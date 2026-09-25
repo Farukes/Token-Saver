@@ -50,6 +50,15 @@ Homepage = "https://github.com/Farukes/Token-Saver"
 Repository = "https://github.com/Farukes/Token-Saver"
 Issues = "https://github.com/Farukes/Token-Saver/issues"
 
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/tests",
+    "README.md",
+    "LICENSE",
+    "pyproject.toml",
+]
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/token_saver"]
 

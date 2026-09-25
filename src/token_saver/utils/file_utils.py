@@ -183,7 +183,7 @@ def walk_source_files(
 
             # Only include files we can detect a language for, or common text files
             ext = Path(filename).suffix.lower()
-            if ext in EXTENSION_TO_LANGUAGE or ext in {".txt", ".cfg", ".ini", ".env"}:
+            if ext in EXTENSION_TO_LANGUAGE or ext in {".txt", ".cfg", ".ini"}:
                 files.append(file_path)
 
     return files

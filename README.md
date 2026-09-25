@@ -19,11 +19,15 @@ Works with **Claude Code**, **Cursor**, **Antigravity (AGY)**, **Windsurf**, **C
 |:---|:---|:---|
 | 🦴 **Code Skeletonizer** | Extracts structural skeleton (signatures, types, docstrings) via Tree-sitter AST | **80-95%** |
 | 📖 **Smart File Reader** | L1 RAM + L2 Persistent SQLite cache with differential reads & diff headers | **90-99%** |
+| 🛡️ **Lockfile & Asset Shield** | Intercepts massive lockfiles & minified bundles with surgical version queries (`query="react"`) | **99%** |
+| 🎯 **Blast Radius & Symbols** | Instant global symbol lookup & cross-file reference caller tracking (`find_symbol_references`) | **85-95%** |
 | 🖥️ **Terminal Pruner** | Compresses test/build/git terminal streams, keeps errors and summary info | **60-90%** |
 | 🗺️ **Repo Map** | PageRank & Graph Centrality codebase overview fitted into custom token budgets | **Budget-fitted** |
-| 🛡️ **Autonomous Guardrails** | Fallback safety on errors, tiny file protection, and runaway memory ceilings | **Guaranteed** |
+| 🎨 **On-Demand UI Dashboard** | Lightweight standalone control panel (`token-saver ui`) with **Zero Background RAM** | **Instant** |
+| ⚡ **1-Click IDE Configuration** | Automatic configuration & non-destructive rollback for Cursor, Windsurf, Claude, VS Code | **Zero-effort** |
 
 ### 🛡️ Built-in Guardrails & Reliability
+- **Lockfile & Giant Asset Shield:** Prevents context window destruction from 50,000-line lockfiles; supports 5-line surgical version queries.
 - **L1 RAM + L2 SQLite Persistent Cache:** Survives MCP server restarts and IDE reboots (`~/.token-saver/cache.db` with WAL mode).
 - **Fallback Safety Guard:** If a test or command fails (`exit_code != 0`), Token-Saver guarantees tracebacks and error contexts are preserved intact.
 - **Tiny File Anomaly Guard:** If a diff header would consume more tokens than the file itself, the full content is returned to prevent token inflation.
@@ -71,6 +75,22 @@ Slash commands are also supported in your AI assistant chat (`/token-saver outpu
 ---
 
 ## 🔌 Setup with Your AI Assistant
+
+### ⚡ 1-Click Automatic Setup (Recommended)
+
+Automatically detects and configures Token-Saver MCP server in Claude Desktop, Cursor, Windsurf, Claude Code, and VS Code with automated backups:
+
+```bash
+# 🟢 Configure all detected IDEs in one command
+token-saver install-mcp
+
+# ⚪ Cleanly revert at any time (preserves all other servers you added!)
+token-saver uninstall-mcp
+```
+
+### Manual Configuration
+
+If you prefer to configure manually or use other clients:
 
 <details>
 <summary><b>Claude Code</b></summary>
@@ -147,9 +167,10 @@ mcpServers:
 ## 🛠️ Available MCP Tools
 
 - **`find_symbol_global(query, root_path=".", exact=False)`**: Search for functions, methods, or classes across the entire codebase by name without reading multiple files.
-- **`get_code_skeleton(file_path)`**: Extract structural skeleton of a file — classes, function signatures, docstrings, and type annotations with bodies replaced by `...`. (Supports Python, JS/TS, Go, Rust, Java, C/C++, C#, Ruby, PHP, Kotlin).
-- **`get_symbol(file_path, symbol_name)`**: Extract the full implementation of a specific class or function by name after inspecting its skeleton.
-- **`read_file_smart(file_path, force_full=False)`**: Differential file reader. Identical files return `[CACHED] unchanged` (~3 tokens). Changed files return unified diffs. Protected against sensitive credential leaks.
+- **`find_symbol_references(symbol_name, root_path=".", max_results=25)`**: Blast radius reference analyzer. Finds all callers, imports, and usages across the entire codebase before editing or refactoring code.
+- **`tool_get_code_skeleton(file_path)`**: Extract structural skeleton of a file — classes, function signatures, docstrings, and type annotations with bodies replaced by `...`. (Supports Python, JS/TS, Go, Rust, Java, C/C++, C#, Ruby, PHP, Kotlin).
+- **`tool_get_symbol(file_path, symbol_name)`**: Extract the full implementation of a specific class or function by name after inspecting its skeleton.
+- **`read_file_smart(file_path, force_full=False, query="")`**: Differential file reader with session caching and Lockfile Shield. Returns `[CACHED] unchanged` (~3 tokens) or unified diffs. For lockfiles (`package-lock.json`, `Cargo.lock`, etc.), pass `query="package-name"` for surgical 5-line version blocks instead of 50,000 lines.
 - **`run_command_smart(command, cwd=".")`**: Executes shell commands and prunes verbose logs from pytest, jest, npm, cargo, and git.
 - **`filter_output(output, output_type="auto")`**: Pure text filter for test runners, build pipelines, and version control logs without executing commands.
 - **`get_repo_map_tool(root_path=".", max_tokens=1000)`**: Graph centrality codebase map prioritized by cross-file import relationships.
@@ -191,6 +212,18 @@ default_budget = 1000
 Token-Saver also functions as an interactive command-line utility for human developers and local shell automation:
 
 ```bash
+# 🎨 Launch On-Demand Control Dashboard (Zero Background RAM UI)
+token-saver ui
+
+# 📊 Check comprehensive live operational status of Token-Saver across IDEs
+token-saver status
+
+# ⚡ 1-Click auto-configure MCP across Claude Desktop, Cursor, Windsurf, VS Code
+token-saver install-mcp
+
+# ⚪ Safely remove Token-Saver MCP configuration and restore exact original state
+token-saver uninstall-mcp
+
 # View cumulative savings dashboard (tokens saved, money saved, operations)
 token-saver stats
 
