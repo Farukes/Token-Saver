@@ -64,9 +64,10 @@ def execute_filtered_command(command: str | list[str], cwd: str = ".") -> int:
             cwd=cwd,
             shell=True,
             capture_output=True,
-            text=True,
         )
-        combined_output = (res.stdout or "") + ("\n" + res.stderr if res.stderr else "")
+        stdout_str = (res.stdout or b"").decode("utf-8", errors="replace")
+        stderr_str = (res.stderr or b"").decode("utf-8", errors="replace")
+        combined_output = f"{stdout_str}\n{stderr_str}".strip() if stderr_str else stdout_str
         exit_code = res.returncode
 
         if bypass:

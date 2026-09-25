@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import re
+import time
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -223,11 +224,19 @@ class SymbolIndexer:
         walk(tree.root_node)
         return symbols
 
+    _last_index_time: dict[str, float] = {}
+
     @classmethod
-    def index_repository(cls, root_path: str = ".") -> list[IndexedSymbol]:
+    def index_repository(cls, root_path: str = ".", min_interval: float = 3.0) -> list[IndexedSymbol]:
         """Scan and index all non-ignored source files in the repository incrementally using PersistentCache."""
         root = Path(root_path).resolve()
         root_str = str(root)
+
+        now = time.time()
+        if min_interval > 0 and (now - cls._last_index_time.get(root_str, 0.0)) < min_interval:
+            return []
+        cls._last_index_time[root_str] = now
+
         config = load_config(root)
         cache = PersistentCache()
         all_symbols: list[IndexedSymbol] = []

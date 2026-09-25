@@ -33,6 +33,7 @@ def auto_filter(output: str, exit_code: int = 0) -> str:
 
 
 def filter_output_logic(raw_output: str, output_type: str = "auto", exit_code: int = 0) -> str:
+    raw_output = raw_output or ""
     # Memory ceiling guard: protect host process against runaway infinite output streams
     if len(raw_output) > MAX_STREAM_BYTES:
         truncated_count = len(raw_output) - (STREAM_HEAD_BYTES + STREAM_TAIL_BYTES)
@@ -128,10 +129,11 @@ def register_output_pruner_tools(mcp):
                 cwd=cwd,
                 shell=True,
                 capture_output=True,
-                text=True,
                 timeout=timeout,
             )
-            raw_output = result.stdout + "\n" + result.stderr
+            stdout_str = (result.stdout or b"").decode("utf-8", errors="replace")
+            stderr_str = (result.stderr or b"").decode("utf-8", errors="replace")
+            raw_output = f"{stdout_str}\n{stderr_str}".strip() if stderr_str else stdout_str
             exit_code = result.returncode
             filtered = filter_output_logic(raw_output, output_type="auto", exit_code=exit_code)
             return f"Exit Code: {exit_code}\n" + filtered
