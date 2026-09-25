@@ -423,13 +423,15 @@
       }
     };
 
-    // Determine initial language from localStorage or browser locale
-    let currentLang = localStorage.getItem('token_saver_lang') || (navigator.language.startsWith('tr') ? 'tr' : 'en');
+    // Primary/default language is English. Explicit user choice is saved in localStorage.
+    let currentLang = localStorage.getItem('token_saver_user_lang') || 'en';
     let currentStatus = null;
 
-    function applyLanguage(lang) {
+    function applyLanguage(lang, persist = false) {
       currentLang = lang;
-      localStorage.setItem('token_saver_lang', lang);
+      if (persist) {
+        localStorage.setItem('token_saver_user_lang', lang);
+      }
       document.documentElement.lang = lang;
 
       // Update toggle button visuals
@@ -458,7 +460,7 @@
 
     function toggleLanguage() {
       const nextLang = currentLang === 'tr' ? 'en' : 'tr';
-      applyLanguage(nextLang);
+      applyLanguage(nextLang, true);
       const msg = nextLang === 'tr' ? 'Dil Türkçe olarak ayarlandı' : 'Language switched to English';
       showToast(msg);
     }
@@ -514,8 +516,9 @@
       // 2. Metrics Ribbon
       document.getElementById('totalSaved').innerText = data.telemetry.total_saved.toLocaleString();
       document.getElementById('dollarsSaved').innerText = `$${data.telemetry.dollars_saved.toFixed(2)}`;
-      document.getElementById('totalProcessed').innerText = data.telemetry.total_processed.toLocaleString();
-      document.getElementById('savingsPct').innerText = `%${data.telemetry.savings_pct.toFixed(1)} ${t.netReduction}`;
+      document.getElementById('savingsPct').innerText = currentLang === 'tr'
+        ? `%${data.telemetry.savings_pct.toFixed(1)} ${t.netReduction}`
+        : `${data.telemetry.savings_pct.toFixed(1)}% ${t.netReduction}`;
 
       // 3. Output mode toggle
       document.getElementById('outputToggle').checked = data.config.compact_output;
