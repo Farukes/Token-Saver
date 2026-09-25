@@ -164,6 +164,7 @@ class SymbolIndexer:
 
         symbols: list[IndexedSymbol] = []
         lines = source_code.splitlines()
+        source_bytes = source_code.encode("utf-8")
 
         def get_signature_text(node) -> str:
             start_l = node.start_point[0]
@@ -199,10 +200,10 @@ class SymbolIndexer:
                         break
 
                 if name_node:
-                    sym_name = source_code.encode("utf-8")[name_node.start_byte : name_node.end_byte].decode("utf-8")
+                    sym_name = source_bytes[name_node.start_byte : name_node.end_byte].decode("utf-8", errors="replace")
                     line_no = node.start_point[0] + 1
                     sig = get_signature_text(node)
-                    body_bytes = source_code.encode("utf-8")[node.start_byte : node.end_byte]
+                    body_bytes = source_bytes[node.start_byte : node.end_byte]
                     c_hash = hashlib.sha256(body_bytes).hexdigest()[:16]
                     symbols.append(
                         IndexedSymbol(
@@ -255,19 +256,7 @@ class SymbolIndexer:
 
             meta = cache.get_indexed_file_meta(root_str, rel)
             if meta and meta[1] == mtime:
-                # Cache hit on mtime!
-                cached_data = cache.get_file_symbols(root_str, rel)
-                for item in cached_data:
-                    all_symbols.append(
-                        IndexedSymbol(
-                            name=item["name"],
-                            kind=item["kind"],
-                            file_path=item["file_path"],
-                            line=item["line"],
-                            signature=item["signature"],
-                            content_hash=item["file_hash"],
-                        )
-                    )
+                # Cache hit on mtime! Fast skip, already indexed in SQLite
                 continue
 
             text = read_file_text(f_path_str)
@@ -277,18 +266,6 @@ class SymbolIndexer:
             f_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
             if meta and meta[0] == f_hash:
                 # Content unchanged even if mtime changed
-                cached_data = cache.get_file_symbols(root_str, rel)
-                for item in cached_data:
-                    all_symbols.append(
-                        IndexedSymbol(
-                            name=item["name"],
-                            kind=item["kind"],
-                            file_path=item["file_path"],
-                            line=item["line"],
-                            signature=item["signature"],
-                            content_hash=item["file_hash"],
-                        )
-                    )
                 continue
 
             # Need re-parse
@@ -407,10 +384,13 @@ def find_symbol_references(
         return "Error: Empty symbol_name provided."
 
     root = Path(root_path).resolve()
-    # 1. Update/check incremental index to locate definition(s)
-    all_symbols = SymbolIndexer.index_repository(root_path)
-    def_matches = [s for s in all_symbols if s.name == sym]
-    def_locations = {(s.file_path, s.line) for s in def_matches}
+    # 1. Update incremental index in SQLite
+    SymbolIndexer.index_repository(root_path)
+
+    # 2. Query definition locations directly from indexed SQLite store (instant O(1))
+    cache = PersistentCache()
+    cached_defs = cache.search_symbols(str(root), sym, exact=True, max_results=10)
+    def_locations = {(d["file_path"], d["line"]) for d in cached_defs}
 
     config = load_config(root)
     all_refs: list[SymbolReference] = []
@@ -438,12 +418,12 @@ def find_symbol_references(
         refs = extract_references_from_code(text, lang, rel, sym, def_locations)
         all_refs.extend(refs)
 
-    if not all_refs and not def_matches:
+    if not all_refs and not cached_defs:
         return f"No references or definitions found for '{symbol_name}' across the codebase."
 
     lines = [f"[REFERENCES] Blast Radius Analysis for '{sym}':"]
-    if def_matches:
-        def_strs = [f"{d.file_path}:{d.line} ({d.kind})" for d in def_matches[:3]]
+    if cached_defs:
+        def_strs = [f"{d['file_path']}:{d['line']} ({d['kind']})" for d in cached_defs[:3]]
         lines.append(f"• Defined at: {', '.join(def_strs)}")
     else:
         lines.append("• Defined at: External / Unindexed symbol")

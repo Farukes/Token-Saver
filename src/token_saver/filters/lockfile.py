@@ -201,13 +201,14 @@ def extract_lockfile_summary(base_name: str, content: str) -> str:
     # 4. Minified Assets
     if lower_name.endswith(".min.js") or lower_name.endswith(".min.css"):
         chars = len(content)
+        lines_n = content.count("\n") + 1
         return (
-            f"• Production Minified Asset ({chars:,} characters, {len(content.splitlines())} lines).\n"
+            f"• Production Minified Asset ({chars:,} characters, {lines_n:,} lines).\n"
             f"• LLM/Human reading not advised; inspect unminified source code instead."
         )
 
     # Generic Fallback
-    lines_count = len(content.splitlines())
+    lines_count = content.count("\n") + 1
     return f"• Auto-generated lock/asset file containing {lines_count:,} lines."
 
 
@@ -218,7 +219,10 @@ def process_lockfile(
 ) -> str:
     """Process a lockfile, returning a surgical match or compact structural summary."""
     base_name = os.path.basename(str(file_path))
-    file_size_bytes = len(content.encode("utf-8", errors="replace"))
+    try:
+        file_size_bytes = os.path.getsize(str(file_path))
+    except OSError:
+        file_size_bytes = len(content.encode("utf-8", errors="replace"))
     file_size_kb = file_size_bytes / 1024
     est_tok = estimate_tokens(content)
 
