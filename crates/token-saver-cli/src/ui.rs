@@ -75,9 +75,38 @@ pub fn build_system_status(tracker: &TelemetryTracker) -> serde_json::Value {
         }
     });
 
+    let ide_configs = token_saver_core::installer::get_supported_ide_configs();
+    let mut any_active = false;
+    let mut ides = Vec::new();
+
+    for (name, path) in ide_configs {
+        let parent_exists = path.parent().map(|p| p.exists()).unwrap_or(false);
+        let file_exists = path.exists();
+        let installed = file_exists || parent_exists;
+        let mut active = false;
+
+        if file_exists {
+            if let Ok(content) = std::fs::read_to_string(&path) {
+                if content.contains("token-saver") {
+                    active = true;
+                    any_active = true;
+                }
+            }
+        }
+
+        ides.push(json!({
+            "name": name,
+            "installed": installed,
+            "active": active,
+            "path": path.to_string_lossy().to_string()
+        }));
+    }
+
+    let is_system_active = any_active || rules_installed;
+
     json!({
-        "active": true,
-        "overall_status": "ACTIVE",
+        "active": is_system_active,
+        "overall_status": if is_system_active { "ACTIVE" } else { "STANDBY" },
         "telemetry": {
             "total_saved": t_data.total_tokens_saved,
             "total_processed": t_data.total_original_tokens,
@@ -85,12 +114,7 @@ pub fn build_system_status(tracker: &TelemetryTracker) -> serde_json::Value {
             "dollars_saved": (t_data.estimated_dollars_saved() * 100.0).round() / 100.0,
             "categories": categories
         },
-        "ides": [
-            { "name": "Cursor", "installed": true, "active": true, "path": ".cursorrules" },
-            { "name": "Windsurf", "installed": true, "active": true, "path": ".windsurfrules" },
-            { "name": "Claude Code", "installed": true, "active": true, "path": "CLAUDE.md" },
-            { "name": "Antigravity (AGY)", "installed": true, "active": true, "path": "AGENTS.md" }
-        ],
+        "ides": ides,
         "rules": {
             "installed": rules_installed,
             "compact_output": cfg.compact_output
@@ -161,6 +185,14 @@ pub async fn start_ui_server(port: u16) -> Result<(), Box<dyn std::error::Error>
         let method = parts[0];
         let path = parts[1];
 
+        let post_json: Option<serde_json::Value> = if method == "POST" {
+            request.find("\r\n\r\n")
+                .or_else(|| request.find("\n\n"))
+                .and_then(|pos| serde_json::from_str(request[pos..].trim()).ok())
+        } else {
+            None
+        };
+
         let (status_code, content_type, body) = match (method, path) {
             ("GET", "/") | ("GET", "/index.html") => {
                 ("200 OK", "text/html; charset=utf-8", HTML_CONTENT.to_string())
@@ -182,8 +214,8 @@ pub async fn start_ui_server(port: u16) -> Result<(), Box<dyn std::error::Error>
                 ("200 OK", "application/json", json!({ "ok": true, "msg": "Server shutting down" }).to_string())
             }
             ("POST", "/api/toggle-output") => {
-                let compact = !request.contains("\"compact\":false") && !request.contains("\"compact\": false");
-                token_saver_core::rules::install_rules(std::path::Path::new("."), true, compact);
+                let compact = post_json.as_ref().and_then(|j| j.get("compact")).and_then(|v| v.as_bool()).unwrap_or(true);
+                token_saver_core::rules::install_rules(std::path::Path::new("."), compact, true);
                 let status_json = build_system_status(&tracker);
                 ("200 OK", "application/json", json!({
                     "ok": true,
@@ -192,7 +224,7 @@ pub async fn start_ui_server(port: u16) -> Result<(), Box<dyn std::error::Error>
                 }).to_string())
             }
             ("POST", "/api/toggle-all") => {
-                let enable = !request.contains("\"enable\":false") && !request.contains("\"enable\": false");
+                let enable = post_json.as_ref().and_then(|j| j.get("enable")).and_then(|v| v.as_bool()).unwrap_or(true);
                 if enable {
                     token_saver_core::installer::install_mcp_all(false, None);
                     token_saver_core::rules::install_rules(std::path::Path::new("."), true, true);
@@ -208,7 +240,7 @@ pub async fn start_ui_server(port: u16) -> Result<(), Box<dyn std::error::Error>
                 }).to_string())
             }
             ("POST", "/api/toggle-rules") => {
-                let enable = !request.contains("\"enable\":false") && !request.contains("\"enable\": false");
+                let enable = post_json.as_ref().and_then(|j| j.get("enable")).and_then(|v| v.as_bool()).unwrap_or(true);
                 if enable {
                     token_saver_core::rules::install_rules(std::path::Path::new("."), true, true);
                 } else {
@@ -222,11 +254,69 @@ pub async fn start_ui_server(port: u16) -> Result<(), Box<dyn std::error::Error>
                 }).to_string())
             }
             ("POST", "/api/toggle-ide") => {
+                let ide_name = post_json.as_ref().and_then(|j| j.get("name")).and_then(|v| v.as_str()).unwrap_or("");
+                let enable = post_json.as_ref().and_then(|j| j.get("enable")).and_then(|v| v.as_bool()).unwrap_or(true);
+
+                let ide_configs = token_saver_core::installer::get_supported_ide_configs();
+                if let Some((_, cfg_path)) = ide_configs.iter().find(|(n, _)| *n == ide_name) {
+                    if enable {
+                        let exe = std::env::current_exe()
+                            .unwrap_or_else(|_| std::path::PathBuf::from("token-saver.exe"))
+                            .to_string_lossy()
+                            .to_string();
+                        if let Some(parent) = cfg_path.parent() {
+                            let _ = std::fs::create_dir_all(parent);
+                        }
+                        let mut json_data = if cfg_path.exists() {
+                            std::fs::read_to_string(cfg_path)
+                                .ok()
+                                .and_then(|c| serde_json::from_str::<serde_json::Value>(&c).ok())
+                                .unwrap_or_else(|| json!({}))
+                        } else {
+                            json!({})
+                        };
+                        if !json_data.is_object() {
+                            json_data = json!({});
+                        }
+                        if json_data.get("mcpServers").is_none() || !json_data["mcpServers"].is_object() {
+                            json_data["mcpServers"] = json!({});
+                        }
+                        json_data["mcpServers"]["token-saver"] = json!({
+                            "command": exe
+                        });
+                        if let Ok(formatted) = serde_json::to_string_pretty(&json_data) {
+                            let _ = std::fs::write(cfg_path, formatted);
+                        }
+                    } else if cfg_path.exists() {
+                        if let Ok(content) = std::fs::read_to_string(cfg_path) {
+                            if let Ok(mut json_data) = serde_json::from_str::<serde_json::Value>(&content) {
+                                if let Some(servers) = json_data.get_mut("mcpServers").and_then(|s| s.as_object_mut()) {
+                                    servers.remove("token-saver");
+                                }
+                                if let Ok(formatted) = serde_json::to_string_pretty(&json_data) {
+                                    let _ = std::fs::write(cfg_path, formatted);
+                                }
+                            }
+                        }
+                    }
+                }
                 let status_json = build_system_status(&tracker);
-                ("200 OK", "application/json", json!({ "ok": true, "msg": "Settings updated", "status": status_json }).to_string())
+                ("200 OK", "application/json", json!({
+                    "ok": true,
+                    "msg": format!("{}: {}", ide_name, if enable { "Connected" } else { "Disconnected" }),
+                    "status": status_json
+                }).to_string())
             }
             ("POST", "/api/prune-cache") => {
-                ("200 OK", "application/json", json!({ "ok": true, "msg": "Cache pruned successfully" }).to_string())
+                let msg = match token_saver_core::cache::persistent_cache::PersistentCache::new() {
+                    Ok(c) => match c.prune(1000) {
+                        Ok(n) => format!("L2 Cache pruned ({n} entries cleared)"),
+                        Err(e) => format!("Prune failed: {e}"),
+                    },
+                    Err(e) => format!("Cache connection failed: {e}"),
+                };
+                let status_json = build_system_status(&tracker);
+                ("200 OK", "application/json", json!({ "ok": true, "msg": msg, "status": status_json }).to_string())
             }
             _ => {
                 ("404 Not Found", "text/plain", "Not Found".to_string())

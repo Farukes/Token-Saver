@@ -183,6 +183,20 @@ impl PersistentCache {
             Ok(None)
         }
     }
+
+    pub fn prune(&self, max_entries: usize) -> Result<usize> {
+        let conn = self.connect()?;
+        let count: usize = conn.query_row("SELECT COUNT(*) FROM file_cache", [], |r| r.get(0)).unwrap_or(0);
+        if count > max_entries {
+            let to_remove = count - max_entries;
+            conn.execute(
+                "DELETE FROM file_cache WHERE file_path IN (SELECT file_path FROM file_cache ORDER BY cached_at ASC LIMIT ?)",
+                params![to_remove],
+            )?;
+            return Ok(to_remove);
+        }
+        Ok(0)
+    }
 }
 
 #[cfg(test)]
