@@ -30,6 +30,7 @@ htmlcov/
 
 # Local Scratch and Backups
 scratch/
+ROADMAP.md
 *.ts_bak
 *.db
 *.db-wal
