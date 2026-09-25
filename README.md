@@ -41,14 +41,23 @@ Works with **Claude Code**, **Cursor**, **Antigravity (AGY)**, **Windsurf**, **C
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Quick Start & Installation
 
-### Installation
+### ⚡ 1-Click Fast Install (Recommended - Single Binary, Zero Python Dependency)
 
+**Windows (PowerShell):**
+```powershell
+iwr -useb https://raw.githubusercontent.com/Farukes/Token-Saver/main/install.ps1 | iex
+```
+
+**Linux & macOS (Bash):**
 ```bash
-git clone https://github.com/Farukes/Token-Saver.git
-cd Token-Saver
-pip install -e .
+curl -fsSL https://raw.githubusercontent.com/Farukes/Token-Saver/main/install.sh | bash
+```
+
+### 🐍 Python Community Edition (pip)
+```bash
+pip install token-saver
 ```
 
 ### Auto-Configure Agent Steering Rules

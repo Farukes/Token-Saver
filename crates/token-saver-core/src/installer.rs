@@ -161,6 +161,9 @@ pub fn install_mcp_all(all_ides: bool, custom_exe: Option<&str>) -> Vec<McpInsta
         }
     }
 
+    // Auto-install /token-saver slash commands into AGY CLI and Claude Code
+    let _ = install_all_slash_commands(true);
+
     results
 }
 
@@ -250,6 +253,102 @@ pub fn uninstall_mcp_all() -> Vec<McpInstallResult> {
                 message: format!("Token-Saver was already inactive in {ide_name}"),
             });
         }
+    }
+
+    results
+}
+
+pub fn install_agy_slash_command() -> (bool, String) {
+    let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
+    let skill_dir = home.join(".gemini").join("config").join("skills").join("token-saver");
+    if let Err(e) = fs::create_dir_all(&skill_dir) {
+        return (false, format!("Failed creating directory: {e}"));
+    }
+    let skill_file = skill_dir.join("SKILL.md");
+    let content = r#"---
+name: token-saver
+description: >-
+  Instant slash command controller for the Token-Saver token optimization engine.
+  Use immediately when user types /token-saver, /token-saver on, /token-saver off,
+  /token-saver output on, /token-saver output off, /token-saver stats, or requests to toggle token-saver state.
+---
+
+# Token-Saver Slash Command Controller
+
+When this command is invoked with an argument:
+
+1. **If argument is 'on' or 'enable':**
+   Execute shell command: `token-saver on`
+   Report confirmation that Token-Saver is active.
+
+2. **If argument is 'off' or 'disable':**
+   Execute shell command: `token-saver off`
+   Report confirmation that Token-Saver is deactivated.
+
+3. **If argument starts with 'output':**
+   Execute shell command: `token-saver output <arg>` (e.g. `token-saver output on` or `token-saver output off`)
+   Report confirmation of the output mode change.
+
+4. **If argument is 'status':**
+   Execute shell command: `token-saver status`
+   Display the overall operational status report.
+
+5. **If argument is 'stats' or 'telemetry':**
+   Execute shell command: `token-saver stats`
+   Display the savings dashboard.
+
+6. **If no argument or 'help':**
+   Show options: `/token-saver status`, `/token-saver on`, `/token-saver off`, `/token-saver output on`, `/token-saver output off`, `/token-saver stats`.
+"#;
+    match fs::write(&skill_file, content) {
+        Ok(_) => (true, format!("Installed /token-saver command for AGY CLI at {:?}", skill_file)),
+        Err(e) => (false, format!("Failed writing skill file: {e}")),
+    }
+}
+
+pub fn install_claude_code_slash_command() -> (bool, String) {
+    let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
+    let claude_dir = home.join(".claude").join("commands");
+    if let Err(e) = fs::create_dir_all(&claude_dir) {
+        return (false, format!("Failed creating directory: {e}"));
+    }
+    let command_file = claude_dir.join("token-saver.md");
+    let content = r#"---
+description: Manage Token-Saver token optimization engine (on, off, output on/off, stats)
+---
+
+Execute the requested Token-Saver operation:
+$ARGUMENTS
+
+Instructions:
+1. If argument is "on" or "enable", run `token-saver on` and confirm activation.
+2. If argument is "off" or "disable", run `token-saver off` and confirm deactivation.
+3. If argument starts with "output", run `token-saver output <args>` and report status.
+4. If argument is "stats", run `token-saver stats` and show the telemetry dashboard.
+5. If empty or help, show usage instructions.
+"#;
+    match fs::write(&command_file, content) {
+        Ok(_) => (true, format!("Installed /token-saver command for Claude Code at {:?}", command_file)),
+        Err(e) => (false, format!("Failed writing command file: {e}")),
+    }
+}
+
+pub fn install_all_slash_commands(only_installed: bool) -> Vec<(&'static str, bool, String)> {
+    let mut results = Vec::new();
+    let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
+
+    let agy_config = home.join(".gemini").join("config").join("mcp_config.json");
+    if !only_installed || agy_config.exists() {
+        let (ok, msg) = install_agy_slash_command();
+        results.push(("Antigravity (AGY)", ok, msg));
+    }
+
+    let claude_config = home.join(".claude.json");
+    if !only_installed || claude_config.exists() {
+        let (ok, msg) = install_claude_code_slash_command();
+        results.push(("Claude Code", ok, msg));
+    } else {
+        results.push(("Claude Code", false, "Not installed (skipped)".to_string()));
     }
 
     results

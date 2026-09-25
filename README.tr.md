@@ -41,14 +41,23 @@ Token-Saver, yapay zeka kodlama asistanınız ile kod tabanınız arasında yer 
 
 ---
 
-## 🚀 Hızlı Başlangıç
+## 🚀 Hızlı Başlangıç ve Kurulum
 
-### Kurulum
+### ⚡ Tek Tıkla Hızlı Kurulum (Önerilen - Bağımsız İkili Dosya, Sıfır Python Bağımlılığı)
 
+**Windows (PowerShell):**
+```powershell
+iwr -useb https://raw.githubusercontent.com/Farukes/Token-Saver/main/install.ps1 | iex
+```
+
+**Linux ve macOS (Bash):**
 ```bash
-git clone https://github.com/Farukes/Token-Saver.git
-cd Token-Saver
-pip install -e .
+curl -fsSL https://raw.githubusercontent.com/Farukes/Token-Saver/main/install.sh | bash
+```
+
+### 🐍 Python Topluluk Sürümü (pip)
+```bash
+pip install token-saver
 ```
 
 ### Yönlendirme Kurallarını Otomatik Yapılandırma

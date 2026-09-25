@@ -3,7 +3,7 @@ use std::path::Path;
 use clap::{Parser, Subcommand};
 
 use token_saver_core::hooks::{install_hooks, remove_hooks};
-use token_saver_core::installer::{get_supported_ide_configs, install_mcp_all, uninstall_mcp_all};
+use token_saver_core::installer::{get_supported_ide_configs, install_all_slash_commands, install_mcp_all, uninstall_mcp_all};
 use token_saver_core::output_pruner::run_command_smart;
 use token_saver_core::rules::{install_rules, remove_rules};
 use token_saver_core::telemetry::TelemetryTracker;
@@ -77,6 +77,10 @@ enum Commands {
     /// Safely remove Token-Saver MCP configuration from all assistants
     #[command(hide = true, alias = "disable-mcp")]
     UninstallMcp,
+
+    /// Install /token-saver slash command definitions across AGY CLI and Claude Code
+    #[command(hide = true, alias = "install-commands")]
+    SetupCommands,
 
     /// Manage AI output mode (compact surgical diffs vs default output)
     #[command(hide = true)]
@@ -279,6 +283,14 @@ async fn main() {
             for r in results {
                 let icon = if r.success { "⚪" } else { "❌" };
                 println!("  {icon} {}: {}", r.ide_name, r.message);
+            }
+        }
+        Some(Commands::SetupCommands) => {
+            println!("⚡ Installing /token-saver slash commands into AGY CLI and Claude Code...");
+            let results = install_all_slash_commands(false);
+            for (name, ok, msg) in results {
+                let icon = if ok { "✅" } else { "❌" };
+                println!("  {icon} {}: {}", name, msg);
             }
         }
         Some(Commands::Output { state, dir }) => {

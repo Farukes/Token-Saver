@@ -7,7 +7,8 @@ on:
     branches: [ main, master ]
 
 jobs:
-  test:
+  python-test:
+    name: Python Tests (${{ matrix.os }} / py${{ matrix.python-version }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -33,6 +34,29 @@ jobs:
       run: |
         ruff check .
 
-    - name: Run tests
+    - name: Run Python unit tests
       run: |
         python -m pytest tests/ -v
+
+  rust-test:
+    name: Rust Tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Rust Cache
+      uses: Swatinem/rust-cache@v2
+
+    - name: Check compilation
+      run: cargo check --workspace --all-targets
+
+    - name: Run Rust workspace unit tests
+      run: cargo test --workspace --verbose

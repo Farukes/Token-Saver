@@ -1,0 +1,113 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-rust-binaries:
+    name: Build Rust Binary (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            bin_name: token-saver.exe
+            archive_name: token-saver-windows-x64.zip
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            bin_name: token-saver
+            archive_name: token-saver-linux-x64.tar.gz
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            bin_name: token-saver
+            archive_name: token-saver-darwin-arm64.tar.gz
+          - os: macos-13
+            target: x86_64-apple-darwin
+            bin_name: token-saver
+            archive_name: token-saver-darwin-x64.tar.gz
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: ${{ matrix.target }}
+
+    - name: Rust Cache
+      uses: Swatinem/rust-cache@v2
+
+    - name: Build release binary
+      run: cargo build --release --target ${{ matrix.target }}
+
+    - name: Package archive (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        Compress-Archive -Path "target/${{ matrix.target }}/release/${{ matrix.bin_name }}" -DestinationPath "${{ matrix.archive_name }}"
+
+    - name: Package archive (Unix)
+      if: runner.os != 'Windows'
+      run: |
+        tar -czvf "${{ matrix.archive_name }}" -C "target/${{ matrix.target }}/release" "${{ matrix.bin_name }}"
+
+    - name: Upload binary asset
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.archive_name }}
+        path: ${{ matrix.archive_name }}
+        retention-days: 1
+
+  build-python-dist:
+    name: Build Python Wheel & Source Dist
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+
+    - name: Install build tools
+      run: |
+        python -m pip install --upgrade pip build
+
+    - name: Build sdist and wheel
+      run: python -m build
+
+    - name: Upload Python dists
+      uses: actions/upload-artifact@v4
+      with:
+        name: python-dist
+        path: dist/*
+        retention-days: 1
+
+  publish-github-release:
+    name: Create GitHub Release
+    needs: [build-rust-binaries, build-python-dist]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download all built artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: release_assets
+        merge-multiple: true
+
+    - name: Publish GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: release_assets/*
+        generate_release_notes: true
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
