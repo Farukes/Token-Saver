@@ -40,6 +40,13 @@ def filter_pytest(output: str) -> str:
                 filtered.append(line)
             elif line.startswith("E   ") or "Error:" in line or "Exception:" in line:
                 filtered.append(line)
+            elif "passed in " in line or "failed in " in line or "passed," in line:
+                m_pass = re.search(r'(\d+)\s+passed', line)
+                if m_pass and passed_count == 0:
+                    passed_count = int(m_pass.group(1))
+                m_fail = re.search(r'(\d+)\s+failed', line)
+                if m_fail and failed_count == 0:
+                    failed_count = int(m_fail.group(1))
 
     # Try to find the summary line to get stats if we missed them
     if not in_failures:
