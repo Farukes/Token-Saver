@@ -8,11 +8,6 @@ from pathlib import Path
 import pytest
 
 from token_saver.config import TokenSaverConfig
-from token_saver.filters.lockfile import (
-    DEFAULT_LOCKFILE_PATTERNS,
-    find_package_in_lockfile,
-    process_lockfile,
-)
 from token_saver.telemetry.stats import tracker
 from token_saver.tools.smart_reader import read_file_smart
 

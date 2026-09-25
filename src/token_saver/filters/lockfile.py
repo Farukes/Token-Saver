@@ -11,7 +11,6 @@ import json
 import os
 import re
 from pathlib import Path
-from typing import Any
 
 from token_saver.utils.token_counter import estimate_tokens
 
