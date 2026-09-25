@@ -142,25 +142,50 @@ class DashboardHandler(BaseHTTPRequestHandler):
         """Suppress standard HTTP server access logs to keep terminal quiet."""
         pass
 
+    def _is_origin_allowed(self) -> bool:
+        """Verify that the request originates from a local origin (prevent CSRF/DNS rebinding)."""
+        origin = self.headers.get("Origin")
+        if not origin:
+            # Same-origin requests or direct curl/CLI/app-mode requests often have no Origin header
+            return True
+        allowed_prefixes = (
+            "http://127.0.0.1",
+            "http://localhost",
+            "https://127.0.0.1",
+            "https://localhost",
+        )
+        return any(origin.startswith(prefix) for prefix in allowed_prefixes)
+
     def _send_json(self, data: Any, status: int = 200) -> None:
         payload = json.dumps(data).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(payload)))
-        self.send_header("Access-Control-Allow-Origin", "*")
+        origin = self.headers.get("Origin")
+        if origin and self._is_origin_allowed():
+            self.send_header("Access-Control-Allow-Origin", origin)
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.end_headers()
         self.wfile.write(payload)
 
     def do_OPTIONS(self) -> None:
+        if not self._is_origin_allowed():
+            self.send_error(403, "Forbidden: Cross-origin access disallowed")
+            return
         self.send_response(200)
-        self.send_header("Access-Control-Allow-Origin", "*")
+        origin = self.headers.get("Origin")
+        if origin:
+            self.send_header("Access-Control-Allow-Origin", origin)
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.end_headers()
 
     def do_GET(self) -> None:
+        if not self._is_origin_allowed():
+            self.send_error(403, "Forbidden: Cross-origin access disallowed")
+            return
+
         if self.path in ("/", "/index.html"):
             index_path = STATIC_DIR / "index.html"
             if index_path.exists():
@@ -182,6 +207,10 @@ class DashboardHandler(BaseHTTPRequestHandler):
         self.send_error(404, "Not Found")
 
     def do_POST(self) -> None:
+        if not self._is_origin_allowed():
+            self.send_error(403, "Forbidden: Cross-origin access disallowed")
+            return
+
         content_length = int(self.headers.get("Content-Length", 0))
         post_body = self.rfile.read(content_length) if content_length > 0 else b"{}"
         try:

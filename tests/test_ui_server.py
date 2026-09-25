@@ -105,3 +105,23 @@ def test_ui_http_prune_cache(ui_test_server: str):
         assert response.status == 200
         data = json.loads(response.read().decode("utf-8"))
         assert data["ok"] is True
+
+
+def test_ui_http_origin_security(ui_test_server: str):
+    """Test that unauthorized cross-origin requests are rejected with 403 Forbidden."""
+    # 1. External malicious origin must be rejected with HTTP 403
+    evil_req = urllib.request.Request(
+        f"{ui_test_server}/api/status",
+        headers={"Origin": "https://evil-attacker.com"},
+    )
+    with pytest.raises(urllib.error.HTTPError) as exc_info:
+        urllib.request.urlopen(evil_req)
+    assert exc_info.value.code == 403
+
+    # 2. Local origin must be allowed with HTTP 200
+    local_req = urllib.request.Request(
+        f"{ui_test_server}/api/status",
+        headers={"Origin": "http://127.0.0.1:4141"},
+    )
+    with urllib.request.urlopen(local_req) as response:
+        assert response.status == 200
