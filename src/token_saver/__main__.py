@@ -67,10 +67,22 @@ def main() -> None:
     subparsers.add_parser("unhook", help="Safely remove all installed shell hooks")
 
     # Subcommand: on / enable
-    subparsers.add_parser("on", help="Activate Token-Saver globally for AGY CLI and detected IDEs")
+    on_parser = subparsers.add_parser("on", aliases=["enable"], help="Activate Token-Saver for current project (or use --global for all IDEs)")
+    on_parser.add_argument(
+        "-g", "--global",
+        dest="global_scope",
+        action="store_true",
+        help="Configure MCP server globally in all detected IDEs without modifying project files",
+    )
 
     # Subcommand: off / disable
-    subparsers.add_parser("off", help="Deactivate Token-Saver globally and revert all settings")
+    off_parser = subparsers.add_parser("off", aliases=["disable"], help="Deactivate Token-Saver for current project (or use --global to uninstall from IDEs)")
+    off_parser.add_argument(
+        "-g", "--global",
+        dest="global_scope",
+        action="store_true",
+        help="Uninstall Token-Saver MCP configuration globally from all IDEs",
+    )
 
     # Subcommand: install-mcp
     install_mcp_parser = subparsers.add_parser(
@@ -274,11 +286,13 @@ def main() -> None:
 
         print("=" * 60)
         print("Useful Commands:")
-        print("  token-saver on         -> Enable Token-Saver globally")
-        print("  token-saver off        -> Disable Token-Saver globally")
-        print("  token-saver output on  -> Enable compact surgical output")
-        print("  token-saver output off -> Revert to standard verbose output")
-        print("  token-saver stats      -> View live token and financial savings")
+        print("  token-saver on           -> Enable Token-Saver for THIS project")
+        print("  token-saver off          -> Disable Token-Saver for THIS project")
+        print("  token-saver on --global  -> Enable MCP across all IDEs globally")
+        print("  token-saver off --global -> Disable MCP across all IDEs globally")
+        print("  token-saver ui           -> Open Web Dashboard in browser")
+        print("  token-saver stats        -> View live token and financial savings")
+        print("  token-saver status       -> Check operational status")
         print("=" * 60)
         if not overall_active:
             sys.exit(1)
@@ -312,28 +326,46 @@ def main() -> None:
 
     elif args.subcommand in ("on", "enable"):
         from token_saver.hooks.manager import HookManager
-        results = HookManager.enable_all()
-        for name, ok, msg in results:
-            if "skipped" in msg.lower():
-                status = "⚪"
-            else:
-                status = "🟢" if ok else "❌"
-            print(f"{status} {name}: {msg}")
-        print("\n✨ Token-Saver is now GLOBALLY ACTIVE across detected IDEs!")
-        print("💡 Repositories remain clean by default.")
-        print("   To inject steering rules into this specific project, run:")
-        print("     token-saver init")
+        from token_saver.rules.manager import RulesManager
+        if getattr(args, "global_scope", False):
+            results = HookManager.enable_all()
+            for name, ok, msg in results:
+                if "skipped" in msg.lower():
+                    status = "⚪"
+                else:
+                    status = "🟢" if ok else "❌"
+                print(f"{status} {name}: {msg}")
+            print("\n✨ Token-Saver is now GLOBALLY ACTIVE across detected IDEs!")
+            print("💡 Projects remain clean by default. To enable for a specific project, run:")
+            print("     token-saver on")
+        else:
+            # Local on
+            HookManager.enable_all()
+            rule_results = RulesManager.install_rules(".")
+            for name, ok, msg in rule_results:
+                print(f"🟢 Rules: {msg}")
+            print("\n✨ Token-Saver is now ACTIVE for this project!")
+            print("💡 Other projects remain unaffected unless explicitly enabled.")
 
     elif args.subcommand in ("off", "disable"):
         from token_saver.hooks.manager import HookManager
-        results = HookManager.disable_all()
-        for name, ok, msg in results:
-            if "skipped" in msg.lower():
-                status = "⚪"
-            else:
-                status = "🔴" if ok else "❌"
-            print(f"{status} {name}: {msg}")
-        print("\n⚪ Token-Saver has been deactivated globally.")
+        from token_saver.rules.manager import RulesManager
+        if getattr(args, "global_scope", False):
+            results = HookManager.disable_all()
+            for name, ok, msg in results:
+                if "skipped" in msg.lower():
+                    status = "⚪"
+                else:
+                    status = "🔴" if ok else "❌"
+                print(f"{status} {name}: {msg}")
+            print("\n⚪ Token-Saver has been deactivated globally across all IDEs.")
+        else:
+            rule_results = RulesManager.remove_rules(".")
+            for name, ok, msg in rule_results:
+                print(f"🔴 Rules: {msg}")
+            print("\n⚪ Token-Saver has been deactivated for THIS project.")
+            print("💡 Global MCP and other projects remain active and unaffected.")
+            print("   (To remove globally from all IDEs, run: token-saver off --global)")
 
     elif args.subcommand in ("install-mcp", "enable-mcp"):
         from token_saver.hooks.manager import HookManager

@@ -249,16 +249,20 @@ token-saver hook
 # Cleanly and safely uninstall all shell hooks
 token-saver unhook
 
-# 🟢 Enable Token-Saver globally across all detected IDEs
+# 🟢 Enable Token-Saver for THIS project (default)
 token-saver on
 
-# ⚪ Disable Token-Saver globally and revert settings cleanly
+# ⚪ Disable Token-Saver for THIS project (keeps other projects active)
 token-saver off
 
-# 📝 Inject steering rules into the current project (AGENTS.md, .cursorrules)
-token-saver init
+# 🌐 Enable Token-Saver MCP globally across all detected IDEs
+token-saver on --global
 
-# 🧹 Remove steering rules from the current project
+# 🔴 Disable Token-Saver MCP globally and cleanly revert IDE settings
+token-saver off --global
+
+# 📝 Alias: Inject steering rules into the current project
+token-saver init
 token-saver init --clean
 
 # Install /token-saver slash commands for AGY CLI and Claude Code

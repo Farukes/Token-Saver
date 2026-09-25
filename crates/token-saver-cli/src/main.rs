@@ -25,13 +25,21 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Turn on Token-Saver globally across all detected IDEs
-    #[command(alias = "enable", alias = "install-mcp")]
-    On,
+    /// Turn on Token-Saver for current project (or use --global for all IDEs)
+    #[command(alias = "enable")]
+    On {
+        /// Configure across all detected IDEs globally without injecting project rules
+        #[arg(short, long)]
+        global: bool,
+    },
 
-    /// Turn off Token-Saver globally and cleanly revert settings
-    #[command(alias = "disable", alias = "uninstall-mcp")]
-    Off,
+    /// Turn off Token-Saver for current project (or use --global to uninstall from IDEs)
+    #[command(alias = "disable")]
+    Off {
+        /// Uninstall Token-Saver MCP configuration globally from all detected IDEs
+        #[arg(short, long)]
+        global: bool,
+    },
 
     /// Inject Token-Saver steering rules into project (AGENTS.md, .cursorrules)
     #[command(alias = "init-rules", alias = "inject")]
@@ -145,43 +153,111 @@ async fn main() {
                     println!("  • ⚪ {name} (Not detected)");
                 }
             }
+
+            let cwd = std::env::current_dir().unwrap_or_else(|_| Path::new(".").to_path_buf());
+            let dir_name = cwd.file_name().unwrap_or_default().to_string_lossy();
+            println!("\nCurrent Project Status ({dir_name}):");
+            let rule_files = ["AGENTS.md", ".cursorrules", ".windsurfrules", "CLAUDE.md"];
+            let mut active_rule_files = Vec::new();
+            for f in &rule_files {
+                let p = cwd.join(f);
+                if p.exists() {
+                    if let Ok(content) = std::fs::read_to_string(&p) {
+                        if content.contains(token_saver_core::rules::RULES_MARKER_START) {
+                            active_rule_files.push(*f);
+                        }
+                    }
+                }
+            }
+            if active_rule_files.is_empty() {
+                println!("  • Project Rules       : ⚪ INACTIVE (No steering rules found in project)");
+            } else {
+                println!("  • Project Rules       : 🟢 ACTIVE in {}", active_rule_files.join(", "));
+            }
+            let config = token_saver_core::config::TokenSaverConfig::load_from_dir(&cwd);
+            let mode_str = if config.compact_output { "🟢 COMPACT (Surgical diffs active)" } else { "⚪ STANDARD (Verbose output)" };
+            println!("  • Output Optimization : {mode_str}");
+
             println!("============================================================");
             println!("Useful Commands:");
-            println!("  token-saver on     -> Enable Token-Saver globally across detected IDEs");
-            println!("  token-saver off    -> Disable Token-Saver globally & revert settings");
-            println!("  token-saver init   -> Inject steering rules into current project (AGENTS.md, .cursorrules)");
-            println!("  token-saver ui     -> Open Web Dashboard in browser");
-            println!("  token-saver stats  -> View live token and financial savings");
-            println!("  token-saver status -> Check operational status across AI assistants");
+            println!("  token-saver on           -> Enable Token-Saver for THIS project");
+            println!("  token-saver off          -> Disable Token-Saver for THIS project");
+            println!("  token-saver on --global  -> Enable MCP across all IDEs globally");
+            println!("  token-saver off --global -> Disable MCP across all IDEs globally");
+            println!("  token-saver ui           -> Open Web Dashboard in browser");
+            println!("  token-saver stats        -> View live token and financial savings");
+            println!("  token-saver status       -> Check operational status");
             println!("============================================================");
         }
-        Some(Commands::On) => {
-            println!("🔌 Configuring Token-Saver MCP in detected AI assistants...");
-            let results = install_mcp_all(false, None);
-            for r in results {
-                let icon = if r.success {
-                    "🟢"
-                } else if r.message.contains("Skipped") {
-                    "⚪"
-                } else {
-                    "❌"
-                };
-                println!("  {icon} {}: {}", r.ide_name, r.message);
-            }
+        Some(Commands::On { global }) => {
+            if *global {
+                println!("🔌 Configuring Token-Saver MCP across all detected AI assistants...");
+                let results = install_mcp_all(false, None);
+                for r in results {
+                    let icon = if r.success {
+                        "🟢"
+                    } else if r.message.contains("Skipped") {
+                        "⚪"
+                    } else {
+                        "❌"
+                    };
+                    println!("  {icon} {}: {}", r.ide_name, r.message);
+                }
+                println!("\n✨ Token-Saver is now GLOBALLY ACTIVE across detected IDEs!");
+                println!("💡 Projects remain clean by default. To enable for a specific project, run:");
+                println!("     token-saver on");
+            } else {
+                let ide_configs = get_supported_ide_configs();
+                let mut any_configured = false;
+                for (_name, path) in &ide_configs {
+                    if path.exists() {
+                        if let Ok(content) = std::fs::read_to_string(path) {
+                            if content.contains("token-saver") {
+                                any_configured = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if !any_configured {
+                    println!("🔌 Auto-configuring Token-Saver MCP in detected AI assistants...");
+                    let results = install_mcp_all(false, None);
+                    for r in results {
+                        if r.success {
+                            println!("  🟢 {}: {}", r.ide_name, r.message);
+                        }
+                    }
+                }
 
-            println!("\n✨ Token-Saver is now GLOBALLY ACTIVE across detected IDEs!");
-            println!("💡 Repositories remain clean by default.");
-            println!("   To inject steering rules into this specific project, run:");
-            println!("     token-saver init");
-        }
-        Some(Commands::Off) => {
-            println!("🔌 Deactivating Token-Saver MCP from AI assistants...");
-            let results = uninstall_mcp_all();
-            for r in results {
-                let icon = if r.success { "⚪" } else { "❌" };
-                println!("  {icon} {}: {}", r.ide_name, r.message);
+                println!("📝 Injecting Token-Saver steering rules into current project...");
+                let rule_results = install_rules(Path::new("."), true, true);
+                for r in rule_results {
+                    let icon = if r.success { "🟢" } else { "❌" };
+                    println!("  {icon} {}: {}", r.file_name, r.message);
+                }
+                println!("\n✨ Token-Saver is now ACTIVE for this project!");
+                println!("💡 Other projects remain unaffected unless explicitly enabled.");
             }
-            println!("\n⚪ Token-Saver has been deactivated globally.");
+        }
+        Some(Commands::Off { global }) => {
+            if *global {
+                println!("🔌 Deactivating Token-Saver MCP globally from all AI assistants...");
+                let results = uninstall_mcp_all();
+                for r in results {
+                    let icon = if r.success { "⚪" } else { "❌" };
+                    println!("  {icon} {}: {}", r.ide_name, r.message);
+                }
+                println!("\n⚪ Token-Saver has been deactivated globally.");
+            } else {
+                println!("📝 Cleaning Token-Saver steering rules from current project...");
+                let rule_results = remove_rules(Path::new("."));
+                for r in rule_results {
+                    println!("  🔴 {}: {}", r.file_name, r.message);
+                }
+                println!("\n⚪ Token-Saver has been deactivated for THIS project.");
+                println!("💡 Global MCP and other projects remain active and unaffected.");
+                println!("   (To remove globally from all IDEs, run: token-saver off --global)");
+            }
         }
         Some(Commands::InstallMcp { all }) => {
             println!("🔌 Configuring Token-Saver MCP across AI assistants...");

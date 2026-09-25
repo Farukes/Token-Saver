@@ -249,16 +249,20 @@ token-saver hook
 # Tüm kabuk kancalarını güvenli ve temiz bir şekilde kaldırın
 token-saver unhook
 
-# 🟢 Token-Saver'ı algılanan tüm IDE'lerde genel olarak etkinleştirin
+# 🟢 Token-Saver'ı BU proje için etkinleştirin (varsayılan)
 token-saver on
 
-# ⚪ Token-Saver'ı genel olarak devre dışı bırakın ve ayarları geri alın
+# ⚪ Token-Saver'ı BU proje için devre dışı bırakın (diğer projeleri etkilemez)
 token-saver off
 
-# 📝 Mevcut projeye yönlendirme kurallarını ekleyin (AGENTS.md, .cursorrules)
-token-saver init
+# 🌐 Token-Saver MCP sunucusunu tüm IDE'lerde genel olarak etkinleştirin
+token-saver on --global
 
-# 🧹 Mevcut projeden yönlendirme kurallarını temizleyin
+# 🔴 Token-Saver MCP'yi tüm IDE'lerden genel olarak kaldırın ve ayarları geri alın
+token-saver off --global
+
+# 📝 Alternatif Takma Ad: Mevcut projeye kural ekleme / temizleme
+token-saver init
 token-saver init --clean
 
 # AGY CLI ve Claude Code için /token-saver slash komutlarını kurun
