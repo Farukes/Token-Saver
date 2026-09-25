@@ -98,7 +98,7 @@ class TelemetryTracker:
     def __init__(self) -> None:
         self.file_path = _get_storage_path()
         self._lock = threading.Lock()
-        self._last_mtime: float = 0.0
+        self._last_stat: tuple[int, int] = (0, 0)
         self._data: TelemetryData = self._load()
 
     @property
@@ -112,12 +112,13 @@ class TelemetryTracker:
         try:
             if not self.file_path.exists():
                 self._data = TelemetryData()
-                self._last_mtime = 0.0
+                self._last_stat = (0, 0)
                 return
-            mtime = self.file_path.stat().st_mtime
-            if mtime != self._last_mtime:
+            st = self.file_path.stat()
+            current_stat = (st.st_mtime_ns, st.st_size)
+            if current_stat != self._last_stat:
                 self._data = self._load()
-                self._last_mtime = mtime
+                self._last_stat = current_stat
         except Exception:
             pass
 
@@ -155,12 +156,14 @@ class TelemetryTracker:
             with open(temp_path, "w", encoding="utf-8") as f:
                 json.dump(asdict(self._data), f, indent=2)
             temp_path.replace(self.file_path)
-            self._last_mtime = self.file_path.stat().st_mtime
+            st = self.file_path.stat()
+            self._last_stat = (st.st_mtime_ns, st.st_size)
         except Exception:
             try:
                 with open(self.file_path, "w", encoding="utf-8") as f:
                     json.dump(asdict(self._data), f, indent=2)
-                self._last_mtime = self.file_path.stat().st_mtime
+                st = self.file_path.stat()
+                self._last_stat = (st.st_mtime_ns, st.st_size)
             except Exception:
                 pass
 

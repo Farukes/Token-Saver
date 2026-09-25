@@ -38,6 +38,7 @@ def test_telemetry_tracker_record_and_reset(tmp_path: Path):
 
 
 def test_telemetry_cross_instance_reset_sync(tmp_path: Path):
+    import time
     test_storage = tmp_path / "telemetry_cross_test.json"
 
     with patch("token_saver.telemetry.stats._get_storage_path", return_value=test_storage):
@@ -51,10 +52,12 @@ def test_telemetry_cross_instance_reset_sync(tmp_path: Path):
         assert tracker_b.data.total_tokens_saved == 800
 
         # Process B resets telemetry
+        time.sleep(0.02)
         tracker_b.reset()
         assert tracker_b.data.total_tokens_saved == 0
 
         # Process A records a new operation - must NOT resurrect the old 800 tokens!
+        time.sleep(0.02)
         tracker_a.record_savings("skeleton", 500, 100)
         assert tracker_a.data.total_tokens_saved == 400
         assert tracker_b.data.total_tokens_saved == 400
