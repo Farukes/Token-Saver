@@ -16,9 +16,6 @@ This project is **Token-Saver**, a zero-cost MCP server that cuts 70-95% of toke
 - Always output debug logs to `sys.stderr`, NEVER `sys.stdout` (as `stdout` is reserved for JSON-RPC MCP messages).
 - All file reads, parsers, and filters must be deterministic and preserve critical information (types, signatures, error tracebacks, exit codes).
 
-
-
-
 # >>> token-saver-rules >>>
 ## 🔋 Token-Saver AI Optimization Guidelines (STRICT ENFORCEMENT)
 CRITICAL MANDATE: Do NOT use native file viewers (view_file, cat) or raw terminal commands when Token-Saver MCP tools are available. Bypassing Token-Saver wastes hundreds of thousands of tokens and triggers conversation context window compaction.
