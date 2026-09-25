@@ -88,7 +88,10 @@ pub fn build_skeleton(source_code: &str, lang: SupportedLanguage) -> String {
             | SupportedLanguage::TypeScript
             | SupportedLanguage::C
             | SupportedLanguage::Cpp
-            | SupportedLanguage::Java => {
+            | SupportedLanguage::Java
+            | SupportedLanguage::CSharp
+            | SupportedLanguage::Php
+            | SupportedLanguage::Bash => {
                 if matches!(
                     node_kind,
                     "function_declaration"
@@ -115,6 +118,27 @@ pub fn build_skeleton(source_code: &str, lang: SupportedLanguage) -> String {
                     }
                 }
             }
+            SupportedLanguage::Ruby => {
+                if matches!(node_kind, "method" | "singleton_method") {
+                    let mut body = None;
+                    for child in node.children(&mut node.walk()) {
+                        if child.kind() == "body_statement" {
+                            body = Some(child);
+                            break;
+                        }
+                    }
+                    if let Some(b) = body {
+                        if b.start_byte() < b.end_byte() {
+                            ranges.push(ReplaceRange {
+                                start_byte: b.start_byte(),
+                                end_byte: b.end_byte(),
+                                replacement: "\n    ...\n  ",
+                            });
+                        }
+                    }
+                }
+            }
+            SupportedLanguage::Html | SupportedLanguage::Css | SupportedLanguage::Json => {}
             SupportedLanguage::Go => {
                 if matches!(node_kind, "function_declaration" | "method_declaration") {
                     let mut body = None;

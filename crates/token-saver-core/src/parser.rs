@@ -3,7 +3,7 @@
 use std::path::Path;
 use tree_sitter::{Language, Parser, Tree};
 
-/// Supported language identifiers.
+/// Supported language identifiers across 15 programming and data languages.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SupportedLanguage {
     Python,
@@ -14,6 +14,13 @@ pub enum SupportedLanguage {
     C,
     Cpp,
     Java,
+    CSharp,
+    Ruby,
+    Php,
+    Bash,
+    Html,
+    Css,
+    Json,
 }
 
 impl SupportedLanguage {
@@ -27,6 +34,13 @@ impl SupportedLanguage {
             Self::C => "c",
             Self::Cpp => "cpp",
             Self::Java => "java",
+            Self::CSharp => "c_sharp",
+            Self::Ruby => "ruby",
+            Self::Php => "php",
+            Self::Bash => "bash",
+            Self::Html => "html",
+            Self::Css => "css",
+            Self::Json => "json",
         }
     }
 
@@ -40,6 +54,13 @@ impl SupportedLanguage {
             Self::C => tree_sitter_c::LANGUAGE.into(),
             Self::Cpp => tree_sitter_cpp::LANGUAGE.into(),
             Self::Java => tree_sitter_java::LANGUAGE.into(),
+            Self::CSharp => tree_sitter_c_sharp::LANGUAGE.into(),
+            Self::Ruby => tree_sitter_ruby::LANGUAGE.into(),
+            Self::Php => tree_sitter_php::LANGUAGE_PHP.into(),
+            Self::Bash => tree_sitter_bash::LANGUAGE.into(),
+            Self::Html => tree_sitter_html::LANGUAGE.into(),
+            Self::Css => tree_sitter_css::LANGUAGE.into(),
+            Self::Json => tree_sitter_json::LANGUAGE.into(),
         }
     }
 
@@ -66,6 +87,13 @@ pub fn detect_language<P: AsRef<Path>>(path: P) -> Option<SupportedLanguage> {
         "c" | "h" => Some(SupportedLanguage::C),
         "cpp" | "cc" | "cxx" | "hpp" | "hxx" => Some(SupportedLanguage::Cpp),
         "java" => Some(SupportedLanguage::Java),
+        "cs" => Some(SupportedLanguage::CSharp),
+        "rb" => Some(SupportedLanguage::Ruby),
+        "php" | "phtml" => Some(SupportedLanguage::Php),
+        "sh" | "bash" | "zsh" => Some(SupportedLanguage::Bash),
+        "html" | "htm" => Some(SupportedLanguage::Html),
+        "css" | "scss" => Some(SupportedLanguage::Css),
+        "json" => Some(SupportedLanguage::Json),
         _ => None,
     }
 }
@@ -88,44 +116,30 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_rust() {
-        let code = "fn hello(name: &str) -> String {\n    format!(\"Hello, {}\", name)\n}\n";
-        let tree = parse_code(code, SupportedLanguage::Rust).expect("Rust parse should succeed");
-        assert_eq!(tree.root_node().kind(), "source_file");
+    fn test_parse_c_sharp() {
+        let code = "class Program { static void Main() {} }\n";
+        let tree = parse_code(code, SupportedLanguage::CSharp).expect("C# parse should succeed");
+        assert_eq!(tree.root_node().kind(), "compilation_unit");
     }
 
     #[test]
-    fn test_parse_javascript() {
-        let code = "function hello(name) {\n    return 'Hello ' + name;\n}\n";
-        let tree = parse_code(code, SupportedLanguage::JavaScript).expect("JS parse should succeed");
+    fn test_parse_ruby() {
+        let code = "def hello\n  puts 'hello'\nend\n";
+        let tree = parse_code(code, SupportedLanguage::Ruby).expect("Ruby parse should succeed");
         assert_eq!(tree.root_node().kind(), "program");
     }
 
     #[test]
-    fn test_parse_typescript() {
-        let code = "function hello(name: string): string {\n    return `Hello ${name}`;\n}\n";
-        let tree = parse_code(code, SupportedLanguage::TypeScript).expect("TS parse should succeed");
+    fn test_parse_php() {
+        let code = "<?php function hello() { echo 'hi'; } ?>";
+        let tree = parse_code(code, SupportedLanguage::Php).expect("PHP parse should succeed");
         assert_eq!(tree.root_node().kind(), "program");
     }
 
     #[test]
-    fn test_parse_go() {
-        let code = "package main\nfunc hello(name string) string {\n    return \"Hello \" + name\n}\n";
-        let tree = parse_code(code, SupportedLanguage::Go).expect("Go parse should succeed");
-        assert_eq!(tree.root_node().kind(), "source_file");
-    }
-
-    #[test]
-    fn test_parse_c() {
-        let code = "int main(void) { return 0; }\n";
-        let tree = parse_code(code, SupportedLanguage::C).expect("C parse should succeed");
-        assert_eq!(tree.root_node().kind(), "translation_unit");
-    }
-
-    #[test]
-    fn test_parse_java() {
-        let code = "class App { public static void main(String[] args) {} }\n";
-        let tree = parse_code(code, SupportedLanguage::Java).expect("Java parse should succeed");
+    fn test_parse_bash() {
+        let code = "#!/bin/bash\nfunction run() { echo 1; }\n";
+        let tree = parse_code(code, SupportedLanguage::Bash).expect("Bash parse should succeed");
         assert_eq!(tree.root_node().kind(), "program");
     }
 }

@@ -79,7 +79,7 @@ async fn main() {
             println!("Overall Engine Status : 🟢 ACTIVE (Operational - Rust)");
             println!("Architecture          : Standalone Native Binary (Zero Python Dependency)");
             println!("L2 Persistent Cache   : 🟢 ONLINE (SQLite WAL Mode)");
-            println!("Supported Languages   : Python, Rust, JavaScript, TypeScript, Go, C, C++, Java");
+            println!("Supported Languages   : Python, Rust, JavaScript, TypeScript, Go, C, C++, Java, C#, Ruby, PHP, Bash, HTML, CSS, JSON");
             println!("============================================================");
         }
         Some(Commands::InstallRules { dir, clean }) | Some(Commands::Inject { dir, clean }) => {
