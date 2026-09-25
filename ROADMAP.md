@@ -55,12 +55,14 @@ flowchart LR
 - Real-time token and money savings metrics, category breakdown cards, one-click IDE switches, output optimization toggle, and L2 cache pruning.
 - Double-clicking `token-saver.exe` in Windows Explorer opens Web Dashboard automatically.
 
-### ✅ Phase 3: The Rust Transformation (`token-saver.exe`)
-- **Self-Contained Single Binary:** Single `token-saver.exe` (~10 MB). Zero Python dependency, zero external runtime.
-- **Microsecond AST Engine:** Native `tree-sitter`, `similar`, and `rusqlite`.
-- **Minimal Memory Footprint:** 12 MB RAM (down from Python's 80-150 MB).
-- **Comprehensive 50-Step Stress Test:** 1,241,757 tokens saved (**97.3% net token reduction**).
-- **Workspace Test Suite:** 32 unit tests passing in 0.04s.
+### ✅ Phase 3: The Rust Transformation & v1.0.0 GA Release
+- **Official v1.0.0 Release:** Shipped both standalone Rust Native Binaries and Python Wheel to GitHub Releases.
+- **1-Click Fast Installers:** `install.ps1` (PowerShell auto-PATH) and `install.sh` (POSIX Bash) for frictionless one-liner global installation.
+- **Microsecond AST Engine:** Native `tree-sitter`, `similar`, and `rusqlite` statically compiled into a single ~10 MB binary.
+- **Ultra-Lean Memory Footprint:** 13.5 - 15.0 MB RAM under heavy load (70% - 84% reduction vs Python/Node).
+- **Comprehensive 100-Step Developer Stress Test:** 554,251 tokens saved (**89.0% net token reduction**, **100.0% quality & accuracy score**, 0.985s total runtime).
+- **50-Cycle Head-to-Head MCP Benchmark:** Rust runs **3.1x faster** than Python (8.1 ms warm latency) with zero GC pauses.
+- **Workspace Parity & CI/CD Matrix:** 32 Rust tests + 64 Python tests passing across Ubuntu, Windows, and macOS on every commit.
 
 ---
 
