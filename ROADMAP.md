@@ -8,15 +8,15 @@
 
 ```mermaid
 flowchart LR
-    M1["✅ v0.6 Core Engine<br>+ Lockfile Shield"] --> M2["⏳ v0.7 IDE Auto-Config<br>(token-saver install-mcp)"]
-    M2 --> M3["⏳ v0.8 On-Demand UI<br>(Tauri Dashboard, 0 RAM)"]
+    M1["✅ v0.6 Core Engine<br>+ Lockfile Shield"] --> M2["✅ v0.7 IDE Auto-Config<br>(token-saver install-mcp)"]
+    M2 --> M3["✅ v0.8 On-Demand UI<br>(Dashboard, 0 RAM)"]
     M3 --> M4["⏳ v1.0 Rust Rewrite<br>(token-saver.exe)"]
     M4 --> M5["🚀 v2.0 Universal Gateway<br>(MCP Compression Proxy)"]
 ```
 
 ---
 
-## 🏆 Completed Milestones (Current Production: v0.6)
+## 🏆 Completed Milestones (Current Production: v0.8.0)
 
 ### ✅ Multi-Language AST Skeletonizer
 - Multi-language AST parsing across 130+ languages (Python, TS/JS, Go, Rust, Java, C++, Ruby, PHP).
@@ -38,38 +38,24 @@ flowchart LR
 - Strips thousands of repetitive passing logs (`.`, `PASS`), retaining only critical error traces and summary metrics.
 - **Measured: 77.5% - 89.6% token reduction (0.7 ms filter overhead).**
 
-### ✅ 🛡️ Lockfile & Giant Asset Shield *(NEW in v0.6)*
+### ✅ 🛡️ Lockfile & Giant Asset Shield
 - Intercepts accidental reads of massive lockfiles (`package-lock.json`, `Cargo.lock`, `poetry.lock`, `yarn.lock`, `pnpm-lock.yaml`, `composer.lock`, `*.min.js`).
 - **Surgical Package Query:** AI can query a specific package via `read_file_smart(file_path="...", query="<package_name>")` to get the exact 5-line version block instead of 50,000 lines.
 - **Structural Summary:** Returns package counts and direct dependencies when no query is passed.
 - **Zero-Block Escape Hatch:** Passing `force_full=True` returns raw full content with zero censorship.
 - **Measured: 95.5% - 99.8% token reduction (eliminates 50k-100k token context compaction blowouts).**
 
+### ✅ Phase 1: 1-Click IDE Auto-Configuration & Non-Destructive Rollback (`token-saver install-mcp`)
+- Automatically registers and configures Token-Saver across **Claude Desktop**, **Cursor**, **Windsurf**, **Claude Code**, and **VS Code (Cline/Roo)**.
+- **Smart Diff Rollback Algorithm (`token-saver uninstall-mcp`):** Preserves 100% of user-added servers or customizations while cleanly excising Token-Saver.
+
+### ✅ Phase 2: On-Demand Control & Settings Dashboard UI (`token-saver ui`)
+- **Zero Background RAM Architecture:** Standalone native window (Edge/Chrome app-mode), 100% terminated on window close.
+- Real-time token and money savings metrics, category breakdown cards, one-click IDE switches, output optimization toggle, and L2 cache pruning.
+
 ---
 
 ## ⏳ Upcoming Milestones
-
-### Phase 1: Zero-Friction IDE MCP Auto-Registration (`token-saver install-mcp`)
-- **Problem:** Developers dislike manually editing JSON configuration files to connect MCP servers.
-- **Goal:** One command or UI click to configure all installed IDEs.
-  - Automatically locates and registers Token-Saver into:
-    - **Claude Desktop:** `%APPDATA%\Claude\claude_desktop_config.json` / `~/Library/Application Support/Claude/`
-    - **Cursor:** `~/.cursor/mcp.json` and `.cursor/mcp.json`
-    - **Windsurf:** `~/.codeium/windsurf/mcp_config.json`
-    - **VS Code Extensions (Cline / Roo / Continue):** `mcp_settings.json`
-  - Safe `.bak` backup before any write operation.
-  - Atomic writing to prevent JSON corruption.
-
-### Phase 2: On-Demand Control & Settings Dashboard (Tauri v2)
-- **Problem:** Desktop apps that run permanently in the background consume RAM and add mental clutter.
-- **Design Philosophy:** **On-Demand Only (Zero Background RAM)**.
-  - Runs like `git gui` or `prisma studio`: launches on `token-saver ui` or desktop shortcut, performs configuration/viewing, and fully terminates when closed.
-  - **Features:**
-    - Live savings counter (Cumulative tokens & dollars saved).
-    - Big Master ON/OFF toggle switch.
-    - One-click "Install into IDEs" button.
-    - Project rule manager (toggle `AGENTS.md`, `.cursorrules`, `CLAUDE.md`).
-    - Cache & Lockfile shield settings.
 
 ### Phase 3: The Rust Transformation (`token-saver.exe`)
 - **Problem:** Python requires runtime installation (Python 3.10+, pip, virtualenv, PATH configuration).
