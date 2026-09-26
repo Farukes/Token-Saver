@@ -525,6 +525,14 @@ fn handle_update(force: bool) {
                 let mut bytes = Vec::new();
                 use std::io::Read;
                 if resp.into_reader().read_to_end(&mut bytes).is_ok() && !bytes.is_empty() {
+                    let final_bin_bytes = match extract_executable_bytes(&bytes) {
+                        Ok(b) => b,
+                        Err(e) => {
+                            eprintln!("\n❌ Extraction error: {e}");
+                            std::process::exit(1);
+                        }
+                    };
+
                     #[cfg(target_os = "windows")]
                     {
                         let old_exe = current_exe.with_extension("exe.old");
@@ -533,7 +541,7 @@ fn handle_update(force: bool) {
                             eprintln!("❌ Failed to rename current executable: {e}");
                             std::process::exit(1);
                         }
-                        if let Err(e) = std::fs::write(&current_exe, &bytes) {
+                        if let Err(e) = std::fs::write(&current_exe, &final_bin_bytes) {
                             eprintln!("❌ Failed to write new binary: {e}");
                             let _ = std::fs::rename(&old_exe, &current_exe);
                             std::process::exit(1);
@@ -543,7 +551,7 @@ fn handle_update(force: bool) {
                     #[cfg(not(target_os = "windows"))]
                     {
                         let tmp_exe = current_exe.with_extension("tmp");
-                        if let Err(e) = std::fs::write(&tmp_exe, &bytes) {
+                        if let Err(e) = std::fs::write(&tmp_exe, &final_bin_bytes) {
                             eprintln!("❌ Failed to write new binary: {e}");
                             std::process::exit(1);
                         }
@@ -571,4 +579,74 @@ fn handle_update(force: bool) {
     println!("   • Winget  : winget upgrade token-saver");
     println!("   • Homebrew: brew upgrade token-saver");
     println!("   • Python  : pip install --upgrade token-saver-engine");
+}
+
+fn extract_executable_bytes(bytes: &[u8]) -> Result<Vec<u8>, String> {
+    #[cfg(target_os = "windows")]
+    let bin_name = "token-saver.exe";
+    #[cfg(not(target_os = "windows"))]
+    let bin_name = "token-saver";
+
+    // 1. If it's a zip archive (starts with PK\x03\x04)
+    if bytes.starts_with(b"PK\x03\x04") {
+        let cursor = std::io::Cursor::new(bytes);
+        let mut archive = zip::ZipArchive::new(cursor)
+            .map_err(|e| format!("Failed to read downloaded zip archive: {e}"))?;
+
+        for i in 0..archive.len() {
+            let mut file = archive.by_index(i)
+                .map_err(|e| format!("Failed to read file in zip archive: {e}"))?;
+            let name = file.name().to_lowercase();
+            if name.ends_with(bin_name) || name == bin_name {
+                let mut extracted = Vec::new();
+                use std::io::Read;
+                file.read_to_end(&mut extracted)
+                    .map_err(|e| format!("Failed to extract {bin_name} from zip: {e}"))?;
+                if !extracted.is_empty() {
+                    return Ok(extracted);
+                }
+            }
+        }
+        return Err(format!("Could not find '{bin_name}' inside the downloaded zip archive."));
+    }
+
+    // 2. If it's a tar.gz archive (starts with gzip magic bytes 0x1f, 0x8b)
+    if bytes.starts_with(b"\x1f\x8b") {
+        let cursor = std::io::Cursor::new(bytes);
+        let gz = flate2::read::GzDecoder::new(cursor);
+        let mut archive = tar::Archive::new(gz);
+        if let Ok(entries) = archive.entries() {
+            for entry in entries.flatten() {
+                let path_buf = entry.path().unwrap_or_default();
+                let name = path_buf.to_string_lossy().to_lowercase();
+                if name.ends_with(bin_name) || name == bin_name {
+                    let mut extracted = Vec::new();
+                    use std::io::Read;
+                    let mut mut_entry = entry;
+                    if mut_entry.read_to_end(&mut extracted).is_ok() && !extracted.is_empty() {
+                        return Ok(extracted);
+                    }
+                }
+            }
+        }
+        return Err(format!("Could not find '{bin_name}' inside the downloaded tarball."));
+    }
+
+    // 3. Direct executable check
+    #[cfg(target_os = "windows")]
+    if bytes.starts_with(b"MZ") {
+        return Ok(bytes.to_vec());
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    if bytes.starts_with(b"\x7fELF") || bytes.starts_with(b"\xfe\xed\xfa") || bytes.starts_with(b"\xcf\xfa\xed\xfe") {
+        return Ok(bytes.to_vec());
+    }
+
+    // Direct binary fallback
+    if bytes.len() > 1024 {
+        return Ok(bytes.to_vec());
+    }
+
+    Err("Downloaded file is not a valid executable or archive.".to_string())
 }

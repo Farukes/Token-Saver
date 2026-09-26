@@ -71,6 +71,7 @@ jobs:
         path: |
           ${{ matrix.archive_name }}
           ${{ matrix.alias_name }}
+          target/${{ matrix.target }}/release/${{ matrix.bin_name }}
         retention-days: 1
 
   build-python-dist:
