@@ -218,7 +218,7 @@ def process_lockfile(
     base_name = os.path.basename(str(file_path))
     try:
         file_size_bytes = os.path.getsize(str(file_path))
-    except OSError:
+    except (OSError, ValueError):
         file_size_bytes = len(content.encode("utf-8", errors="replace"))
     file_size_kb = file_size_bytes / 1024
     est_tok = estimate_tokens(content)
