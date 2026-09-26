@@ -486,6 +486,7 @@ def main() -> None:
         import json
         import subprocess
         import urllib.request
+
         from token_saver import __version__
 
         print("=" * 60)

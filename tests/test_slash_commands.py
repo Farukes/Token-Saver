@@ -52,8 +52,9 @@ def test_install_all_slash_commands(tmp_path: Path):
 
 
 def test_cli_update_subcommand(capsys):
-    from token_saver.__main__ import main
     import sys
+
+    from token_saver.__main__ import main
 
     # Simulate running 'token-saver update' when already up to date
     with patch.object(sys, "argv", ["token-saver", "update"]):

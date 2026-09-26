@@ -150,6 +150,7 @@ def test_background_command_launch():
 
 def test_command_timeout():
     import sys
+
     from token_saver.tools.output_pruner import register_output_pruner_tools
 
     class DummyMCP:
