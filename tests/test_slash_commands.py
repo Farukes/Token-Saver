@@ -59,8 +59,9 @@ def test_cli_update_subcommand(capsys):
     # Simulate running 'token-saver update' when already up to date
     with patch.object(sys, "argv", ["token-saver", "update"]):
         with patch("urllib.request.urlopen") as mock_url:
-            from unittest.mock import MagicMock
             import json
+            from unittest.mock import MagicMock
+
             from token_saver import __version__
 
             mock_resp = MagicMock()
