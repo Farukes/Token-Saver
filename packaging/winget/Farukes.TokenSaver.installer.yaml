@@ -1,5 +1,5 @@
 PackageIdentifier: Farukes.TokenSaver
-PackageVersion: 1.0.0
+PackageVersion: 1.0.1
 InstallerType: zip
 NestedInstallerType: portable
 NestedInstallerFiles:
@@ -7,7 +7,7 @@ NestedInstallerFiles:
     PortableCommandAlias: token-saver
 Installers:
   - Architecture: x64
-    InstallerUrl: https://github.com/Farukes/Token-Saver/releases/download/v1.0.0/token-saver-windows-x64.zip
-    InstallerSha256: C0A4D04602C764E0DCFAFC214C853A16C5AB61909EA515665642E091C845C167
+    InstallerUrl: https://github.com/Farukes/Token-Saver/releases/download/v1.0.1/token-saver-windows-x64.zip
+    InstallerSha256: 1D405711E7E90572357EA9C547C133358FEDCB9FB5FA0C76500A4925C3B3C015
 ManifestType: installer
 ManifestVersion: 1.6.0
