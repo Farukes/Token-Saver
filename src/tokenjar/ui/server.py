@@ -371,8 +371,43 @@ def open_app_window(url: str) -> None:
     webbrowser.open(url)
 
 
-def start_ui_server(port: int = 4141, host: str = "127.0.0.1", open_browser: bool = True) -> None:
+def run_fastapi_server(port: int = 4141, host: str = "127.0.0.1", open_browser: bool = True) -> None:
+    """Start high-performance FastAPI/Uvicorn server for TokenJar Dashboard."""
+    try:
+        import uvicorn
+        from tokenjar.ui.fastapi_app import create_app
+        app = create_app()
+    except ImportError as e:
+        print(f"[TokenJar UI] FastAPI/Uvicorn not available: {e}. Falling back to standard server.", file=sys.stderr)
+        start_ui_server(port=port, host=host, open_browser=open_browser, use_fastapi=False)
+        return
+
+    url = f"http://{host}:{port}"
+    print("┌────────────────────────────────────────────────────────────────────────┐")
+    print("│ ⚡ TOKENJAR FASTAPI REACT 18 DASHBOARD                               │")
+    print("├────────────────────────────────────────────────────────────────────────┤")
+    print(f"│  Dashboard URL : {url:<53} │")
+    print(f"│  OpenAPI Docs  : {url + '/docs':<53} │")
+    print("│  Engine        : FastAPI + Uvicorn + Server-Sent Events (SSE)          │")
+    print("└────────────────────────────────────────────────────────────────────────┘")
+
+    if open_browser:
+        threading.Thread(target=lambda: (time.sleep(0.5), open_app_window(url)), daemon=True).start()
+
+    uvicorn.run(app, host=host, port=port, log_level="warning")
+
+
+def start_ui_server(
+    port: int = 4141,
+    host: str = "127.0.0.1",
+    open_browser: bool = True,
+    use_fastapi: bool = False,
+) -> None:
     """Start the lightweight On-Demand Dashboard server."""
+    if use_fastapi:
+        run_fastapi_server(port=port, host=host, open_browser=open_browser)
+        return
+
     # Find free port if 4141 is busy
     actual_port = port
     server = None

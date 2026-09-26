@@ -2,6 +2,7 @@
 members = [
     "crates/tokenjar-core",
     "crates/tokenjar-cli",
+    "crates/tokenjar-desktop",
 ]
 resolver = "2"
 
