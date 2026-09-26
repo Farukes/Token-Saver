@@ -328,47 +328,35 @@ class DashboardHandler(BaseHTTPRequestHandler):
 
 
 def open_app_window(url: str) -> None:
-    """Open the dashboard URL in standalone app-mode window or browser."""
-    # 1. Try Microsoft Edge in standalone App Mode (present on Windows 10/11)
-    if os.name == "nt":
-        edge_candidates = [
-            Path(os.environ.get("PROGRAMFILES(X86)", "")) / "Microsoft" / "Edge" / "Application" / "msedge.exe",
-            Path(os.environ.get("PROGRAMFILES", "")) / "Microsoft" / "Edge" / "Application" / "msedge.exe",
-        ]
-        for edge in edge_candidates:
-            if edge.is_file():
-                try:
-                    subprocess.Popen([str(edge), f"--app={url}", "--window-size=1120,840"])
-                    return
-                except Exception:
-                    pass
+    """Open the dashboard URL reliably in the default system browser or window."""
+    opened = False
 
-        # 2. Try Google Chrome in standalone App Mode
-        chrome_candidates = [
-            Path(os.environ.get("PROGRAMFILES", "")) / "Google" / "Chrome" / "Application" / "chrome.exe",
-            Path(os.environ.get("PROGRAMFILES(X86)", "")) / "Google" / "Chrome" / "Application" / "chrome.exe",
-            Path.home() / "AppData" / "Local" / "Google" / "Chrome" / "Application" / "chrome.exe",
-        ]
-        for chrome in chrome_candidates:
-            if chrome.is_file():
-                try:
-                    subprocess.Popen([str(chrome), f"--app={url}", "--window-size=1120,840"])
-                    return
-                except Exception:
-                    pass
+    # 1. Native Windows ShellExecute (opens default browser immediately and brings to foreground)
+    if os.name == "nt" and hasattr(os, "startfile"):
+        try:
+            os.startfile(url)
+            opened = True
+        except Exception:
+            pass
 
-    # 3. macOS Chrome/Edge App Mode
-    elif sys.platform == "darwin":
-        chrome_app = Path("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
-        if chrome_app.is_file():
-            try:
-                subprocess.Popen([str(chrome_app), f"--app={url}", "--window-size=1120,840"])
-                return
-            except Exception:
-                pass
+    # 2. Python standard library webbrowser
+    if not opened:
+        try:
+            opened = webbrowser.open(url, new=2, autoraise=True)
+        except Exception:
+            pass
 
-    # 4. Fallback to default system browser
-    webbrowser.open(url)
+    # 3. Fallback to OS commands if needed
+    if not opened:
+        try:
+            if os.name == "nt":
+                subprocess.Popen(f'start "" "{url}"', shell=True)
+            elif sys.platform == "darwin":
+                subprocess.Popen(["open", url])
+            else:
+                subprocess.Popen(["xdg-open", url])
+        except Exception:
+            pass
 
 
 def run_fastapi_server(port: int = 4141, host: str = "127.0.0.1", open_browser: bool = True) -> None:
@@ -390,9 +378,10 @@ def run_fastapi_server(port: int = 4141, host: str = "127.0.0.1", open_browser: 
     print(f"│  OpenAPI Docs  : {url + '/docs':<53} │")
     print("│  Engine        : FastAPI + Uvicorn + Server-Sent Events (SSE)          │")
     print("└────────────────────────────────────────────────────────────────────────┘")
+    sys.stdout.flush()
 
     if open_browser:
-        threading.Thread(target=lambda: (time.sleep(0.5), open_app_window(url)), daemon=True).start()
+        threading.Thread(target=lambda: (time.sleep(0.3), open_app_window(url)), daemon=True).start()
 
     uvicorn.run(app, host=host, port=port, log_level="warning")
 
@@ -408,10 +397,10 @@ def start_ui_server(
         run_fastapi_server(port=port, host=host, open_browser=open_browser)
         return
 
-    # Find free port if 4141 is busy
+    # Find free port if 4141 is busy (search up to 25 ports)
     actual_port = port
     server = None
-    for attempt in range(5):
+    for attempt in range(25):
         try:
             server = HTTPServer((host, actual_port), DashboardHandler)
             break
@@ -430,9 +419,10 @@ def start_ui_server(
     print("│  Architecture  : Standalone On-Demand (Zero Background RAM)            │")
     print("│  Exit          : Click 'Quit Dashboard' in UI or press Ctrl+C          │")
     print("└────────────────────────────────────────────────────────────────────────┘")
+    sys.stdout.flush()
 
     if open_browser:
-        threading.Thread(target=lambda: (time.sleep(0.5), open_app_window(url)), daemon=True).start()
+        threading.Thread(target=lambda: (time.sleep(0.2), open_app_window(url)), daemon=True).start()
 
     try:
         server.serve_forever()

@@ -150,7 +150,11 @@ pub fn build_system_status(tracker: &TelemetryTracker) -> serde_json::Value {
 
 fn open_browser(url: &str) {
     #[cfg(target_os = "windows")]
-    let _ = Command::new("cmd").args(["/C", "start", url]).spawn();
+    {
+        if Command::new("cmd").args(["/C", "start", "", url]).spawn().is_err() {
+            let _ = Command::new("explorer").arg(url).spawn();
+        }
+    }
 
     #[cfg(target_os = "macos")]
     let _ = Command::new("open").arg(url).spawn();
