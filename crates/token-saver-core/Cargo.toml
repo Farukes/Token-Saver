@@ -5,6 +5,9 @@ edition.workspace = true
 authors.workspace = true
 license.workspace = true
 repository.workspace = true
+description = "High-performance AST and token optimization engine for AI coding assistants"
+documentation = "https://docs.rs/token-saver-core"
+readme = "../../README.md"
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
