@@ -24,7 +24,8 @@ fn test_extreme_100_step_stress_rust() {
     println!("============================================================");
 
     let config = TokenJarConfig::default();
-    let tracker = TelemetryTracker::new();
+    let temp_telemetry = tempfile::NamedTempFile::new().unwrap();
+    let tracker = TelemetryTracker::with_path(temp_telemetry.path().to_path_buf());
 
     // ------------------------------------------------------------------
     // DIMENSION 1: High-Frequency File Cache, Slicing & Diffs (Steps 1-25)

@@ -164,7 +164,8 @@ mod tests {
 
         let cache = SessionCache::new();
         let config = TokenJarConfig::default();
-        let tracker = TelemetryTracker::new();
+        let temp_telemetry = tempfile::NamedTempFile::new().unwrap();
+        let tracker = TelemetryTracker::with_path(temp_telemetry.path().to_path_buf());
 
         let p_str = file_path.to_str().unwrap();
 
@@ -187,7 +188,8 @@ mod tests {
 
         let cache = SessionCache::new();
         let config = TokenJarConfig::default();
-        let tracker = TelemetryTracker::new();
+        let temp_telemetry = tempfile::NamedTempFile::new().unwrap();
+        let tracker = TelemetryTracker::with_path(temp_telemetry.path().to_path_buf());
 
         let p_str = file_path.to_str().unwrap();
 
@@ -241,7 +243,8 @@ mod tests {
         let temp = tempfile::tempdir().unwrap();
         let cache = SessionCache::new();
         let config = TokenJarConfig::default();
-        let tracker = TelemetryTracker::new();
+        let temp_telemetry = tempfile::NamedTempFile::new().unwrap();
+        let tracker = TelemetryTracker::with_path(temp_telemetry.path().to_path_buf());
 
         let dir_str = temp.path().to_str().unwrap();
         let r = read_file_smart(dir_str, false, None, None, None, &cache, &config, &tracker);
@@ -258,7 +261,8 @@ mod tests {
 
         let cache = SessionCache::new();
         let config = TokenJarConfig::default();
-        let tracker = TelemetryTracker::new();
+        let temp_telemetry = tempfile::NamedTempFile::new().unwrap();
+        let tracker = TelemetryTracker::with_path(temp_telemetry.path().to_path_buf());
 
         let p_str = file_path.to_str().unwrap();
         let r = read_file_smart(p_str, false, None, None, None, &cache, &config, &tracker);

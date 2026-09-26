@@ -250,7 +250,8 @@ test test_c ... ok
 
 test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 "#;
-        let tracker = TelemetryTracker::new();
+        let temp_telemetry = tempfile::NamedTempFile::new().unwrap();
+        let tracker = TelemetryTracker::with_path(temp_telemetry.path().to_path_buf());
         let result = filter_output_logic(raw, "cargo", 0, &tracker);
         assert!(result.contains("test result: ok"));
         assert!(result.contains("TokenJar:"));
@@ -258,7 +259,8 @@ test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 
     #[test]
     fn test_command_timeout() {
-        let tracker = TelemetryTracker::new();
+        let temp_telemetry = tempfile::NamedTempFile::new().unwrap();
+        let tracker = TelemetryTracker::with_path(temp_telemetry.path().to_path_buf());
         #[cfg(target_os = "windows")]
         let cmd = "powershell -NoProfile -Command Start-Sleep -Seconds 4";
         #[cfg(not(target_os = "windows"))]

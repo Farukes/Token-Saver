@@ -43,7 +43,8 @@ fn test_real_life_50_steps_rust() {
         .unwrap_or(manifest_dir);
 
     let config = TokenJarConfig::load_from_dir(&repo_root);
-    let tracker = TelemetryTracker::new();
+    let temp_telemetry = tempfile::NamedTempFile::new().unwrap();
+    let tracker = TelemetryTracker::with_path(temp_telemetry.path().to_path_buf());
     let session_cache = SessionCache::new();
 
     // -------------------------------------------------------------
