@@ -88,7 +88,7 @@ members = [
 resolver = "2"
 
 [workspace.package]
-version = "1.0.2"
+version = "1.0.3"
 edition = "2021"
 authors = ["Ömer Faruk Eskitürk"]
 license = "BUS...
@@ -109,7 +109,7 @@ members = [
 resolver = "2"
 
 [workspace.package]
-version = "1.0.2"
+version = "1.0.3"
 edi...
 ```
 

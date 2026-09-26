@@ -9,12 +9,12 @@
 <h1 align="center">🍯 TokenJar</h1>
 <p align="center"><b>Token'ları kumbarana geri koy. Yapay zekâ kodlama asistanları için sıfır maliyetli token kumbarası ve akıllı optimizasyon motoru.</b></p>
 
-[![Release: v1.0.2](https://img.shields.io/badge/S%C3%BCr%C3%BCm-v1.0.2%20GA-green.svg)](https://github.com/Farukes/TokenJar/releases/latest)
+[![Release: v1.0.3](https://img.shields.io/badge/S%C3%BCr%C3%BCm-v1.0.3%20GA-green.svg)](https://github.com/Farukes/TokenJar/releases/latest)
 [![CI](https://github.com/Farukes/TokenJar/actions/workflows/ci.yml/badge.svg)](https://github.com/Farukes/TokenJar/actions/workflows/ci.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](https://www.python.org/downloads/)
-[![Kurumsal Yerel Motor: Rust](https://img.shields.io/badge/Kurumsal%20Yerel%20Motor-Rust%20v1.0.2-orange.svg)](#-kurumsal-ve-y%C3%BCksek-performansl%C4%B1-yerel-motor-rust-s%C3%BCr%C3%BCm%C3%BC)
-[![Crates.io: v1.0.2](https://img.shields.io/badge/crates.io-v1.0.2-orange.svg?logo=rust&logoColor=white)](https://crates.io/crates/tokenjar)
-[![PyPI: v1.0.2](https://img.shields.io/badge/PyPI-v1.0.2-blue.svg?logo=pypi&logoColor=white)](https://pypi.org/project/tokenjar/)
+[![Kurumsal Yerel Motor: Rust](https://img.shields.io/badge/Kurumsal%20Yerel%20Motor-Rust%20v1.0.3-orange.svg)](#-kurumsal-ve-y%C3%BCksek-performansl%C4%B1-yerel-motor-rust-s%C3%BCr%C3%BCm%C3%BC)
+[![Crates.io: v1.0.3](https://img.shields.io/badge/crates.io-v1.0.3-orange.svg?logo=rust&logoColor=white)](https://crates.io/crates/tokenjar)
+[![PyPI: v1.0.3](https://img.shields.io/badge/PyPI-v1.0.3-blue.svg?logo=pypi&logoColor=white)](https://pypi.org/project/tokenjar/)
 [![Token Tasarrufu](https://img.shields.io/badge/Token%20Tasarrufu-%2589%20ile%20%2596-brightgreen.svg)](#-kan%C4%B1tlanm%C4%B1%C5%9F-performans-ve-stres-testi-sonu%C3%A7lar%C4%B1)
 [![Lisans: BSL 1.1](https://img.shields.io/badge/Lisans-BSL%201.1-blue.svg)](LICENSE)
 [![Zero Telemetry](https://img.shields.io/badge/telemetri-0%25%20(100%25%20yerel)-success.svg)](#-kurumsal-gizlilik-ve-g%C3%BCvenlik-garantisi)
