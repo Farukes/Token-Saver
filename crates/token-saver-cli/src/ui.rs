@@ -112,7 +112,14 @@ pub fn build_system_status(tracker: &TelemetryTracker) -> serde_json::Value {
 
     let is_system_active = any_active || rules_installed;
 
+    let cache_bytes = tracker.get_l2_cache_disk_bytes();
+    let cache_mb = ((cache_bytes as f64 / (1024.0 * 1024.0)) * 100.0).round() / 100.0;
+    let cache_entries = token_saver_core::cache::persistent_cache::PersistentCache::new()
+        .map(|c| c.count_entries().unwrap_or(0))
+        .unwrap_or(0);
+
     json!({
+        "version": env!("CARGO_PKG_VERSION"),
         "active": is_system_active,
         "overall_status": if is_system_active { "ACTIVE" } else { "STANDBY" },
         "telemetry": {
@@ -120,7 +127,13 @@ pub fn build_system_status(tracker: &TelemetryTracker) -> serde_json::Value {
             "total_processed": t_data.total_original_tokens,
             "savings_pct": (t_data.savings_pct() * 10.0).round() / 10.0,
             "dollars_saved": (t_data.estimated_dollars_saved() * 100.0).round() / 100.0,
-            "categories": categories
+            "categories": categories,
+            "l2_cache": {
+                "disk_bytes": cache_bytes,
+                "disk_mb": cache_mb,
+                "entries": cache_entries,
+                "warning": cache_mb > 50.0
+            }
         },
         "ides": ides,
         "rules": {
@@ -390,6 +403,21 @@ pub async fn start_ui_server(port: u16) -> Result<(), Box<dyn std::error::Error>
                     Ok(c) => match c.prune(1000) {
                         Ok(n) => format!("L2 Cache pruned ({n} entries cleared)"),
                         Err(e) => format!("Prune failed: {e}"),
+                    },
+                    Err(e) => format!("Cache connection failed: {e}"),
+                };
+                let status_json = build_system_status(&tracker);
+                (
+                    "200 OK",
+                    "application/json",
+                    json!({ "ok": true, "msg": msg, "status": status_json }).to_string(),
+                )
+            }
+            ("POST", "/api/clear-cache") | ("POST", "/api/reset-cache") => {
+                let msg = match token_saver_core::cache::persistent_cache::PersistentCache::new() {
+                    Ok(c) => match c.clear() {
+                        Ok(n) => format!("L2 Cache completely cleared ({n} entries removed)"),
+                        Err(e) => format!("Clear failed: {e}"),
                     },
                     Err(e) => format!("Cache connection failed: {e}"),
                 };

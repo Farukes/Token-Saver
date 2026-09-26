@@ -209,6 +209,26 @@ impl PersistentCache {
         }
         Ok(0)
     }
+
+    pub fn count_entries(&self) -> Result<usize> {
+        let conn = self.connect()?;
+        let file_count: usize = conn
+            .query_row("SELECT COUNT(*) FROM file_cache", [], |r| r.get(0))
+            .unwrap_or(0);
+        let symbol_count: usize = conn
+            .query_row("SELECT COUNT(*) FROM symbol_index", [], |r| r.get(0))
+            .unwrap_or(0);
+        Ok(file_count + symbol_count)
+    }
+
+    pub fn clear(&self) -> Result<usize> {
+        let conn = self.connect()?;
+        let count = self.count_entries()?;
+        conn.execute("DELETE FROM file_cache", [])?;
+        conn.execute("DELETE FROM symbol_index", [])?;
+        let _ = conn.execute("VACUUM", []);
+        Ok(count)
+    }
 }
 
 #[cfg(test)]

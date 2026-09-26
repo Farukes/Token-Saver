@@ -633,7 +633,8 @@ name: token-saver
 description: >-
   Instant slash command controller for the Token-Saver token optimization engine.
   Use immediately when user types /token-saver, /token-saver on, /token-saver off,
-  /token-saver output on, /token-saver output off, /token-saver stats, or requests to toggle token-saver state.
+  /token-saver output on, /token-saver output off, /token-saver stats, /token-saver ui,
+  /token-saver cache-clear, /token-saver reset-stats, or requests to toggle token-saver state.
 ---
 
 # Token-Saver Slash Command Controller
@@ -660,8 +661,20 @@ When this command is invoked with an argument:
    Execute shell command: `token-saver stats`
    Display the savings dashboard.
 
-6. **If no argument or 'help':**
-   Show options: `/token-saver status`, `/token-saver on`, `/token-saver off`, `/token-saver output on`, `/token-saver output off`, `/token-saver stats`.
+6. **If argument is 'ui' or 'dashboard':**
+   Execute shell command: `token-saver ui`
+   Report confirmation that the Web Dashboard has been launched.
+
+7. **If argument is 'cache-clear' or 'cache-reset':**
+   Execute shell command: `token-saver cache-clear`
+   Report confirmation that L2 SQLite cache has been cleared.
+
+8. **If argument is 'reset-stats':**
+   Execute shell command: `token-saver reset-stats`
+   Report confirmation that cumulative telemetry metrics have been reset.
+
+9. **If no argument or 'help':**
+   Show options: `/token-saver status`, `/token-saver on`, `/token-saver off`, `/token-saver output on/off`, `/token-saver stats`, `/token-saver ui`, `/token-saver cache-clear`, `/token-saver reset-stats`.
 """
         try:
             skill_file.write_text(content, encoding="utf-8")
@@ -678,7 +691,7 @@ When this command is invoked with an argument:
         command_file = claude_dir / "token-saver.md"
 
         content = """---
-description: Manage Token-Saver token optimization engine (on, off, output on/off, stats)
+description: Manage Token-Saver token optimization engine (on, off, output on/off, stats, ui, cache-clear, reset-stats)
 ---
 
 Execute the requested Token-Saver operation:
@@ -689,7 +702,10 @@ Instructions:
 2. If argument is "off" or "disable", run `token-saver off` and confirm deactivation.
 3. If argument starts with "output", run `token-saver output <args>` and report status.
 4. If argument is "stats", run `token-saver stats` and show the telemetry dashboard.
-5. If empty or help, show usage instructions.
+5. If argument is "ui" or "dashboard", run `token-saver ui` and confirm dashboard launch.
+6. If argument is "cache-clear" or "cache-reset", run `token-saver cache-clear` and report cache reset.
+7. If argument is "reset-stats", run `token-saver reset-stats` and report telemetry reset.
+8. If empty or help, show usage instructions.
 """
         try:
             command_file.write_text(content, encoding="utf-8")

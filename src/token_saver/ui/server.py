@@ -114,7 +114,14 @@ def get_system_status() -> dict[str, Any]:
 
     cfg = load_config()
 
+    # L2 Cache metrics
+    l2_bytes = tracker.get_l2_cache_disk_bytes()
+    l2_mb = round(l2_bytes / (1024.0 * 1024.0), 2)
+    p_cache = PersistentCache()
+    l2_entries = p_cache.count_entries()
+
     return {
+        "version": "1.0.1",
         "active": any_active or rules_installed,
         "overall_status": "ACTIVE" if (any_active or rules_installed) else "INACTIVE",
         "telemetry": {
@@ -123,6 +130,12 @@ def get_system_status() -> dict[str, Any]:
             "savings_pct": round(t_data.savings_pct, 1),
             "dollars_saved": round(t_data.estimated_dollars_saved, 2),
             "categories": cats,
+            "l2_cache": {
+                "disk_bytes": l2_bytes,
+                "disk_mb": l2_mb,
+                "entries": l2_entries,
+                "warning": l2_mb > 50.0,
+            },
         },
         "ides": ide_list,
         "rules": {
@@ -277,6 +290,19 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 ok = True
             except Exception as e:
                 msg = f"Cache prune failed: {e}"
+                ok = False
+            self._send_json({"ok": ok, "msg": msg, "status": get_system_status()})
+            return
+
+        if self.path in ("/api/clear-cache", "/api/reset-cache"):
+            try:
+                p_cache = PersistentCache()
+                before = p_cache.count_entries()
+                p_cache.clear()
+                msg = f"L2 Cache completely cleared ({before} entries removed)"
+                ok = True
+            except Exception as e:
+                msg = f"Cache clear failed: {e}"
                 ok = False
             self._send_json({"ok": ok, "msg": msg, "status": get_system_status()})
             return

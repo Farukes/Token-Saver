@@ -133,6 +133,9 @@ class PersistentCache:
         try:
             with self._get_connection() as conn:
                 conn.execute("DELETE FROM file_cache")
+                conn.execute("DELETE FROM symbol_index")
+                conn.execute("DELETE FROM file_index_meta")
+                conn.execute("VACUUM")
         except Exception:
             pass
 
@@ -163,13 +166,15 @@ class PersistentCache:
             return 0
 
     def count_entries(self) -> int:
-        """Return total number of cached entries."""
+        """Return total number of cached entries (files and indexed symbols)."""
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
                 cursor.execute("SELECT COUNT(*) FROM file_cache")
-                row = cursor.fetchone()
-                return int(row[0]) if row else 0
+                files_count = cursor.fetchone()[0]
+                cursor.execute("SELECT COUNT(*) FROM symbol_index")
+                syms_count = cursor.fetchone()[0]
+                return int(files_count + syms_count)
         except Exception:
             return 0
 
