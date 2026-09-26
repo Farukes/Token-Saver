@@ -331,6 +331,17 @@ token-saver off --global
 token-saver init
 token-saver init --clean
 
+# 🎨 Open interactive Web Dashboard (Zero Background RAM)
+token-saver ui
+
+# 🧹 Completely clear L2 SQLite cache
+token-saver cache-clear
+
+# ⚠️ Completely uninstall Token-Saver from host (IDEs, project rules, hooks, cache, and PATH)
+token-saver uninstall
+# or skip confirmation prompt:
+token-saver uninstall --yes
+
 # Install /token-saver slash commands for AGY CLI and Claude Code
 token-saver setup-commands
 

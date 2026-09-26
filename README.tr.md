@@ -331,6 +331,17 @@ token-saver off --global
 token-saver init
 token-saver init --clean
 
+# 🎨 Etkileşimli Web Kontrol Panelini Başlatın (Sıfır Arka Plan RAM)
+token-saver ui
+
+# 🧹 L2 SQLite Önbelleğini Tamamen Sıfırlayın
+token-saver cache-clear
+
+# ⚠️ Token-Saver'ı Bilgisayardan Tamamen Kaldırın (IDE'ler, kurallar, hook'lar, önbellek ve PATH)
+token-saver uninstall
+# veya onay istemini atlayarak:
+token-saver uninstall --yes
+
 # AGY CLI ve Claude Code için /token-saver slash komutlarını kurun
 token-saver setup-commands
 
