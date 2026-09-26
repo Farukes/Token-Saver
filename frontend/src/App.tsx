@@ -1,14 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Header } from './components/Header';
+import { NavigationTabs, TabType } from './components/NavigationTabs';
 import { MetricCards } from './components/MetricCards';
 import { CategoryBreakdown } from './components/CategoryBreakdown';
 import { IdeIntegrationGrid } from './components/IdeIntegrationGrid';
 import { RulesConfigManager } from './components/RulesConfigManager';
 import { GatewayPreview } from './components/GatewayPreview';
 import { LiveEventStream } from './components/LiveEventStream';
+import { PlaygroundTab } from './components/PlaygroundTab';
 import { SystemStatus, Language, ConfigData } from './types';
 import { translations } from './i18n';
-import { ShieldCheck, Heart, Github, Lock } from 'lucide-react';
+import { ShieldCheck, Github, Lock, Sparkles, Activity } from 'lucide-react';
 
 const defaultStatus: SystemStatus = {
   version: "1.0.1",
@@ -129,6 +131,7 @@ export const App: React.FC = () => {
   const [status, setStatus] = useState<SystemStatus>(defaultStatus);
   const [isLive, setIsLive] = useState<boolean>(false);
   const [lang, setLang] = useState<Language>('tr');
+  const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [isClearingCache, setIsClearingCache] = useState<boolean>(false);
   const [isResettingStats, setIsResettingStats] = useState<boolean>(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -142,7 +145,7 @@ export const App: React.FC = () => {
 
   const fetchStatus = useCallback(async () => {
     try {
-      const res = await fetch('/api/status');
+      const res = await fetch('/api/status', { cache: 'no-store' });
       if (res.ok) {
         const data: SystemStatus = await res.json();
         setStatus(data);
@@ -196,7 +199,6 @@ export const App: React.FC = () => {
   };
 
   const handleToggleIde = async (ideName: string) => {
-    // Optimistic UI update
     setStatus((prev) => ({
       ...prev,
       ides: prev.ides.map((ide) =>
@@ -212,12 +214,11 @@ export const App: React.FC = () => {
       });
       await fetchStatus();
     } catch {
-      // Keep optimistic state in demo mode
+      // In demo mode keep optimistic state
     }
   };
 
   const handleUpdateConfig = async (updated: Partial<ConfigData>) => {
-    // Optimistic UI update
     setStatus((prev) => ({
       ...prev,
       config: { ...prev.config, ...updated },
@@ -231,7 +232,7 @@ export const App: React.FC = () => {
       });
       await fetchStatus();
     } catch {
-      // Keep optimistic state in demo mode
+      // In demo mode keep optimistic state
     }
   };
 
@@ -258,28 +259,61 @@ export const App: React.FC = () => {
         isResettingStats={isResettingStats}
       />
 
-      {/* Main Dashboard Content */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-6 py-8 space-y-8">
-        {/* Metric Cards Row */}
-        <MetricCards telemetry={status.telemetry} lang={lang} />
+      {/* Main Container */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-6 py-6 space-y-6">
+        {/* Navigation Tabs */}
+        <NavigationTabs
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          lang={lang}
+        />
 
-        {/* Compression Pipelines & IDE Integration Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          <div className="lg:col-span-7">
-            <CategoryBreakdown categories={status.telemetry.categories} lang={lang} />
+        {/* Tab 1: Overview */}
+        {activeTab === 'overview' && (
+          <div className="space-y-6 animate-fadeIn">
+            {/* Metric Cards Row */}
+            <MetricCards telemetry={status.telemetry} lang={lang} />
+
+            {/* Compression Pipelines & IDE Quick Status */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              <div className="lg:col-span-7">
+                <CategoryBreakdown categories={status.telemetry.categories} lang={lang} />
+              </div>
+              <div className="lg:col-span-5">
+                <IdeIntegrationGrid
+                  ides={status.ides}
+                  lang={lang}
+                  onToggleIde={handleToggleIde}
+                />
+              </div>
+            </div>
+
+            {/* Live Activity Stream */}
+            <LiveEventStream lang={lang} />
           </div>
-          <div className="lg:col-span-5">
+        )}
+
+        {/* Tab 2: Interactive Playground */}
+        {activeTab === 'playground' && (
+          <div className="animate-fadeIn">
+            <PlaygroundTab lang={lang} />
+          </div>
+        )}
+
+        {/* Tab 3: IDE Matrix */}
+        {activeTab === 'ides' && (
+          <div className="space-y-6 animate-fadeIn">
             <IdeIntegrationGrid
               ides={status.ides}
               lang={lang}
               onToggleIde={handleToggleIde}
             />
           </div>
-        </div>
+        )}
 
-        {/* Engine Rules & Gateway V2 Preview */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          <div className="lg:col-span-6">
+        {/* Tab 4: Optimization Policies */}
+        {activeTab === 'rules' && (
+          <div className="space-y-6 animate-fadeIn">
             <RulesConfigManager
               config={status.config}
               rules={status.rules}
@@ -287,17 +321,18 @@ export const App: React.FC = () => {
               onUpdateConfig={handleUpdateConfig}
             />
           </div>
-          <div className="lg:col-span-6">
+        )}
+
+        {/* Tab 5: V2 Universal Gateway */}
+        {activeTab === 'gateway' && (
+          <div className="space-y-6 animate-fadeIn">
             <GatewayPreview lang={lang} />
           </div>
-        </div>
-
-        {/* Live Activity Stream */}
-        <LiveEventStream lang={lang} />
+        )}
       </main>
 
       {/* Footer */}
-      <footer className="glass-panel border-t border-surface-700/60 bg-surface-950/80 py-6 px-6 mt-12">
+      <footer className="glass-panel border-t border-surface-700/60 bg-surface-950/80 py-5 px-6 mt-12">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
           <div className="flex items-center space-x-2">
             <span className="font-bold text-slate-200">TokenJar</span>

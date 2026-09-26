@@ -176,6 +176,9 @@ class DashboardHandler(BaseHTTPRequestHandler):
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(payload)))
+        self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+        self.send_header("Pragma", "no-cache")
+        self.send_header("Expires", "0")
         origin = self.headers.get("Origin")
         if origin and self._is_origin_allowed():
             self.send_header("Access-Control-Allow-Origin", origin)
@@ -201,7 +204,8 @@ class DashboardHandler(BaseHTTPRequestHandler):
             self.send_error(403, "Forbidden: Cross-origin access disallowed")
             return
 
-        if self.path in ("/", "/index.html"):
+        path_clean = self.path.split("?")[0]
+        if path_clean in ("/", "/index.html"):
             index_path = STATIC_DIR / "index.html"
             if index_path.exists():
                 html_bytes = index_path.read_bytes()
@@ -211,11 +215,14 @@ class DashboardHandler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
             self.send_header("Content-Length", str(len(html_bytes)))
+            self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+            self.send_header("Pragma", "no-cache")
+            self.send_header("Expires", "0")
             self.end_headers()
             self.wfile.write(html_bytes)
             return
 
-        if self.path == "/api/status":
+        if path_clean == "/api/status":
             self._send_json(get_system_status())
             return
 
