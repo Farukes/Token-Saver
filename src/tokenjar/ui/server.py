@@ -370,6 +370,7 @@ def run_fastapi_server(port: int = 4141, host: str = "127.0.0.1", open_browser: 
     """Start high-performance FastAPI/Uvicorn server for TokenJar Dashboard."""
     try:
         import uvicorn
+
         from tokenjar.ui.fastapi_app import create_app
         app = create_app()
     except ImportError as e:

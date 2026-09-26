@@ -9,21 +9,19 @@ from __future__ import annotations
 
 import asyncio
 import json
-from pathlib import Path
 from typing import Any, AsyncGenerator, Optional
 
 from tokenjar.cache.persistent_cache import PersistentCache
-from tokenjar.config import TokenJarConfig, load_config
 from tokenjar.hooks.manager import HookManager
 from tokenjar.rules.manager import RulesManager
 from tokenjar.telemetry.stats import tracker
 from tokenjar.ui.server import STATIC_DIR, get_system_status
 
 try:
-    from fastapi import FastAPI, HTTPException, Request, Response, status
+    from fastapi import FastAPI, HTTPException, Request, Response
     from fastapi.middleware.cors import CORSMiddleware
     from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
-    from pydantic import BaseModel, Field
+    from pydantic import BaseModel
 
     FASTAPI_AVAILABLE = True
 except ImportError:

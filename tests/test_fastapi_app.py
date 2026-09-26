@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+
 from tokenjar.ui.fastapi_app import FASTAPI_AVAILABLE, create_app
 
 
