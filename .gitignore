@@ -45,5 +45,8 @@ target/
 Thumbs.db
 
 # Assets (Local design prototypes)
-assets/
+assets/*.psd
+assets/*.tmp
+!assets/icon.ico
+!crates/tokenjar-cli/assets/
 

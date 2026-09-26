@@ -13,6 +13,7 @@ fn main() {
         res.set("CompanyName", "TokenJar Open Source");
         res.set("FileVersion", "1.0.3.0");
         res.set("ProductVersion", "1.0.3.0");
+        res.set_icon("assets/icon.ico");
         res.set_manifest(r#"
 <assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
 <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
