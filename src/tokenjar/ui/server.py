@@ -378,6 +378,7 @@ def run_fastapi_server(port: int = 4141, host: str = "127.0.0.1", open_browser: 
         return
 
     url = f"http://{host}:{port}"
+    launch_url = f"{url}/?v={int(time.time())}"
     print("┌────────────────────────────────────────────────────────────────────────┐")
     print("│ ⚡ TOKENJAR FASTAPI REACT 18 DASHBOARD                               │")
     print("├────────────────────────────────────────────────────────────────────────┤")
@@ -388,7 +389,7 @@ def run_fastapi_server(port: int = 4141, host: str = "127.0.0.1", open_browser: 
     sys.stdout.flush()
 
     if open_browser:
-        threading.Thread(target=lambda: (time.sleep(0.3), open_app_window(url)), daemon=True).start()
+        threading.Thread(target=lambda: (time.sleep(0.3), open_app_window(launch_url)), daemon=True).start()
 
     uvicorn.run(app, host=host, port=port, log_level="warning")
 
@@ -419,6 +420,7 @@ def start_ui_server(
         sys.exit(1)
 
     url = f"http://{host}:{actual_port}"
+    launch_url = f"{url}/?v={int(time.time())}"
     print("┌────────────────────────────────────────────────────────────────────────┐")
     print("│ 🔋 TOKENJAR ON-DEMAND CONTROL DASHBOARD                             │")
     print("├────────────────────────────────────────────────────────────────────────┤")
@@ -429,7 +431,7 @@ def start_ui_server(
     sys.stdout.flush()
 
     if open_browser:
-        threading.Thread(target=lambda: (time.sleep(0.2), open_app_window(url)), daemon=True).start()
+        threading.Thread(target=lambda: (time.sleep(0.2), open_app_window(launch_url)), daemon=True).start()
 
     try:
         server.serve_forever()

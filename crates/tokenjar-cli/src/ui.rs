@@ -180,6 +180,11 @@ pub async fn start_ui_server(port: u16) -> Result<(), Box<dyn std::error::Error>
     };
 
     let url = format!("http://127.0.0.1:{current_port}");
+    let timestamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0);
+    let launch_url = format!("{url}/?v={timestamp}");
     println!("============================================================");
     println!("🔋 TOKENJAR CONTROL DASHBOARD (RUST NATIVE)");
     println!("============================================================");
@@ -187,7 +192,7 @@ pub async fn start_ui_server(port: u16) -> Result<(), Box<dyn std::error::Error>
     println!("Status        : 🟢 Running (Press Ctrl+C to terminate)");
     println!("============================================================");
 
-    open_browser(&url);
+    open_browser(&launch_url);
 
     let tracker = TelemetryTracker::new();
 
@@ -208,7 +213,8 @@ pub async fn start_ui_server(port: u16) -> Result<(), Box<dyn std::error::Error>
         }
 
         let method = parts[0];
-        let path = parts[1];
+        let full_path = parts[1];
+        let path = full_path.split('?').next().unwrap_or("/");
 
         // Security: Host and Origin header validation against DNS rebinding and CSRF
         let mut host_header = "";
@@ -440,6 +446,9 @@ pub async fn start_ui_server(port: u16) -> Result<(), Box<dyn std::error::Error>
             "HTTP/1.1 {status_code}\r\n\
              Content-Type: {content_type}\r\n\
              Content-Length: {}\r\n\
+             Cache-Control: no-store, no-cache, must-revalidate, max-age=0\r\n\
+             Pragma: no-cache\r\n\
+             Expires: 0\r\n\
              Connection: close\r\n\
              Access-Control-Allow-Origin: *\r\n\
              \r\n\
