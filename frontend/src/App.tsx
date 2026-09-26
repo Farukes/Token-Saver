@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Header } from './components/Header';
-import { NavigationTabs, TabType } from './components/NavigationTabs';
+import { Sidebar, ViewTab } from './components/Sidebar';
+import { SavingsHero } from './components/SavingsHero';
+import { SavingsComparisonChart } from './components/SavingsComparisonChart';
 import { MetricCards } from './components/MetricCards';
 import { CategoryBreakdown } from './components/CategoryBreakdown';
 import { IdeIntegrationGrid } from './components/IdeIntegrationGrid';
@@ -10,7 +11,7 @@ import { LiveEventStream } from './components/LiveEventStream';
 import { PlaygroundTab } from './components/PlaygroundTab';
 import { SystemStatus, Language, ConfigData } from './types';
 import { translations } from './i18n';
-import { ShieldCheck, Github, Lock, Sparkles, Activity } from 'lucide-react';
+import { ShieldCheck, RotateCw, ExternalLink, Sparkles } from 'lucide-react';
 
 const defaultStatus: SystemStatus = {
   version: "1.0.1",
@@ -131,7 +132,7 @@ export const App: React.FC = () => {
   const [status, setStatus] = useState<SystemStatus>(defaultStatus);
   const [isLive, setIsLive] = useState<boolean>(false);
   const [lang, setLang] = useState<Language>('tr');
-  const [activeTab, setActiveTab] = useState<TabType>('overview');
+  const [activeTab, setActiveTab] = useState<ViewTab>('overview');
   const [isClearingCache, setIsClearingCache] = useState<boolean>(false);
   const [isResettingStats, setIsResettingStats] = useState<boolean>(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -214,7 +215,7 @@ export const App: React.FC = () => {
       });
       await fetchStatus();
     } catch {
-      // In demo mode keep optimistic state
+      // Keep optimistic state
     }
   };
 
@@ -232,12 +233,29 @@ export const App: React.FC = () => {
       });
       await fetchStatus();
     } catch {
-      // In demo mode keep optimistic state
+      // Keep optimistic state
+    }
+  };
+
+  const getViewTitle = () => {
+    switch (activeTab) {
+      case 'overview':
+        return lang === 'tr' ? 'Canlı Telemetri ve Tasarruf Paneli' : 'Live Telemetry & Token Savings';
+      case 'playground':
+        return lang === 'tr' ? 'İnteraktif Sıkıştırma Laboratuvarı' : 'Interactive Compression Lab';
+      case 'ides':
+        return lang === 'tr' ? 'IDE ve Ajan Entegrasyon Merkezi' : 'IDE & Agent Integration Center';
+      case 'rules':
+        return lang === 'tr' ? 'Optimizasyon Politikaları ve Kurallar' : 'Optimization Policies & Heuristics';
+      case 'gateway':
+        return lang === 'tr' ? 'V2 Evrensel MCP Ağ Geçidi' : 'V2 Universal MCP Gateway';
+      default:
+        return 'Dashboard';
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-surface-950 text-slate-100 selection:bg-brand-500 selection:text-white">
+    <div className="min-h-screen flex bg-surface-950 text-slate-100 selection:bg-brand-500 selection:text-white">
       {/* Toast Notification */}
       {toast && (
         <div className="fixed bottom-6 right-6 z-50 px-4 py-2.5 rounded-xl bg-brand-500 text-surface-950 font-bold text-xs shadow-2xl flex items-center space-x-2 animate-bounce">
@@ -246,131 +264,110 @@ export const App: React.FC = () => {
         </div>
       )}
 
-      {/* Header */}
-      <Header
+      {/* Modern Sidebar */}
+      <Sidebar
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
         lang={lang}
         onToggleLang={handleToggleLang}
         isLive={isLive}
         version={status.version}
-        onRefresh={fetchStatus}
         onClearCache={handleClearCache}
         onResetStats={handleResetStats}
         isClearingCache={isClearingCache}
         isResettingStats={isResettingStats}
       />
 
-      {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-6 py-6 space-y-6">
-        {/* Navigation Tabs */}
-        <NavigationTabs
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          lang={lang}
-        />
+      {/* Right Column: Top Bar + Active View Content */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto custom-scrollbar">
+        {/* Top Bar */}
+        <header className="sticky top-0 z-30 px-6 py-4 glass-panel border-b border-surface-700/60 bg-surface-950/80 backdrop-blur-xl flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <h1 className="text-lg font-extrabold text-white tracking-tight">
+              {getViewTitle()}
+            </h1>
+            <span className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-surface-800 text-slate-400 border border-surface-700">
+              {activeTab.toUpperCase()}
+            </span>
+          </div>
 
-        {/* Tab 1: Overview */}
-        {activeTab === 'overview' && (
-          <div className="space-y-6 animate-fadeIn">
-            {/* Metric Cards Row */}
-            <MetricCards telemetry={status.telemetry} lang={lang} />
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={fetchStatus}
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-surface-850 hover:bg-surface-800 text-slate-300 hover:text-white border border-surface-700/80 text-xs font-semibold shadow-sm transition-all"
+            >
+              <RotateCw className="w-3.5 h-3.5 text-brand-400" />
+              <span>{t.btnRefresh}</span>
+            </button>
 
-            {/* Compression Pipelines & IDE Quick Status */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              <div className="lg:col-span-7">
-                <CategoryBreakdown categories={status.telemetry.categories} lang={lang} />
-              </div>
-              <div className="lg:col-span-5">
-                <IdeIntegrationGrid
-                  ides={status.ides}
-                  lang={lang}
-                  onToggleIde={handleToggleIde}
-                />
+            <a
+              href="https://github.com/Farukes/TokenJar"
+              target="_blank"
+              rel="noreferrer"
+              className="p-2 rounded-xl bg-surface-850 hover:bg-surface-800 text-slate-400 hover:text-white border border-surface-700/80 transition-colors"
+              title="GitHub Repository"
+            >
+              <ExternalLink className="w-4 h-4" />
+            </a>
+          </div>
+        </header>
+
+        {/* Main Content Body */}
+        <main className="p-6 max-w-7xl w-full mx-auto space-y-6">
+          {/* Tab 1: Overview */}
+          {activeTab === 'overview' && (
+            <div className="space-y-6">
+              {/* Savings Hero with Radial Gauge */}
+              <SavingsHero telemetry={status.telemetry} lang={lang} />
+
+              {/* Visual Area Comparison Chart */}
+              <SavingsComparisonChart lang={lang} />
+
+              {/* 4 Metric Cards */}
+              <MetricCards telemetry={status.telemetry} lang={lang} />
+
+              {/* Category Breakdown & Live Activity Stream */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div className="lg:col-span-7">
+                  <CategoryBreakdown categories={status.telemetry.categories} lang={lang} />
+                </div>
+                <div className="lg:col-span-5">
+                  <LiveEventStream lang={lang} />
+                </div>
               </div>
             </div>
+          )}
 
-            {/* Live Activity Stream */}
-            <LiveEventStream lang={lang} />
-          </div>
-        )}
-
-        {/* Tab 2: Interactive Playground */}
-        {activeTab === 'playground' && (
-          <div className="animate-fadeIn">
+          {/* Tab 2: Playground */}
+          {activeTab === 'playground' && (
             <PlaygroundTab lang={lang} />
-          </div>
-        )}
+          )}
 
-        {/* Tab 3: IDE Matrix */}
-        {activeTab === 'ides' && (
-          <div className="space-y-6 animate-fadeIn">
+          {/* Tab 3: IDEs */}
+          {activeTab === 'ides' && (
             <IdeIntegrationGrid
               ides={status.ides}
               lang={lang}
               onToggleIde={handleToggleIde}
             />
-          </div>
-        )}
+          )}
 
-        {/* Tab 4: Optimization Policies */}
-        {activeTab === 'rules' && (
-          <div className="space-y-6 animate-fadeIn">
+          {/* Tab 4: Rules */}
+          {activeTab === 'rules' && (
             <RulesConfigManager
               config={status.config}
               rules={status.rules}
               lang={lang}
               onUpdateConfig={handleUpdateConfig}
             />
-          </div>
-        )}
+          )}
 
-        {/* Tab 5: V2 Universal Gateway */}
-        {activeTab === 'gateway' && (
-          <div className="space-y-6 animate-fadeIn">
+          {/* Tab 5: V2 Gateway */}
+          {activeTab === 'gateway' && (
             <GatewayPreview lang={lang} />
-          </div>
-        )}
-      </main>
-
-      {/* Footer */}
-      <footer className="glass-panel border-t border-surface-700/60 bg-surface-950/80 py-5 px-6 mt-12">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
-          <div className="flex items-center space-x-2">
-            <span className="font-bold text-slate-200">TokenJar</span>
-            <span>&bull;</span>
-            <span className="flex items-center space-x-1 text-brand-400 font-medium">
-              <Lock className="w-3 h-3" />
-              <span>Zero Telemetry &bull; 100% Local Processing</span>
-            </span>
-          </div>
-          <div className="flex items-center space-x-4">
-            <a
-              href="https://github.com/Farukes/TokenJar"
-              target="_blank"
-              rel="noreferrer"
-              className="hover:text-white flex items-center space-x-1 transition-colors"
-            >
-              <Github className="w-4 h-4" />
-              <span>GitHub</span>
-            </a>
-            <a
-              href="https://pypi.org/project/tokenjar/"
-              target="_blank"
-              rel="noreferrer"
-              className="hover:text-white transition-colors"
-            >
-              PyPI
-            </a>
-            <a
-              href="https://crates.io/crates/tokenjar"
-              target="_blank"
-              rel="noreferrer"
-              className="hover:text-white transition-colors"
-            >
-              Crates.io
-            </a>
-          </div>
-        </div>
-      </footer>
+          )}
+        </main>
+      </div>
     </div>
   );
 };
