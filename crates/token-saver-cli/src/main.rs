@@ -139,6 +139,9 @@ enum Commands {
         #[arg(long)]
         all: bool,
     },
+
+    /// Show version information
+    Version,
 }
 
 #[tokio::main]
@@ -147,6 +150,9 @@ async fn main() {
     let tracker = TelemetryTracker::new();
 
     match &cli.command {
+        Some(Commands::Version) => {
+            println!("token-saver {}", env!("CARGO_PKG_VERSION"));
+        }
         Some(Commands::Stats) => {
             println!("{}", tracker.render_dashboard());
         }

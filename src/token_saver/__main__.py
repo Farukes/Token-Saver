@@ -28,7 +28,17 @@ def main() -> None:
         prog="token-saver",
         description="Token-Saver: Zero-cost token optimization engine for AI coding assistants and developers.",
     )
+    parser.add_argument(
+        "-v",
+        "--version",
+        action="version",
+        version="token-saver 1.0.1",
+        help="Show program's version number and exit",
+    )
     subparsers = parser.add_subparsers(dest="subcommand", metavar="<command>", help="Available subcommands")
+
+    # Subcommand: version
+    subparsers.add_parser("version", help="Show program's version number and exit")
 
     # Subcommand: server (default if no args)
     subparsers.add_parser("server", help="Start the MCP server (stdio transport)")
@@ -251,6 +261,10 @@ def main() -> None:
             return
 
     args = parser.parse_args()
+
+    if args.subcommand == "version":
+        print("token-saver 1.0.1")
+        return
 
     if args.subcommand in (None, "server"):
         from token_saver.server import mcp
