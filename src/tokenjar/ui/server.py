@@ -121,7 +121,7 @@ def get_system_status() -> dict[str, Any]:
     l2_entries = p_cache.count_entries()
 
     return {
-        "version": "1.0.1",
+        "version": "1.0.2",
         "active": any_active or rules_installed,
         "overall_status": "ACTIVE" if (any_active or rules_installed) else "INACTIVE",
         "telemetry": {

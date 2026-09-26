@@ -9,12 +9,12 @@
 <h1 align="center">🍯 TokenJar</h1>
 <p align="center"><b>Put tokens back in your jar. Save 70-95% tokens for AI coding assistants without losing functionality.</b></p>
 
-[![Release: v1.0.1](https://img.shields.io/badge/Release-v1.0.1%20GA-green.svg)](https://github.com/Farukes/TokenJar/releases/latest)
+[![Release: v1.0.2](https://img.shields.io/badge/Release-v1.0.2%20GA-green.svg)](https://github.com/Farukes/TokenJar/releases/latest)
 [![CI](https://github.com/Farukes/TokenJar/actions/workflows/ci.yml/badge.svg)](https://github.com/Farukes/TokenJar/actions/workflows/ci.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](https://www.python.org/downloads/)
-[![Enterprise Native: Rust](https://img.shields.io/badge/Enterprise%20Native-Rust%20v1.0.1-orange.svg)](#-enterprise--high-performance-native-engine-rust-edition)
-[![Crates.io: v1.0.1](https://img.shields.io/badge/crates.io-v1.0.1-orange.svg?logo=rust&logoColor=white)](https://crates.io/crates/tokenjar)
-[![PyPI: v1.0.1](https://img.shields.io/badge/PyPI-v1.0.1-blue.svg?logo=pypi&logoColor=white)](https://pypi.org/project/tokenjar/)
+[![Enterprise Native: Rust](https://img.shields.io/badge/Enterprise%20Native-Rust%20v1.0.2-orange.svg)](#-enterprise--high-performance-native-engine-rust-edition)
+[![Crates.io: v1.0.2](https://img.shields.io/badge/crates.io-v1.0.2-orange.svg?logo=rust&logoColor=white)](https://crates.io/crates/tokenjar)
+[![PyPI: v1.0.2](https://img.shields.io/badge/PyPI-v1.0.2-blue.svg?logo=pypi&logoColor=white)](https://pypi.org/project/tokenjar/)
 [![Token Reduction](https://img.shields.io/badge/Token%20Savings-89%25%20to%2096%25-brightgreen.svg)](#-proven-performance--stress-test-benchmark)
 [![License: BSL 1.1](https://img.shields.io/badge/License-BSL%201.1-blue.svg)](LICENSE)
 [![Zero Telemetry](https://img.shields.io/badge/telemetry-0%25%20(100%25%20local)-success.svg)](#-enterprise-privacy--security-guarantee)
@@ -50,7 +50,7 @@ Works with **Claude Code**, **Cursor**, **Antigravity (AGY)**, **Windsurf**, **C
 
 ---
 
-## 🚀 Quick Start & Installation (v1.0.1 GA)
+## 🚀 Quick Start & Installation (v1.0.2 GA)
 
 TokenJar is distributed in two official editions:
 1. **🦀 Rust Native Engine (Recommended):** High-performance, self-contained single binary with microsecond AST, 14 MB RAM, and zero Python dependencies.
@@ -58,7 +58,7 @@ TokenJar is distributed in two official editions:
 
 ### 📥 1-Click Direct Downloads (Precompiled Binaries)
 
-Click your operating system below to download the latest v1.0.1 release:
+Click your operating system below to download the latest v1.0.2 release:
 
 | Platform | Architecture | Click to Download | Format |
 |:---|:---|:---|:---|
@@ -114,7 +114,7 @@ pip install git+https://github.com/Farukes/TokenJar.git
 
 Empirical results from our rigorous **100-Step Real-Life Developer Stress Test** and **50-Cycle MCP Head-to-Head Benchmark** comparing Standard Raw AI vs TokenJar Python vs TokenJar Rust Native Engine:
 
-| Metric | 1. Raw AI (No TokenJar) | 2. TokenJar Python | 3. TokenJar Rust (v1.0.1) | Rust Advantage |
+| Metric | 1. Raw AI (No TokenJar) | 2. TokenJar Python | 3. TokenJar Rust (v1.0.2) | Rust Advantage |
 |:---|:---|:---|:---|:---|
 | **Consumed Tokens (100 Steps)** | 622,892 tokens | 95,492 tokens | **68,641 tokens** | **89.0% net savings (554k tokens saved)** |
 | **End-to-End Coding Savings** | 166,513 tokens | 12,400 tokens | **6,585 tokens** | **🚀 96.0% net savings (Surgical edits)** |

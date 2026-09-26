@@ -1,5 +1,5 @@
 PackageIdentifier: Farukes.TokenJar
-PackageVersion: 1.0.1
+PackageVersion: 1.0.2
 PackageLocale: en-US
 Publisher: Ömer Faruk Eskitürk
 PublisherUrl: https://github.com/Farukes
@@ -20,6 +20,6 @@ Tags:
   - cursor
   - windsurf
   - rust
-ReleaseNotesUrl: https://github.com/Farukes/TokenJar/releases/tag/v1.0.1
+ReleaseNotesUrl: https://github.com/Farukes/TokenJar/releases/tag/v1.0.2
 ManifestType: defaultLocale
 ManifestVersion: 1.6.0

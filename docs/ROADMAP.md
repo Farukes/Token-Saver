@@ -11,7 +11,7 @@ TokenJar V2.0 transforms TokenJar from a standalone local file/terminal optimize
 
 ```mermaid
 flowchart LR
-    subgraph V1 ["TokenJar v1.0.1 (Current Architecture)"]
+    subgraph V1 ["TokenJar v1.0.2 (Current Architecture)"]
         IDE1["AI Assistant"] <==>|"AST + Diff Cache + Pruner"| TJ1["TokenJar MCP Engine"]
         TJ1 --- LocalFiles["Local Codebase & Terminal"]
     end

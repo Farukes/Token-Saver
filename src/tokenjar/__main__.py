@@ -32,7 +32,7 @@ def main() -> None:
         "-v",
         "--version",
         action="version",
-        version="tokenjar 1.0.1",
+        version="tokenjar 1.0.2",
         help="Show program's version number and exit",
     )
     subparsers = parser.add_subparsers(dest="subcommand", metavar="<command>", help="Available subcommands")
@@ -263,7 +263,7 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.subcommand == "version":
-        print("tokenjar 1.0.1")
+        print("tokenjar 1.0.2")
         return
 
     if args.subcommand in (None, "server"):
