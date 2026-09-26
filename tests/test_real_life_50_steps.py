@@ -23,15 +23,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 from token_saver.cache.persistent_cache import PersistentCache
 from token_saver.filters.lockfile import process_lockfile
-from token_saver.filters.test_runners import filter_cargo, filter_pytest
 from token_saver.rules.manager import RulesManager
 from token_saver.telemetry.stats import tracker
-from token_saver.utils.token_counter import estimate_tokens
 from token_saver.tools.output_pruner import filter_output_logic
 from token_saver.tools.repo_map import get_directory_tree, get_repo_map
 from token_saver.tools.skeleton import _build_skeleton, get_code_skeleton, get_symbol
 from token_saver.tools.smart_reader import read_file_smart
 from token_saver.tools.symbol_index import find_symbol_global, find_symbol_references
+from token_saver.utils.token_counter import estimate_tokens
 
 
 def run_50_step_real_life_test():
@@ -67,7 +66,9 @@ def run_50_step_real_life_test():
     total_raw_tokens += est_full_repo
     total_saved_tokens += saved_map
     assert len(repo_map) > 0
-    print(f"  [Step 2] get_repo_map(budget=1000) -> {map_tok} tokens ({saved_map/est_full_repo*100:.1f}% saved) in {dt:.2f}ms")
+    print(
+        f"  [Step 2] get_repo_map(budget=1000) -> {map_tok} tokens ({saved_map / est_full_repo * 100:.1f}% saved) in {dt:.2f}ms"
+    )
 
     # Step 3: Directory tree exploration
     t0 = time.perf_counter()
@@ -107,7 +108,9 @@ def run_50_step_real_life_test():
     saved_mgr = max(0, raw_mgr - skel_tok)
     total_raw_tokens += raw_mgr
     total_saved_tokens += saved_mgr
-    print(f"  [Step 7] get_code_skeleton(manager.py) -> {raw_mgr} -> {skel_tok} tokens ({saved_mgr/raw_mgr*100:.1f}% saved) in {dt:.2f}ms")
+    print(
+        f"  [Step 7] get_code_skeleton(manager.py) -> {raw_mgr} -> {skel_tok} tokens ({saved_mgr / raw_mgr * 100:.1f}% saved) in {dt:.2f}ms"
+    )
 
     # Step 8: AST Skeleton on rules/manager.py
     rules_path = str(repo_root / "src" / "token_saver" / "rules" / "manager.py")
@@ -119,7 +122,9 @@ def run_50_step_real_life_test():
     saved_rules = max(0, raw_rules - skel_rules_tok)
     total_raw_tokens += raw_rules
     total_saved_tokens += saved_rules
-    print(f"  [Step 8] get_code_skeleton(rules/manager.py) -> {raw_rules} -> {skel_rules_tok} tokens ({saved_rules/raw_rules*100:.1f}% saved) in {dt:.2f}ms")
+    print(
+        f"  [Step 8] get_code_skeleton(rules/manager.py) -> {raw_rules} -> {skel_rules_tok} tokens ({saved_rules / raw_rules * 100:.1f}% saved) in {dt:.2f}ms"
+    )
 
     # Step 9: Specific symbol lookup via get_symbol
     t0 = time.perf_counter()
@@ -129,10 +134,14 @@ def run_50_step_real_life_test():
     print(f"  [Step 9] get_symbol('RulesManager') -> extracted implementation in {dt:.2f}ms")
 
     # Step 10: Massive 3,000 package lockfile shield interception
-    mock_lockfile = '{\n  "name": "enterprise-monorepo",\n  "packages": {\n' + "".join(
-        f'    "node_modules/pkg-{i}": {{\n      "version": "{i}.0.0",\n      "resolved": "https://registry.npmjs.org/pkg-{i}"\n    }},\n'
-        for i in range(1, 3000)
-    ) + '    "node_modules/react": {\n      "version": "18.3.1"\n    }\n  }\n}'
+    mock_lockfile = (
+        '{\n  "name": "enterprise-monorepo",\n  "packages": {\n'
+        + "".join(
+            f'    "node_modules/pkg-{i}": {{\n      "version": "{i}.0.0",\n      "resolved": "https://registry.npmjs.org/pkg-{i}"\n    }},\n'
+            for i in range(1, 3000)
+        )
+        + '    "node_modules/react": {\n      "version": "18.3.1"\n    }\n  }\n}'
+    )
     orig_tok = estimate_tokens(mock_lockfile)
     t0 = time.perf_counter()
     filtered_lock = process_lockfile("package-lock.json", mock_lockfile, query="react")
@@ -142,7 +151,9 @@ def run_50_step_real_life_test():
     total_raw_tokens += orig_tok
     total_saved_tokens += saved_lock
     assert "18.3.1" in filtered_lock
-    print(f"  [Step 10] Lockfile Shield on 3,000 packages -> {orig_tok} -> {comp_tok} tokens ({saved_lock/orig_tok*100:.1f}% saved) in {dt:.2f}ms")
+    print(
+        f"  [Step 10] Lockfile Shield on 3,000 packages -> {orig_tok} -> {comp_tok} tokens ({saved_lock / orig_tok * 100:.1f}% saved) in {dt:.2f}ms"
+    )
 
     # -------------------------------------------------------------
     # PHASE 2: Slicing, Differential Cache & Surgical Diffs (Steps 11-20)
@@ -158,7 +169,9 @@ def run_50_step_real_life_test():
     total_raw_tokens += raw_mgr
     total_saved_tokens += saved_s1
     assert "Lines 1-30" in slice_1
-    print(f"  [Step 11] Targeted Slice (Lines 1-30) -> {raw_mgr} -> {slice_tok1} tokens ({saved_s1/raw_mgr*100:.1f}% saved) in {dt:.2f}ms")
+    print(
+        f"  [Step 11] Targeted Slice (Lines 1-30) -> {raw_mgr} -> {slice_tok1} tokens ({saved_s1 / raw_mgr * 100:.1f}% saved) in {dt:.2f}ms"
+    )
 
     # Step 12: Targeted slice (lines 650 to 680 - full_uninstall area)
     t0 = time.perf_counter()
@@ -169,7 +182,9 @@ def run_50_step_real_life_test():
     total_raw_tokens += raw_mgr
     total_saved_tokens += saved_s2
     assert "full_uninstall" in slice_2
-    print(f"  [Step 12] Targeted Slice (Lines 650-680) -> {raw_mgr} -> {slice_tok2} tokens ({saved_s2/raw_mgr*100:.1f}% saved) in {dt:.2f}ms")
+    print(
+        f"  [Step 12] Targeted Slice (Lines 650-680) -> {raw_mgr} -> {slice_tok2} tokens ({saved_s2 / raw_mgr * 100:.1f}% saved) in {dt:.2f}ms"
+    )
 
     # Steps 13-17: Rapid repetitive reads hitting session cache
     t0 = time.perf_counter()
@@ -180,7 +195,7 @@ def run_50_step_real_life_test():
         total_raw_tokens += raw_mgr
         total_saved_tokens += s_saved
     dt = (time.perf_counter() - t0) * 1000
-    print(f"  [Steps 13-17] 5x Repetitive Cache Hits -> {dt/5:.3f}ms avg/read (99.8% token savings)")
+    print(f"  [Steps 13-17] 5x Repetitive Cache Hits -> {dt / 5:.3f}ms avg/read (99.8% token savings)")
 
     # Steps 18-20: Caching across other key repo files
     key_files = [
@@ -196,7 +211,7 @@ def run_50_step_real_life_test():
         kf_raw = estimate_tokens(Path(kf).read_text(encoding="utf-8"))
         kf_tok = estimate_tokens(c_res)
         total_raw_tokens += kf_raw
-        total_saved_tokens += (kf_raw - kf_tok)
+        total_saved_tokens += kf_raw - kf_tok
         assert "[CACHED]" in c_res
         print(f"  [Step {idx}] Instant cache hit on {Path(kf).name} in {dt:.2f}ms")
 
@@ -206,7 +221,10 @@ def run_50_step_real_life_test():
     print("\n📍 [Phase 3/5] Terminal Output Pruning & Safety Guardrails (Steps 21-30)")
 
     # Step 21: Pytest passing output (50 passing tests)
-    passing_pytest = "\n".join([f"tests/test_{i}.py::test_feature_{i} PASSED [ {i*2}%]" for i in range(1, 51)]) + "\n\n==== 50 passed in 1.45s ===="
+    passing_pytest = (
+        "\n".join([f"tests/test_{i}.py::test_feature_{i} PASSED [ {i * 2}%]" for i in range(1, 51)])
+        + "\n\n==== 50 passed in 1.45s ===="
+    )
     t0 = time.perf_counter()
     pruned_pytest = filter_output_logic(passing_pytest, "pytest")
     dt = (time.perf_counter() - t0) * 1000
@@ -215,10 +233,16 @@ def run_50_step_real_life_test():
     saved_p = raw_p - pruned_p
     total_raw_tokens += raw_p
     total_saved_tokens += saved_p
-    print(f"  [Step 21] 50-test Pytest Pruning -> {raw_p} -> {pruned_p} tokens ({saved_p/raw_p*100:.1f}% saved) in {dt:.2f}ms")
+    print(
+        f"  [Step 21] 50-test Pytest Pruning -> {raw_p} -> {pruned_p} tokens ({saved_p / raw_p * 100:.1f}% saved) in {dt:.2f}ms"
+    )
 
     # Step 22: Cargo test passing output (38 tests)
-    passing_cargo = "running 38 tests\n" + "\n".join([f"test test_unit_{i} ... ok" for i in range(1, 39)]) + "\ntest result: ok. 38 passed; 0 failed; finished in 2.10s"
+    passing_cargo = (
+        "running 38 tests\n"
+        + "\n".join([f"test test_unit_{i} ... ok" for i in range(1, 39)])
+        + "\ntest result: ok. 38 passed; 0 failed; finished in 2.10s"
+    )
     t0 = time.perf_counter()
     pruned_cargo = filter_output_logic(passing_cargo, "cargo")
     dt = (time.perf_counter() - t0) * 1000
@@ -227,7 +251,9 @@ def run_50_step_real_life_test():
     saved_c = raw_c - pruned_c
     total_raw_tokens += raw_c
     total_saved_tokens += saved_c
-    print(f"  [Step 22] 38-test Cargo Pruning -> {raw_c} -> {pruned_c} tokens ({saved_c/raw_c*100:.1f}% saved) in {dt:.2f}ms")
+    print(
+        f"  [Step 22] 38-test Cargo Pruning -> {raw_c} -> {pruned_c} tokens ({saved_c / raw_c * 100:.1f}% saved) in {dt:.2f}ms"
+    )
 
     # Steps 23-27: Repetitive build & test prunes
     for s in range(23, 28):
@@ -236,8 +262,8 @@ def run_50_step_real_life_test():
         clean = filter_output_logic(noisy_output, "cargo")
         c_tok = estimate_tokens(clean)
         total_raw_tokens += r_tok
-        total_saved_tokens += (r_tok - c_tok)
-    print(f"  [Steps 23-27] 5x Build & Compilation Stream Filters executed successfully")
+        total_saved_tokens += r_tok - c_tok
+    print("  [Steps 23-27] 5x Build & Compilation Stream Filters executed successfully")
 
     # Step 28: CRITICAL: Fallback Safety Guard (Error must NEVER be pruned)
     failing_pytest = "=== FAILURES ===\n________________ test_failure ________________\n> assert 200 == 500\nE AssertionError: Expected 200 got 500\ntests/test_core.py:45: AssertionError\n==== 1 failed, 49 passed in 0.82s ===="
@@ -249,13 +275,16 @@ def run_50_step_real_life_test():
     print(f"  [Step 28] Fallback Safety Guard -> Error details 100% preserved in {dt:.2f}ms")
 
     # Steps 29-30: Git diff & status pruners
-    git_diff_noisy = "diff --git a/file.txt b/file.txt\nindex 1234..5678 100644\n--- a/file.txt\n+++ b/file.txt\n@@ -1,5 +1,5 @@\n-old line\n+new line\n" * 20
+    git_diff_noisy = (
+        "diff --git a/file.txt b/file.txt\nindex 1234..5678 100644\n--- a/file.txt\n+++ b/file.txt\n@@ -1,5 +1,5 @@\n-old line\n+new line\n"
+        * 20
+    )
     r_g = estimate_tokens(git_diff_noisy)
     clean_git = filter_output_logic(git_diff_noisy, "git")
     c_g = estimate_tokens(clean_git)
     total_raw_tokens += r_g
     total_saved_tokens += max(0, r_g - c_g)
-    print(f"  [Steps 29-30] Git Stream Pruning -> Repetitive git diffs filtered cleanly")
+    print("  [Steps 29-30] Git Stream Pruning -> Repetitive git diffs filtered cleanly")
 
     # -------------------------------------------------------------
     # PHASE 4: Multi-Language AST Parsing & Symbol Index (Steps 31-40)
@@ -263,10 +292,19 @@ def run_50_step_real_life_test():
     print("\n📍 [Phase 4/5] Multi-Language AST & Symbol Indexing (Steps 31-40)")
 
     sample_snippets = [
-        ("typescript", "export interface User { id: string; name: string; }\nexport function fetchUser(id: string): Promise<User> { return api.get(id); }"),
+        (
+            "typescript",
+            "export interface User { id: string; name: string; }\nexport function fetchUser(id: string): Promise<User> { return api.get(id); }",
+        ),
         ("go", "package main\ntype Server struct { Port int }\nfunc (s *Server) Start() error { return nil }"),
-        ("rust", "pub struct Config { pub timeout: u64 }\nimpl Config { pub fn new() -> Self { Self { timeout: 30 } } }"),
-        ("python", "class Engine:\n    def __init__(self, name: str):\n        self.name = name\n    def run(self) -> bool:\n        return True"),
+        (
+            "rust",
+            "pub struct Config { pub timeout: u64 }\nimpl Config { pub fn new() -> Self { Self { timeout: 30 } } }",
+        ),
+        (
+            "python",
+            "class Engine:\n    def __init__(self, name: str):\n        self.name = name\n    def run(self) -> bool:\n        return True",
+        ),
         ("cpp", "class Controller { public: void execute(); private: int state_; };"),
     ]
 
@@ -289,7 +327,7 @@ def run_50_step_real_life_test():
         res = p_cache.search_symbols(str(repo_root), sym_q, max_results=5)
         assert len(res) > 0, f"Symbol query {sym_q} returned 0 results"
     dt = (time.perf_counter() - t0) * 1000
-    print(f"  [Steps 36-40] 5x SQLite Indexed Symbol Queries -> {dt/5:.2f}ms avg/query from cache.db")
+    print(f"  [Steps 36-40] 5x SQLite Indexed Symbol Queries -> {dt / 5:.2f}ms avg/query from cache.db")
 
     # -------------------------------------------------------------
     # PHASE 5: L2 Cache, Disk Footprint & Telemetry (Steps 41-50)
@@ -327,6 +365,7 @@ def run_50_step_real_life_test():
     # Step 45: Telemetry data integrity
     t0 = time.perf_counter()
     data = tracker.data
+    assert data is not None
     dt = (time.perf_counter() - t0) * 1000
     print(f"  [Step 45] Cumulative telemetry tracker verified in {dt:.2f}ms")
 
@@ -340,7 +379,9 @@ def run_50_step_real_life_test():
     # Step 47: Config reload from disk
     t0 = time.perf_counter()
     from token_saver.config import load_config
+
     cfg_loaded = load_config(repo_root)
+    assert cfg_loaded is not None
     dt = (time.perf_counter() - t0) * 1000
     print(f"  [Step 47] Config loading from directory verified in {dt:.2f}ms")
 
@@ -364,15 +405,15 @@ def run_50_step_real_life_test():
     print("\n" + "=" * 70)
     print("🏆 50-STEP REAL-LIFE DEVELOPER STRESS TEST COMPLETED SUCCESSFULLY!")
     print("=" * 70)
-    print(f"  • Total Steps Executed   : 50 / 50 (100% Passed)")
-    print(f"  • Total Execution Time   : {total_elapsed:.3f} seconds ({total_elapsed/50*1000:.1f}ms / step)")
+    print("  • Total Steps Executed   : 50 / 50 (100% Passed)")
+    print(f"  • Total Execution Time   : {total_elapsed:.3f} seconds ({total_elapsed / 50 * 1000:.1f}ms / step)")
     print(f"  • Raw Tokens Processed   : {total_raw_tokens:,} tokens")
     print(f"  • Tokens Consumed        : {total_raw_tokens - total_saved_tokens:,} tokens")
     print(f"  • Tokens Saved           : {total_saved_tokens:,} tokens")
     print(f"  • Net Savings Ratio      : {overall_savings_pct:.1f}% NET TOKEN REDUCTION")
     print(f"  • Est. Financial Savings : ${dollars:.4f} USD")
     print(f"  • L2 SQLite Cache Health : {entries_count} entries ({disk_mb:.2f} MB)")
-    print(f"  • Quality & Accuracy     : 100.0% (Zero assertion failures, Zero data loss)")
+    print("  • Quality & Accuracy     : 100.0% (Zero assertion failures, Zero data loss)")
     print("=" * 70)
 
     assert total_saved_tokens > 0

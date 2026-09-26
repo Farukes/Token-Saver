@@ -545,7 +545,9 @@ def main() -> None:
     elif args.subcommand in ("uninstall", "purge", "self-destruct"):
         if not getattr(args, "yes", False):
             try:
-                confirm = input("⚠️  Are you sure you want to completely uninstall Token-Saver from this computer? (y/N): ")
+                confirm = input(
+                    "⚠️  Are you sure you want to completely uninstall Token-Saver from this computer? (y/N): "
+                )
                 if confirm.strip().lower() not in ("y", "yes"):
                     print("Aborted.")
                     sys.exit(0)
