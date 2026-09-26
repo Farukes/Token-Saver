@@ -53,12 +53,66 @@ pub struct RuleInstallResult {
     pub message: String,
 }
 
+pub fn record_project(target_dir: &Path) {
+    if let Some(home) = dirs::home_dir() {
+        let dir = home.join(".token-saver");
+        let _ = std::fs::create_dir_all(&dir);
+        let p_file = dir.join("projects.json");
+        let resolved = std::fs::canonicalize(target_dir).unwrap_or_else(|_| target_dir.to_path_buf());
+        let resolved_str = resolved.to_string_lossy().to_string();
+
+        let mut projects: std::collections::BTreeSet<String> = if p_file.exists() {
+            std::fs::read_to_string(&p_file)
+                .ok()
+                .and_then(|s| serde_json::from_str(&s).ok())
+                .unwrap_or_default()
+        } else {
+            std::collections::BTreeSet::new()
+        };
+
+        projects.insert(resolved_str);
+        if let Ok(formatted) = serde_json::to_string_pretty(&projects) {
+            let _ = std::fs::write(p_file, formatted);
+        }
+    }
+}
+
+pub fn get_known_project_roots() -> Vec<PathBuf> {
+    let mut roots = std::collections::BTreeSet::new();
+
+    // 1. From projects.json
+    if let Some(home) = dirs::home_dir() {
+        let p_file = home.join(".token-saver").join("projects.json");
+        if p_file.exists() {
+            if let Ok(content) = std::fs::read_to_string(&p_file) {
+                if let Ok(list) = serde_json::from_str::<Vec<String>>(&content) {
+                    for p in list {
+                        let pb = PathBuf::from(&p);
+                        if pb.exists() {
+                            roots.insert(pb);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // 2. Current working directory
+    if let Ok(curr) = std::env::current_dir() {
+        roots.insert(curr);
+    }
+    roots.insert(PathBuf::from("."));
+
+    roots.into_iter().collect()
+}
+
 /// Injects or updates Token-Saver rules into target project rule files.
 pub fn install_rules(
     target_dir: &Path,
     compact_output: bool,
     prevent_truncation: bool,
 ) -> Vec<RuleInstallResult> {
+    record_project(target_dir);
     let rules_text = generate_rules(compact_output, prevent_truncation);
     let mut results = Vec::new();
 
@@ -149,6 +203,19 @@ pub fn remove_rules(target_dir: &Path) -> Vec<RuleInstallResult> {
                     message: "Rules removed from existing file.".to_string(),
                 });
             }
+        }
+    }
+
+    // Also remove project-level config if present
+    let toml_path = target_dir.join("token-saver.toml");
+    if toml_path.exists() {
+        if fs::remove_file(&toml_path).is_ok() {
+            results.push(RuleInstallResult {
+                file_name: "token-saver.toml".to_string(),
+                path: toml_path,
+                success: true,
+                message: "Removed token-saver.toml configuration.".to_string(),
+            });
         }
     }
 

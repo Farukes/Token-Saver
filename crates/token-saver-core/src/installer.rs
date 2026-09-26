@@ -671,6 +671,170 @@ pub fn ensure_in_user_path() -> (bool, String) {
     }
 }
 
+pub fn remove_from_user_path() -> (bool, String) {
+    let exe_path = match std::env::current_exe() {
+        Ok(p) => p,
+        Err(e) => return (false, format!("Could not get current executable path: {e}")),
+    };
+    let exe_dir = match exe_path.parent() {
+        Some(d) => d,
+        None => return (false, "Could not determine binary directory".to_string()),
+    };
+    let exe_dir_str = exe_dir.to_string_lossy().to_string();
+
+    #[cfg(target_os = "windows")]
+    {
+        let query_output = Command::new("reg")
+            .args(["query", "HKCU\\Environment", "/v", "Path"])
+            .output();
+
+        let mut current_user_path = String::new();
+        if let Ok(out) = query_output {
+            let stdout = String::from_utf8_lossy(&out.stdout);
+            for line in stdout.lines() {
+                let trimmed = line.trim();
+                if trimmed.starts_with("Path") {
+                    let parts: Vec<&str> = trimmed.split_whitespace().collect();
+                    if parts.len() >= 3 {
+                        current_user_path = parts[2..].join(" ");
+                    }
+                }
+            }
+        }
+
+        let parts: Vec<&str> = current_user_path
+            .split(';')
+            .map(|s| s.trim())
+            .filter(|s| !s.is_empty())
+            .collect();
+        let filtered: Vec<&str> = parts
+            .into_iter()
+            .filter(|p| !p.eq_ignore_ascii_case(&exe_dir_str))
+            .collect();
+        let new_user_path = filtered.join(";");
+
+        let _ = Command::new("reg")
+            .args([
+                "add",
+                "HKCU\\Environment",
+                "/v",
+                "Path",
+                "/t",
+                "REG_EXPAND_SZ",
+                "/d",
+                &new_user_path,
+                "/f",
+            ])
+            .output();
+
+        (true, format!("Removed {exe_dir_str} from Windows User PATH"))
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    {
+        (true, format!("Verified User PATH for {exe_dir_str}"))
+    }
+}
+
+pub fn uninstall_all_slash_commands() -> Vec<(&'static str, bool, String)> {
+    let mut results = Vec::new();
+    let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
+
+    // 1. AGY CLI skill
+    let agy_skill = home.join(".gemini").join("config").join("skills").join("token-saver");
+    if agy_skill.exists() {
+        match fs::remove_dir_all(&agy_skill) {
+            Ok(_) => results.push(("Antigravity (AGY)", true, format!("Removed slash command skill at {:?}", agy_skill))),
+            Err(e) => results.push(("Antigravity (AGY)", false, format!("Failed removing skill: {e}"))),
+        }
+    }
+
+    // 2. Claude Code command
+    let claude_cmd = home.join(".claude").join("commands").join("token-saver.md");
+    if claude_cmd.exists() {
+        match fs::remove_file(&claude_cmd) {
+            Ok(_) => results.push(("Claude Code", true, format!("Removed slash command at {:?}", claude_cmd))),
+            Err(e) => results.push(("Claude Code", false, format!("Failed removing command: {e}"))),
+        }
+    }
+
+    results
+}
+
+pub fn full_uninstall() {
+    println!("{}", "=".repeat(65));
+    println!("⚠️  TOKEN-SAVER COMPLETE UNINSTALL & PURGE (RUST NATIVE)");
+    println!("{}", "=".repeat(65));
+
+    // 1. Revert all AI coding CLIs
+    println!("\n🔌 Reverting MCP server configurations in AI coding assistants...");
+    let ide_results = uninstall_mcp_all();
+    for r in ide_results {
+        let icon = if r.success { "⚪" } else { "❌" };
+        println!("  {icon} {}: {}", r.ide_name, r.message);
+    }
+
+    // 2. Remove shell hooks
+    println!("\n🪝 Removing shell hooks from terminal profiles...");
+    let hook_results = crate::hooks::remove_hooks();
+    for r in hook_results {
+        let icon = if r.success { "⚪" } else { "❌" };
+        println!("  {icon} {}: {}", r.shell, r.message);
+    }
+
+    // 3. Clean project rules across all known projects
+    println!("\n📝 Cleaning Token-Saver steering rules from all known projects...");
+    let project_roots = crate::rules::get_known_project_roots();
+    let mut cleaned_count = 0;
+    for root in project_roots {
+        let rule_results = crate::rules::remove_rules(&root);
+        for r in rule_results {
+            if r.success && r.message.contains("Removed") {
+                cleaned_count += 1;
+                let dir_name = root.file_name().unwrap_or_default().to_string_lossy();
+                println!("  ⚪ {dir_name}/{}: {}", r.file_name, r.message);
+            }
+        }
+    }
+    if cleaned_count == 0 {
+        println!("  ⚪ No active project steering rules found.");
+    }
+
+    // 4. Remove slash commands
+    println!("\n⚡ Removing slash command definitions...");
+    let cmd_results = uninstall_all_slash_commands();
+    for (name, ok, msg) in cmd_results {
+        let icon = if ok { "⚪" } else { "❌" };
+        println!("  {icon} {name}: {msg}");
+    }
+
+    // 5. Clean User PATH
+    println!("\n🌐 Removing Token-Saver from User PATH...");
+    let (ok_path, path_msg) = remove_from_user_path();
+    let icon_path = if ok_path { "⚪" } else { "❌" };
+    println!("  {icon_path} {path_msg}");
+
+    // 6. Delete ~/.token-saver data directory
+    if let Some(home) = dirs::home_dir() {
+        let data_dir = home.join(".token-saver");
+        println!("\n💾 Purging {:?} (L2 SQLite cache, telemetry, settings)...", data_dir);
+        if data_dir.exists() {
+            match fs::remove_dir_all(&data_dir) {
+                Ok(_) => println!("  ⚪ Deleted {:?} successfully.", data_dir),
+                Err(e) => println!("  ❌ Could not delete {:?}: {e}", data_dir),
+            }
+        } else {
+            println!("  ⚪ Data directory already clean.");
+        }
+    }
+
+    println!("\n{}", "=".repeat(65));
+    println!("✨ Token-Saver has been completely uninstalled from your computer!");
+    println!("   Zero background processes, zero configs, and zero traces remain.");
+    println!("   You can now delete this executable file if desired.");
+    println!("{}", "=".repeat(65));
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

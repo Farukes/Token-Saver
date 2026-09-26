@@ -7,6 +7,7 @@ Token-Saver MCP tools over native, unoptimized tools.
 
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 
@@ -73,6 +74,62 @@ class RulesManager:
     }
 
     @classmethod
+    def record_project(cls, project_path: Path | str) -> None:
+        """Record an initialized project directory in ~/.token-saver/projects.json."""
+        try:
+            p_dir = Path.home() / ".token-saver"
+            p_dir.mkdir(parents=True, exist_ok=True)
+            p_file = p_dir / "projects.json"
+            resolved = str(Path(project_path).resolve())
+            projects = set()
+            if p_file.exists():
+                try:
+                    projects = set(json.loads(p_file.read_text(encoding="utf-8")))
+                except Exception:
+                    pass
+            projects.add(resolved)
+            p_file.write_text(json.dumps(sorted(projects), indent=2), encoding="utf-8")
+        except Exception:
+            pass
+
+    @classmethod
+    def get_known_project_roots(cls) -> list[Path]:
+        """Return all project roots ever initialized or indexed by Token-Saver."""
+        roots = set()
+        # 1. From projects.json
+        p_file = Path.home() / ".token-saver" / "projects.json"
+        if p_file.exists():
+            try:
+                for p in json.loads(p_file.read_text(encoding="utf-8")):
+                    p_path = Path(p)
+                    if p_path.exists():
+                        roots.add(p_path)
+            except Exception:
+                pass
+
+        # 2. From SQLite PersistentCache
+        try:
+            from token_saver.cache.persistent_cache import PersistentCache
+
+            cache = PersistentCache()
+            with cache._get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    "SELECT DISTINCT project_root FROM symbol_index UNION SELECT DISTINCT project_root FROM file_index_meta"
+                )
+                for row in cursor.fetchall():
+                    if row and row[0]:
+                        p_path = Path(row[0])
+                        if p_path.exists():
+                            roots.add(p_path)
+        except Exception:
+            pass
+
+        # 3. Current working directory
+        roots.add(Path.cwd())
+        return sorted(roots)
+
+    @classmethod
     def install_rules(
         cls,
         target_dir: Path | str = ".",
@@ -83,6 +140,7 @@ class RulesManager:
         """Install or update Token-Saver steering rules in the specified project directory."""
         results = []
         project_path = Path(target_dir).resolve()
+        cls.record_project(project_path)
 
         if compact_output is None or prevent_truncation is None:
             from token_saver.config import load_config
@@ -159,6 +217,15 @@ class RulesManager:
                         results.append((filename, True, f"Removed rules block from {file_path.name}"))
             except Exception as e:
                 results.append((filename, False, f"Failed cleaning {filename}: {e}"))
+
+        # Also remove project-level config if present
+        cfg_toml = project_path / "token-saver.toml"
+        if cfg_toml.exists():
+            try:
+                cfg_toml.unlink()
+                results.append(("token-saver.toml", True, "Removed token-saver.toml configuration"))
+            except Exception:
+                pass
 
         return results
 

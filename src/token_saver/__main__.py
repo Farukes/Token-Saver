@@ -221,6 +221,19 @@ def main() -> None:
         help="Force reinstallation even if already on the latest version",
     )
 
+    # Subcommand: uninstall / purge
+    uninstall_parser = subparsers.add_parser(
+        "uninstall",
+        aliases=["purge", "self-destruct"],
+        help="Completely uninstall Token-Saver: revert IDE configs, remove project rules, hooks, cache, and PATH",
+    )
+    uninstall_parser.add_argument(
+        "-y",
+        "--yes",
+        action="store_true",
+        help="Skip confirmation prompt and immediately purge all Token-Saver traces",
+    )
+
     # If called with no arguments, default to launching the MCP server
     if len(sys.argv) == 1:
         from token_saver.server import mcp
@@ -519,6 +532,21 @@ def main() -> None:
         from token_saver.ui.server import start_ui_server
 
         start_ui_server(port=args.port, open_browser=not args.no_open)
+
+    elif args.subcommand in ("uninstall", "purge", "self-destruct"):
+        if not getattr(args, "yes", False):
+            try:
+                confirm = input("⚠️  Are you sure you want to completely uninstall Token-Saver from this computer? (y/N): ")
+                if confirm.strip().lower() not in ("y", "yes"):
+                    print("Aborted.")
+                    sys.exit(0)
+            except (KeyboardInterrupt, EOFError):
+                print("\nAborted.")
+                sys.exit(0)
+
+        from token_saver.hooks.manager import HookManager
+
+        HookManager.full_uninstall()
 
     elif args.subcommand in ("update", "upgrade"):
         import json

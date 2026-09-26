@@ -576,6 +576,146 @@ npm() {{ if [ "$1" = "test" ]; then token-saver run "npm $@"; else command npm "
             return False, f"Could not update PATH: {e}"
 
     @classmethod
+    def remove_from_user_path(cls) -> tuple[bool, str]:
+        """Remove token-saver binary directory from Windows User PATH or shell profile."""
+        try:
+            exe_path = Path(sys.argv[0]).resolve()
+            exe_dir = exe_path.parent
+            exe_dir_str = str(exe_dir)
+            if exe_path.name.lower() in ("python.exe", "python3.exe", "__main__.py", "pythonw.exe"):
+                scripts_dir = Path(sys.executable).parent / ("Scripts" if os.name == "nt" else "bin")
+                if scripts_dir.exists():
+                    exe_dir_str = str(scripts_dir)
+
+            if os.name == "nt":
+                import winreg
+
+                with winreg.OpenKey(
+                    winreg.HKEY_CURRENT_USER, "Environment", 0, winreg.KEY_READ | winreg.KEY_WRITE
+                ) as key:
+                    try:
+                        val, reg_type = winreg.QueryValueEx(key, "Path")
+                    except FileNotFoundError:
+                        return True, "No User PATH entry found"
+
+                    parts = [p.strip() for p in val.split(";") if p.strip()]
+                    norm_target = os.path.normpath(exe_dir_str).lower()
+                    new_parts = [p for p in parts if os.path.normpath(p).lower() != norm_target]
+                    if len(new_parts) != len(parts):
+                        new_val = ";".join(new_parts)
+                        winreg.SetValueEx(key, "Path", 0, reg_type, new_val)
+                        return True, f"Removed {exe_dir_str} from Windows User PATH"
+                return True, "Not present in Windows User PATH"
+            else:
+                home = Path.home()
+                updated = False
+                for rc_name in (".bashrc", ".zshrc"):
+                    rc_file = home / rc_name
+                    if rc_file.exists():
+                        content = rc_file.read_text(encoding="utf-8", errors="replace")
+                        if exe_dir_str in content:
+                            lines = [line for line in content.splitlines() if exe_dir_str not in line]
+                            rc_file.write_text("\n".join(lines) + "\n", encoding="utf-8")
+                            updated = True
+                if updated:
+                    return True, f"Removed {exe_dir_str} from shell profile PATH"
+                return True, "Not present in shell profile PATH"
+        except Exception as e:
+            return False, f"Could not clean PATH: {e}"
+
+    @classmethod
+    def uninstall_all_slash_commands(cls) -> list[tuple[str, bool, str]]:
+        """Remove slash commands installed for AGY and Claude Code."""
+        results = []
+        home = Path.home()
+
+        # 1. AGY CLI skill
+        agy_skill = home / ".gemini" / "config" / "skills" / "token-saver"
+        if agy_skill.exists():
+            try:
+                import shutil
+
+                shutil.rmtree(agy_skill)
+                results.append(("Antigravity (AGY)", True, f"Removed slash command skill at {agy_skill}"))
+            except Exception as e:
+                results.append(("Antigravity (AGY)", False, f"Failed removing skill: {e}"))
+
+        # 2. Claude Code command
+        claude_cmd = home / ".claude" / "commands" / "token-saver.md"
+        if claude_cmd.exists():
+            try:
+                claude_cmd.unlink()
+                results.append(("Claude Code", True, f"Removed slash command at {claude_cmd}"))
+            except Exception as e:
+                results.append(("Claude Code", False, f"Failed removing command: {e}"))
+
+        return results
+
+    @classmethod
+    def full_uninstall(cls) -> None:
+        """Completely purge Token-Saver from host: IDE configs, project rules, hooks, cache, and PATH."""
+        import shutil
+        from token_saver.rules.manager import RulesManager
+
+        print("=" * 65)
+        print("⚠️  TOKEN-SAVER COMPLETE UNINSTALL & PURGE")
+        print("=" * 65)
+
+        # 1. Revert all AI coding CLIs
+        print("\n🔌 Reverting MCP server configurations in AI coding assistants...")
+        ide_results = cls.disable_all()
+        for name, ok, msg in ide_results:
+            icon = "⚪" if ok else "❌"
+            print(f"  {icon} {name}: {msg}")
+
+        # 2. Remove shell hooks
+        print("\n🪝 Removing shell hooks from terminal profiles...")
+        ok_hook, hook_msg = cls.uninstall_shell_hook()
+        print(f"  {'⚪' if ok_hook else '❌'} {hook_msg}")
+
+        # 3. Clean project rules across all known projects
+        print("\n📝 Cleaning Token-Saver steering rules from all known projects...")
+        project_roots = RulesManager.get_known_project_roots()
+        cleaned_rules_count = 0
+        for root in project_roots:
+            rule_results = RulesManager.remove_rules(root)
+            for fname, ok, msg in rule_results:
+                if ok and "removed" in msg.lower():
+                    cleaned_rules_count += 1
+                    print(f"  ⚪ {root.name}/{fname}: {msg}")
+        if cleaned_rules_count == 0:
+            print("  ⚪ No active project steering rules found.")
+
+        # 4. Remove slash commands
+        print("\n⚡ Removing slash command definitions...")
+        cmd_results = cls.uninstall_all_slash_commands()
+        for name, ok, msg in cmd_results:
+            print(f"  {'⚪' if ok else '❌'} {name}: {msg}")
+
+        # 5. Clean User PATH
+        print("\n🌐 Removing Token-Saver from User PATH...")
+        ok_path, path_msg = cls.remove_from_user_path()
+        print(f"  {'⚪' if ok_path else '❌'} {path_msg}")
+
+        # 6. Delete ~/.token-saver data directory
+        data_dir = Path.home() / ".token-saver"
+        print(f"\n💾 Purging {data_dir} (L2 SQLite cache, telemetry, settings)...")
+        if data_dir.exists():
+            try:
+                shutil.rmtree(data_dir)
+                print(f"  ⚪ Deleted {data_dir} successfully.")
+            except Exception as e:
+                print(f"  ❌ Could not delete {data_dir}: {e}")
+        else:
+            print("  ⚪ Data directory already clean.")
+
+        print("\n" + "=" * 65)
+        print("✨ Token-Saver has been completely uninstalled from your computer!")
+        print("   Zero background processes, zero configs, and zero traces remain.")
+        print("   You can now delete this executable file if desired.")
+        print("=" * 65)
+
+    @classmethod
     def disable_all(cls) -> list[tuple[str, bool, str]]:
         """Universally revert all AI coding CLIs back to their exact pre-activation settings."""
         results = []

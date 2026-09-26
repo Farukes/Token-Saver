@@ -72,6 +72,14 @@ enum Commands {
         force: bool,
     },
 
+    /// Completely uninstall Token-Saver: revert IDE configs, remove project rules, hooks, cache, and PATH
+    #[command(alias = "purge", alias = "self-destruct")]
+    Uninstall {
+        /// Skip confirmation prompt and immediately purge all Token-Saver traces
+        #[arg(short, long)]
+        yes: bool,
+    },
+
     // --- Secondary & Technical Commands (hidden from default help to avoid clutter) ---
     /// Reset all cumulative telemetry counters
     #[command(hide = true)]
@@ -436,6 +444,26 @@ async fn main() {
         }
         Some(Commands::Update { force }) => {
             handle_update(*force);
+        }
+        Some(Commands::Uninstall { yes }) => {
+            if !*yes {
+                use std::io::Write;
+                print!("⚠️  Are you sure you want to completely uninstall Token-Saver from this computer? (y/N): ");
+                let _ = std::io::stdout().flush();
+                let mut input = String::new();
+                if std::io::stdin().read_line(&mut input).is_ok() {
+                    let trimmed = input.trim().to_lowercase();
+                    if trimmed != "y" && trimmed != "yes" {
+                        println!("Aborted.");
+                        return;
+                    }
+                } else {
+                    println!("\nAborted.");
+                    return;
+                }
+            }
+
+            token_saver_core::installer::full_uninstall();
         }
         None => {
             // When run without arguments:
