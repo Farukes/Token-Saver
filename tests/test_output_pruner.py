@@ -147,3 +147,28 @@ def test_background_command_launch():
     assert "[BACKGROUND PROCESS LAUNCHED]" in res
     assert "PID:" in res
 
+
+def test_command_timeout():
+    import sys
+    from token_saver.tools.output_pruner import register_output_pruner_tools
+
+    class DummyMCP:
+        def __init__(self):
+            self.tools = {}
+
+        def tool(self):
+            def dec(f):
+                self.tools[f.__name__] = f
+                return f
+
+            return dec
+
+    dummy = DummyMCP()
+    register_output_pruner_tools(dummy)
+    run_cmd = dummy.tools["run_command_smart"]
+
+    # Run sleep command with 1s timeout
+    cmd = f'"{sys.executable}" -c "import time; time.sleep(3)"'
+    res = run_cmd(cmd, timeout=1)
+    assert "Command timed out" in res
+

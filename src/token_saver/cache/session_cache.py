@@ -91,12 +91,8 @@ class SessionCache:
         self._stats.total_reads += 1
 
         if entry.hash == current_hash:
-            # Unchanged — return compact reference
+            # Unchanged — return compact reference (pure L1 in-memory hit)
             self._stats.cache_hits += 1
-            if self._persistent_cache:
-                self._persistent_cache.set_entry(
-                    normalized_path, entry.hash, entry.content, entry.read_count
-                )
             base_name = os.path.basename(file_path)
             compact = f"[CACHED] {base_name} — unchanged since last read (read #{entry.read_count})"
             return CacheResult(

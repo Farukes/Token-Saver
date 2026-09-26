@@ -448,7 +448,15 @@ impl McpServer {
                     .or_else(|| args.get("path"))
                     .and_then(|v| v.as_str())
                     .ok_or((-32602, "Missing 'file_path'".to_string()))?;
-                Ok(get_code_skeleton_file(file_path))
+                let res = get_code_skeleton_file(file_path);
+                if let Ok(raw) = std::fs::read_to_string(file_path) {
+                    let orig_tok = (raw.len() / 4) as u64;
+                    let opt_tok = (res.len() / 4) as u64;
+                    if orig_tok > opt_tok {
+                        self.tracker.record_savings("skeleton", orig_tok, opt_tok);
+                    }
+                }
+                Ok(res)
             }
 
             "tool_get_symbol" => {
@@ -470,7 +478,13 @@ impl McpServer {
                 let exact = args.get("exact").and_then(|v| v.as_bool()).unwrap_or(false);
                 let max_results = args.get("max_results").and_then(|v| v.as_u64()).unwrap_or(15) as usize;
 
-                Ok(find_symbol_global(query, Path::new(root_path_str), exact, max_results))
+                let res = find_symbol_global(query, Path::new(root_path_str), exact, max_results);
+                let opt_tok = (res.len() / 4) as u64;
+                let raw_tok = (opt_tok.max(10) * 10) as u64;
+                if raw_tok > opt_tok {
+                    self.tracker.record_savings("symbol_search", raw_tok, opt_tok);
+                }
+                Ok(res)
             }
 
             "find_symbol_references" => {
@@ -480,7 +494,13 @@ impl McpServer {
                 let root_path_str = args.get("root_path").and_then(|v| v.as_str()).unwrap_or(".");
                 let max_results = args.get("max_results").and_then(|v| v.as_u64()).unwrap_or(25) as usize;
 
-                Ok(find_symbol_references(symbol_name, Path::new(root_path_str), max_results))
+                let res = find_symbol_references(symbol_name, Path::new(root_path_str), max_results);
+                let opt_tok = (res.len() / 4) as u64;
+                let raw_tok = (opt_tok.max(5) * 8) as u64;
+                if raw_tok > opt_tok {
+                    self.tracker.record_savings("symbol_search", raw_tok, opt_tok);
+                }
+                Ok(res)
             }
 
             "run_command_smart" => {
@@ -512,7 +532,11 @@ impl McpServer {
                     .map(|arr| arr.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect())
                     .unwrap_or_default();
 
-                Ok(get_repo_map(Path::new(root_path_str), max_tokens, &focus_files))
+                let res = get_repo_map(Path::new(root_path_str), max_tokens, &focus_files);
+                let opt_tok = (res.len() / 4) as u64;
+                let raw_tok = (opt_tok * 15).max(3000);
+                self.tracker.record_savings("repo_map", raw_tok, opt_tok);
+                Ok(res)
             }
 
             "get_directory_tree_tool" => {

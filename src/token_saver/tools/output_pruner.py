@@ -138,9 +138,9 @@ def register_output_pruner_tools(mcp):
             filtered = filter_output_logic(raw_output, output_type="auto", exit_code=exit_code)
             return f"Exit Code: {exit_code}\n" + filtered
         except subprocess.TimeoutExpired as e:
-            stdout_text = e.stdout if isinstance(e.stdout, str) else (e.stdout.decode("utf-8") if e.stdout else "")
-            stderr_text = e.stderr if isinstance(e.stderr, str) else (e.stderr.decode("utf-8") if e.stderr else "")
-            raw_output = stdout_text + "\n" + stderr_text
+            stdout_text = e.stdout if isinstance(e.stdout, str) else (e.stdout.decode("utf-8", errors="replace") if e.stdout else "")
+            stderr_text = e.stderr if isinstance(e.stderr, str) else (e.stderr.decode("utf-8", errors="replace") if e.stderr else "")
+            raw_output = f"{stdout_text}\n{stderr_text}".strip()
             filtered = filter_output_logic(raw_output, output_type="auto", exit_code=-1)
             return f"Command timed out after {timeout}s\n" + filtered
         except Exception as e:

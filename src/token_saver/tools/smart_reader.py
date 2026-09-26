@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from token_saver.cache.session_cache import CacheStatus, SessionCache
 from token_saver.config import load_config
-from token_saver.utils.file_utils import read_file_text
+from token_saver.utils.file_utils import is_binary, read_file_text
 from token_saver.utils.token_counter import format_savings
 
 _cache = SessionCache()
@@ -66,6 +66,9 @@ def read_file_smart(
             f"(credentials/secrets/exclusions). Pass force_full=True if you explicitly "
             f"need to read this file."
         )
+
+    if not force_full and is_binary(file_path):
+        return f"[TOKEN-SAVER] Binary file '{file_path}' skipped to prevent context window corruption."
 
     try:
         content = read_file_text(file_path)

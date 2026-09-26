@@ -15,6 +15,8 @@ pub struct TelemetryTracker {
     last_mtime: Mutex<Option<SystemTime>>,
     last_size: Mutex<Option<u64>>,
     data: Mutex<TelemetryData>,
+    dirty: Mutex<bool>,
+    last_save_time: Mutex<Option<std::time::Instant>>,
 }
 
 impl Default for TelemetryTracker {
@@ -35,6 +37,8 @@ impl TelemetryTracker {
             last_mtime: Mutex::new(None),
             last_size: Mutex::new(None),
             data: Mutex::new(TelemetryData::default()),
+            dirty: Mutex::new(false),
+            last_save_time: Mutex::new(None),
         };
         tracker.refresh_if_needed();
         tracker
@@ -46,6 +50,8 @@ impl TelemetryTracker {
             last_mtime: Mutex::new(None),
             last_size: Mutex::new(None),
             data: Mutex::new(TelemetryData::default()),
+            dirty: Mutex::new(false),
+            last_save_time: Mutex::new(None),
         };
         tracker.refresh_if_needed();
         tracker
@@ -93,7 +99,18 @@ impl TelemetryTracker {
         }
     }
 
+    pub fn flush(&self) {
+        let mut dirty = self.dirty.lock().unwrap();
+        if *dirty {
+            let data_lock = self.data.lock().unwrap();
+            self.save(&data_lock);
+            *dirty = false;
+            *self.last_save_time.lock().unwrap() = Some(std::time::Instant::now());
+        }
+    }
+
     pub fn get_data(&self) -> TelemetryData {
+        self.flush();
         self.refresh_if_needed();
         self.data.lock().unwrap().clone()
     }
@@ -145,13 +162,26 @@ impl TelemetryTracker {
             _ => {}
         }
 
-        self.save(&data_lock);
+        let mut dirty = self.dirty.lock().unwrap();
+        *dirty = true;
+        let mut last_save = self.last_save_time.lock().unwrap();
+        let should_save = match *last_save {
+            Some(t) => t.elapsed() >= std::time::Duration::from_millis(500),
+            None => true,
+        };
+        if should_save {
+            self.save(&data_lock);
+            *dirty = false;
+            *last_save = Some(std::time::Instant::now());
+        }
     }
 
     pub fn reset(&self) {
         let mut data_lock = self.data.lock().unwrap();
         *data_lock = TelemetryData::default();
         self.save(&data_lock);
+        *self.dirty.lock().unwrap() = false;
+        *self.last_save_time.lock().unwrap() = Some(std::time::Instant::now());
     }
 
     pub fn render_dashboard(&self) -> String {
@@ -195,6 +225,12 @@ impl TelemetryTracker {
             dollars,
             d.total_original_tokens,
         )
+    }
+}
+
+impl Drop for TelemetryTracker {
+    fn drop(&mut self) {
+        self.flush();
     }
 }
 

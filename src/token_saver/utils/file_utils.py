@@ -85,7 +85,6 @@ BINARY_EXTENSIONS: set[str] = {
     ".woff", ".woff2", ".ttf", ".otf", ".eot",
     ".pyc", ".pyo", ".class", ".jar",
     ".db", ".sqlite", ".sqlite3",
-    ".lock",
 }
 
 # Directories to always skip

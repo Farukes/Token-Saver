@@ -107,11 +107,11 @@ pub fn filter_output_logic(
     format!("{filtered}\n[Token-Saver: {orig_tokens} -> {new_tokens} tokens ({pct}% saved)]")
 }
 
-/// Runs a command via the system shell with intelligent token filtering.
+/// Runs a command via the system shell with intelligent token filtering and timeout protection.
 pub fn run_command_smart(
     command_str: &str,
     cwd: &str,
-    _timeout_secs: u64,
+    timeout_secs: u64,
     background: bool,
     tracker: &TelemetryTracker,
 ) -> String {
@@ -145,26 +145,74 @@ pub fn run_command_smart(
         #[cfg(not(target_os = "windows"))]
         cmd.args(["-c", command_str]);
 
-        cmd.current_dir(cwd);
+        cmd.current_dir(cwd)
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped());
 
-        match cmd.output() {
-            Ok(out) => {
-                let stdout_str = String::from_utf8_lossy(&out.stdout).to_string();
-                let stderr_str = String::from_utf8_lossy(&out.stderr).to_string();
-                let combined = if stderr_str.is_empty() {
-                    stdout_str
-                } else if stdout_str.is_empty() {
-                    stderr_str
-                } else {
-                    format!("{stdout_str}\n{stderr_str}")
-                };
+        let mut child = match cmd.spawn() {
+            Ok(c) => c,
+            Err(e) => return format!("Error executing command: {e}"),
+        };
 
-                let exit_code = out.status.code().unwrap_or(-1);
-                let filtered = filter_output_logic(&combined, "auto", exit_code, tracker);
-                format!("Exit Code: {exit_code}\n{filtered}")
+        let stdout_handle = child.stdout.take();
+        let stderr_handle = child.stderr.take();
+
+        let stdout_thread = std::thread::spawn(move || {
+            let mut buf = Vec::new();
+            if let Some(mut h) = stdout_handle {
+                use std::io::Read;
+                let _ = h.read_to_end(&mut buf);
             }
-            Err(e) => format!("Error executing command: {e}"),
+            buf
+        });
+
+        let stderr_thread = std::thread::spawn(move || {
+            let mut buf = Vec::new();
+            if let Some(mut h) = stderr_handle {
+                use std::io::Read;
+                let _ = h.read_to_end(&mut buf);
+            }
+            buf
+        });
+
+        let start = std::time::Instant::now();
+        let timeout = std::time::Duration::from_secs(timeout_secs.max(1));
+        let exit_code;
+
+        loop {
+            match child.try_wait() {
+                Ok(Some(status)) => {
+                    exit_code = status.code().unwrap_or(-1);
+                    break;
+                }
+                Ok(None) => {
+                    if start.elapsed() >= timeout {
+                        let _ = child.kill();
+                        let _ = child.wait();
+                        let _ = stdout_thread.join();
+                        let _ = stderr_thread.join();
+                        return format!("Error: Command timed out after {timeout_secs} seconds.");
+                    }
+                    std::thread::sleep(std::time::Duration::from_millis(20));
+                }
+                Err(e) => return format!("Error waiting for command: {e}"),
+            }
         }
+
+        let stdout_bytes = stdout_thread.join().unwrap_or_default();
+        let stderr_bytes = stderr_thread.join().unwrap_or_default();
+        let stdout_str = String::from_utf8_lossy(&stdout_bytes).to_string();
+        let stderr_str = String::from_utf8_lossy(&stderr_bytes).to_string();
+        let combined = if stderr_str.is_empty() {
+            stdout_str
+        } else if stdout_str.is_empty() {
+            stderr_str
+        } else {
+            format!("{stdout_str}\n{stderr_str}")
+        };
+
+        let filtered = filter_output_logic(&combined, "auto", exit_code, tracker);
+        format!("Exit Code: {exit_code}\n{filtered}")
     }
 }
 
@@ -190,5 +238,17 @@ test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
         let result = filter_output_logic(raw, "cargo", 0, &tracker);
         assert!(result.contains("test result: ok"));
         assert!(result.contains("Token-Saver:"));
+    }
+
+    #[test]
+    fn test_command_timeout() {
+        let tracker = TelemetryTracker::new();
+        #[cfg(target_os = "windows")]
+        let cmd = "powershell -NoProfile -Command Start-Sleep -Seconds 4";
+        #[cfg(not(target_os = "windows"))]
+        let cmd = "sleep 4";
+
+        let result = run_command_smart(cmd, ".", 1, false, &tracker);
+        assert!(result.contains("timed out"));
     }
 }

@@ -7,8 +7,10 @@ Provides granular category breakdowns (AST, Cache, RepoMap, Commands, Symbols).
 
 from __future__ import annotations
 
+import atexit
 import json
 import threading
+import time
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -99,14 +101,29 @@ class TelemetryTracker:
         self.file_path = _get_storage_path()
         self._lock = threading.Lock()
         self._last_stat: tuple[int, int] = (0, 0)
+        self._last_save_time: float = 0.0
+        self._dirty: bool = False
         self._data: TelemetryData = self._load()
+        atexit.register(self.flush)
 
     @property
     def data(self) -> TelemetryData:
         """Always return the latest telemetry data synchronized with disk."""
         with self._lock:
+            if self._dirty:
+                self._save()
+                self._dirty = False
+                self._last_save_time = time.time()
             self._refresh_if_needed()
             return self._data
+
+    def flush(self) -> None:
+        """Explicitly write any pending dirty telemetry to disk."""
+        with self._lock:
+            if self._dirty:
+                self._save()
+                self._dirty = False
+                self._last_save_time = time.time()
 
     def _refresh_if_needed(self) -> None:
         try:
@@ -205,13 +222,20 @@ class TelemetryTracker:
                 cat_stat.saved += saved
                 cat_stat.count += 1
 
-            self._save()
+            self._dirty = True
+            now = time.time()
+            if now - self._last_save_time >= 0.5:
+                self._save()
+                self._dirty = False
+                self._last_save_time = now
 
     def reset(self) -> None:
         """Reset all telemetry metrics."""
         with self._lock:
             self._data = TelemetryData()
+            self._dirty = False
             self._save()
+            self._last_save_time = time.time()
 
     def render_dashboard(self) -> str:
         """Format a detailed categorical terminal dashboard of metrics."""

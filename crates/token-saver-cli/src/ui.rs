@@ -190,6 +190,35 @@ pub async fn start_ui_server(port: u16) -> Result<(), Box<dyn std::error::Error>
         let method = parts[0];
         let path = parts[1];
 
+        // Security: Host and Origin header validation against DNS rebinding and CSRF
+        let mut host_header = "";
+        let mut origin_header = "";
+        for line in request.lines().skip(1) {
+            let line_lower = line.to_lowercase();
+            if line_lower.starts_with("host:") {
+                host_header = line[5..].trim();
+            } else if line_lower.starts_with("origin:") {
+                origin_header = line[7..].trim();
+            }
+        }
+
+        if !host_header.is_empty() && !host_header.starts_with("127.0.0.1") && !host_header.starts_with("localhost") {
+            let resp = "HTTP/1.1 403 Forbidden\r\nContent-Type: text/plain\r\n\r\nForbidden Host";
+            let _ = socket.write_all(resp.as_bytes()).await;
+            continue;
+        }
+
+        if !origin_header.is_empty()
+            && !origin_header.starts_with("http://127.0.0.1")
+            && !origin_header.starts_with("http://localhost")
+            && !origin_header.starts_with("https://127.0.0.1")
+            && !origin_header.starts_with("https://localhost")
+        {
+            let resp = "HTTP/1.1 403 Forbidden\r\nContent-Type: text/plain\r\n\r\nForbidden Origin";
+            let _ = socket.write_all(resp.as_bytes()).await;
+            continue;
+        }
+
         let post_json: Option<serde_json::Value> = if method == "POST" {
             request.find("\r\n\r\n")
                 .or_else(|| request.find("\n\n"))
