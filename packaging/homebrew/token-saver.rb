@@ -7,16 +7,16 @@ class TokenSaver < Formula
   on_macos do
     if Hardware::CPU.arm?
       url "https://github.com/Farukes/Token-Saver/releases/download/v1.0.1/token-saver-darwin-arm64.tar.gz"
-      sha256 "01c5d96664be27704feb197619cdf47297dc4a9a6e9e941ddd0bc4a2a372bc07"
+      sha256 "9003d12f616077ccd13ff5b649dea347fcdaa287de74b617d1fbbd4da53e1618"
     else
       url "https://github.com/Farukes/Token-Saver/releases/download/v1.0.1/token-saver-darwin-x64.tar.gz"
-      sha256 "74557a58d0a815cdaf828c3a46f2617280ba045aca6bdcb4f3160fb908dff845"
+      sha256 "d2149e96002442eeb35b95260259c392a478eef0646fe1cec3e527f1feebd980"
     end
   end
 
   on_linux do
     url "https://github.com/Farukes/Token-Saver/releases/download/v1.0.1/token-saver-linux-x64.tar.gz"
-    sha256 "2b7c48a70fe0bb998e7928302c1d3eb9803226f62b597a34cc228d93edda6729"
+    sha256 "83c7f71f1edb7c55fe493c657041eec90247fc2a9ff2bfb2cc0bcd4f7d01d6ad"
   end
 
   def install

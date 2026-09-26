@@ -8,6 +8,6 @@ NestedInstallerFiles:
 Installers:
   - Architecture: x64
     InstallerUrl: https://github.com/Farukes/Token-Saver/releases/download/v1.0.1/token-saver-windows-x64.zip
-    InstallerSha256: 97C46155F9132A991A582463A3F92F66567D42E73F7F54BBCB484322EBD984E8
+    InstallerSha256: 249DEC707E86F52F1AB561773F05BE61A9BAEB4329967482240E7AE6E22D8F5C
 ManifestType: installer
 ManifestVersion: 1.6.0
