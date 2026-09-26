@@ -58,7 +58,8 @@ pub fn record_project(target_dir: &Path) {
         let dir = home.join(".token-saver");
         let _ = std::fs::create_dir_all(&dir);
         let p_file = dir.join("projects.json");
-        let resolved = std::fs::canonicalize(target_dir).unwrap_or_else(|_| target_dir.to_path_buf());
+        let resolved =
+            std::fs::canonicalize(target_dir).unwrap_or_else(|_| target_dir.to_path_buf());
         let resolved_str = resolved.to_string_lossy().to_string();
 
         let mut projects: std::collections::BTreeSet<String> = if p_file.exists() {

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import os
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -654,7 +655,6 @@ npm() {{ if [ "$1" = "test" ]; then token-saver run "npm $@"; else command npm "
     @classmethod
     def full_uninstall(cls) -> None:
         """Completely purge Token-Saver from host: IDE configs, project rules, hooks, cache, and PATH."""
-        import shutil
         from token_saver.rules.manager import RulesManager
 
         print("=" * 65)

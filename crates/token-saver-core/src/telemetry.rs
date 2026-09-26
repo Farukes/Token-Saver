@@ -187,9 +187,15 @@ impl TelemetryTracker {
     }
 
     pub fn get_l2_cache_disk_bytes(&self) -> u64 {
-        let dir = self.file_path.parent().map(|p| p.to_path_buf()).unwrap_or_else(|| {
-            dirs::home_dir().unwrap_or_else(|| PathBuf::from(".")).join(".token-saver")
-        });
+        let dir = self
+            .file_path
+            .parent()
+            .map(|p| p.to_path_buf())
+            .unwrap_or_else(|| {
+                dirs::home_dir()
+                    .unwrap_or_else(|| PathBuf::from("."))
+                    .join(".token-saver")
+            });
         ["cache.db", "cache.db-wal", "cache.db-shm"]
             .iter()
             .filter_map(|name| std::fs::metadata(dir.join(name)).ok())

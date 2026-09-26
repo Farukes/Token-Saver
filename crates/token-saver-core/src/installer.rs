@@ -727,7 +727,10 @@ pub fn remove_from_user_path() -> (bool, String) {
             ])
             .output();
 
-        (true, format!("Removed {exe_dir_str} from Windows User PATH"))
+        (
+            true,
+            format!("Removed {exe_dir_str} from Windows User PATH"),
+        )
     }
 
     #[cfg(not(target_os = "windows"))]
@@ -741,11 +744,23 @@ pub fn uninstall_all_slash_commands() -> Vec<(&'static str, bool, String)> {
     let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
 
     // 1. AGY CLI skill
-    let agy_skill = home.join(".gemini").join("config").join("skills").join("token-saver");
+    let agy_skill = home
+        .join(".gemini")
+        .join("config")
+        .join("skills")
+        .join("token-saver");
     if agy_skill.exists() {
         match fs::remove_dir_all(&agy_skill) {
-            Ok(_) => results.push(("Antigravity (AGY)", true, format!("Removed slash command skill at {:?}", agy_skill))),
-            Err(e) => results.push(("Antigravity (AGY)", false, format!("Failed removing skill: {e}"))),
+            Ok(_) => results.push((
+                "Antigravity (AGY)",
+                true,
+                format!("Removed slash command skill at {:?}", agy_skill),
+            )),
+            Err(e) => results.push((
+                "Antigravity (AGY)",
+                false,
+                format!("Failed removing skill: {e}"),
+            )),
         }
     }
 
@@ -753,8 +768,16 @@ pub fn uninstall_all_slash_commands() -> Vec<(&'static str, bool, String)> {
     let claude_cmd = home.join(".claude").join("commands").join("token-saver.md");
     if claude_cmd.exists() {
         match fs::remove_file(&claude_cmd) {
-            Ok(_) => results.push(("Claude Code", true, format!("Removed slash command at {:?}", claude_cmd))),
-            Err(e) => results.push(("Claude Code", false, format!("Failed removing command: {e}"))),
+            Ok(_) => results.push((
+                "Claude Code",
+                true,
+                format!("Removed slash command at {:?}", claude_cmd),
+            )),
+            Err(e) => results.push((
+                "Claude Code",
+                false,
+                format!("Failed removing command: {e}"),
+            )),
         }
     }
 
@@ -817,7 +840,10 @@ pub fn full_uninstall() {
     // 6. Delete ~/.token-saver data directory
     if let Some(home) = dirs::home_dir() {
         let data_dir = home.join(".token-saver");
-        println!("\n💾 Purging {:?} (L2 SQLite cache, telemetry, settings)...", data_dir);
+        println!(
+            "\n💾 Purging {:?} (L2 SQLite cache, telemetry, settings)...",
+            data_dir
+        );
         if data_dir.exists() {
             match fs::remove_dir_all(&data_dir) {
                 Ok(_) => println!("  ⚪ Deleted {:?} successfully.", data_dir),
