@@ -44,6 +44,43 @@ class PushNotifier {
     assert "PushNotifier" in names_kt
     assert "sendAlert" in names_kt
 
+    go_code = """
+package main
+type Server struct{}
+func (s *Server) Start() error { return nil }
+func NewServer() *Server { return &Server{} }
+"""
+    symbols_go = SymbolIndexer.extract_symbols_from_code(go_code, "go", "main.go")
+    names_go = [s.name for s in symbols_go]
+    assert "Start" in names_go
+    assert "NewServer" in names_go
+
+    cpp_code = """
+class DatabaseConnection {
+public:
+    void connect() {}
+};
+int query(int q) { return q; }
+"""
+    symbols_cpp = SymbolIndexer.extract_symbols_from_code(cpp_code, "cpp", "db.cpp")
+    names_cpp = [s.name for s in symbols_cpp]
+    assert "DatabaseConnection" in names_cpp
+    assert "connect" in names_cpp
+    assert "query" in names_cpp
+
+    java_code = """
+package com.example;
+public class AuthProvider {
+    public boolean verifyToken(String token) {
+        return true;
+    }
+}
+"""
+    symbols_java = SymbolIndexer.extract_symbols_from_code(java_code, "java", "AuthProvider.java")
+    names_java = [s.name for s in symbols_java]
+    assert "AuthProvider" in names_java
+    assert "verifyToken" in names_java
+
 
 def test_find_symbol_global(tmp_path):
     src_file = tmp_path / "app.py"

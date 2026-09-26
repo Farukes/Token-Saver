@@ -67,7 +67,11 @@ fn test_extreme_100_step_stress_rust() {
         "  [Steps 2-10] Burst Cache Hit Avg Latency: {:.4} ms / hit",
         hit_lat
     );
-    assert!(hit_lat < 1.0, "Cache hits must be sub-millisecond");
+    let max_hit_lat = if cfg!(debug_assertions) { 10.0 } else { 1.0 };
+    assert!(
+        hit_lat < max_hit_lat,
+        "Cache hits must be sub-millisecond in release mode"
+    );
 
     // Steps 11-18: Targeted line slicing
     let t0 = Instant::now();

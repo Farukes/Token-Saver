@@ -185,10 +185,16 @@ def main() -> None:
         help="Clean steering rules from target project directory instead of installing",
     )
 
-    # Subcommand: cache-prune
+    # Subcommand: cache-prune / cache-clear / cache-reset
     prune_parser = subparsers.add_parser(
         "cache-prune",
-        help="Prune expired or excess entries from L2 SQLite cache",
+        aliases=["cache-clear", "cache-reset"],
+        help="Prune expired entries or completely reset L2 SQLite cache",
+    )
+    prune_parser.add_argument(
+        "--all",
+        action="store_true",
+        help="Completely clear all cached files and symbols",
     )
     prune_parser.add_argument(
         "--max-entries",
@@ -492,14 +498,19 @@ def main() -> None:
             print("  token-saver output on   -> Activate compact surgical diffs & zero-truncation")
             print("  token-saver output off  -> Revert to default normal/verbose output")
 
-    elif args.subcommand == "cache-prune":
+    elif args.subcommand in ("cache-prune", "cache-clear", "cache-reset"):
         from token_saver.cache.persistent_cache import PersistentCache
 
         p = PersistentCache()
         before = p.count_entries()
-        deleted = p.prune(max_entries=args.max_entries, max_age_days=args.ttl_days)
-        after = p.count_entries()
-        print(f"L2 Cache Pruned: {deleted} entries removed. ({before} -> {after} entries remaining)")
+        if getattr(args, "all", False) or args.subcommand in ("cache-clear", "cache-reset"):
+            p.clear()
+            after = p.count_entries()
+            print(f"🧹 L2 Cache Reset: {before} entries cleared. ({after} remaining in SQLite)")
+        else:
+            deleted = p.prune(max_entries=args.max_entries, max_age_days=args.ttl_days)
+            after = p.count_entries()
+            print(f"L2 Cache Pruned: {deleted} entries removed. ({before} -> {after} entries remaining)")
 
     elif args.subcommand == "ui":
         from token_saver.hooks.manager import HookManager

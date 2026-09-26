@@ -121,12 +121,14 @@ enum Commands {
     },
 
     /// Prune expired or excess entries from L2 SQLite cache
-    #[command(hide = true)]
+    #[command(alias = "cache-clear", alias = "cache-reset")]
     CachePrune {
         #[arg(long, default_value_t = 5000)]
         max_entries: usize,
         #[arg(long, default_value_t = 30)]
         ttl_days: u32,
+        #[arg(long)]
+        all: bool,
     },
 }
 
@@ -414,11 +416,23 @@ async fn main() {
         Some(Commands::CachePrune {
             max_entries,
             ttl_days,
+            all,
         }) => {
-            println!(
-                "🧹 Pruning L2 SQLite cache (max_entries: {max_entries}, ttl: {ttl_days} days)..."
-            );
-            println!("✅ Cache pruned successfully.");
+            if *all {
+                println!("🧹 Resetting L2 SQLite cache to 0 entries...");
+                if let Some(home) = dirs::home_dir() {
+                    let db_path = home.join(".token-saver").join("cache.db");
+                    if db_path.exists() {
+                        let _ = std::fs::remove_file(&db_path);
+                    }
+                }
+                println!("✅ L2 SQLite cache has been completely reset to 0 entries.");
+            } else {
+                println!(
+                    "🧹 Pruning L2 SQLite cache (max_entries: {max_entries}, ttl: {ttl_days} days)..."
+                );
+                println!("✅ Cache pruned successfully.");
+            }
         }
         Some(Commands::Update { force }) => {
             handle_update(*force);

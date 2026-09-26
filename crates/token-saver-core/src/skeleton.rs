@@ -219,6 +219,31 @@ pub fn find_symbol_in_code(
     let tree = parse_code(source_code, lang)?;
     let source_bytes = source_code.as_bytes();
 
+    fn get_node_name<'a>(node: tree_sitter::Node<'a>, source_bytes: &'a [u8]) -> Option<&'a str> {
+        for child in node.children(&mut node.walk()) {
+            if matches!(
+                child.kind(),
+                "identifier"
+                    | "type_identifier"
+                    | "property_identifier"
+                    | "name"
+                    | "constant"
+                    | "field_identifier"
+            ) {
+                if let Ok(name_str) =
+                    std::str::from_utf8(&source_bytes[child.start_byte()..child.end_byte()])
+                {
+                    return Some(name_str);
+                }
+            } else if matches!(child.kind(), "function_declarator" | "declarator") {
+                if let Some(nested) = get_node_name(child, source_bytes) {
+                    return Some(nested);
+                }
+            }
+        }
+        None
+    }
+
     fn walk(node: tree_sitter::Node, source_bytes: &[u8], target_name: &str) -> Option<String> {
         let node_kind = node.kind();
         let is_target_def = matches!(
@@ -227,29 +252,24 @@ pub fn find_symbol_in_code(
                 | "class_definition"
                 | "function_declaration"
                 | "class_declaration"
+                | "class_specifier"
+                | "struct_specifier"
                 | "method_definition"
+                | "method_declaration"
                 | "function_item"
                 | "struct_item"
                 | "enum_item"
                 | "impl_item"
+                | "interface_declaration"
         );
 
         if is_target_def {
-            for child in node.children(&mut node.walk()) {
-                if matches!(
-                    child.kind(),
-                    "identifier" | "type_identifier" | "property_identifier" | "name"
-                ) {
-                    if let Ok(name_str) =
-                        std::str::from_utf8(&source_bytes[child.start_byte()..child.end_byte()])
+            if let Some(name_str) = get_node_name(node, source_bytes) {
+                if name_str == target_name {
+                    if let Ok(full_impl) =
+                        std::str::from_utf8(&source_bytes[node.start_byte()..node.end_byte()])
                     {
-                        if name_str == target_name {
-                            if let Ok(full_impl) = std::str::from_utf8(
-                                &source_bytes[node.start_byte()..node.end_byte()],
-                            ) {
-                                return Some(full_impl.to_string());
-                            }
-                        }
+                        return Some(full_impl.to_string());
                     }
                 }
             }

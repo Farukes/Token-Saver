@@ -64,28 +64,45 @@ pub fn extract_symbols_from_code(
             });
         } else if matches!(
             node_kind,
-            "class_definition" | "class_declaration" | "class"
+            "class_definition" | "class_declaration" | "class" | "class_specifier"
         ) {
             kind = Some("class");
         } else if matches!(node_kind, "method_definition" | "method_declaration") {
             kind = Some("method");
-        } else if matches!(node_kind, "struct_item" | "struct_declaration") {
+        } else if matches!(
+            node_kind,
+            "struct_item" | "struct_declaration" | "struct_specifier"
+        ) {
             kind = Some("struct");
         } else if matches!(node_kind, "enum_item") {
             kind = Some("enum");
+        } else if matches!(node_kind, "interface_declaration") {
+            kind = Some("interface");
         }
 
         if let Some(k) = kind {
-            let mut name_node = None;
-            for child in node.children(&mut node.walk()) {
-                if matches!(
-                    child.kind(),
-                    "identifier" | "type_identifier" | "property_identifier" | "name" | "constant"
-                ) {
-                    name_node = Some(child);
-                    break;
+            fn get_symbol_name_node(n: tree_sitter::Node) -> Option<tree_sitter::Node> {
+                for child in n.children(&mut n.walk()) {
+                    if matches!(
+                        child.kind(),
+                        "identifier"
+                            | "type_identifier"
+                            | "property_identifier"
+                            | "name"
+                            | "constant"
+                            | "field_identifier"
+                    ) {
+                        return Some(child);
+                    } else if matches!(child.kind(), "function_declarator" | "declarator") {
+                        if let Some(nested) = get_symbol_name_node(child) {
+                            return Some(nested);
+                        }
+                    }
                 }
+                None
             }
+
+            let name_node = get_symbol_name_node(node);
 
             if let Some(n) = name_node {
                 if let Ok(name_str) =
@@ -634,6 +651,58 @@ def process_login(user):
         assert_eq!(refs.len(), 2);
         assert!(refs.iter().any(|r| r.kind == ReferenceKind::Import));
         assert!(refs.iter().any(|r| r.kind == ReferenceKind::Call));
+    }
+
+    #[test]
+    fn test_extract_symbols_go_cpp_java() {
+        let go_code = r#"
+package main
+type Server struct{}
+func (s *Server) Start() error { return nil }
+func NewServer() *Server { return &Server{} }
+"#;
+        let syms_go = extract_symbols_from_code(go_code, SupportedLanguage::Go, "main.go");
+        assert!(syms_go
+            .iter()
+            .any(|s| s.name == "Start" && s.kind == "method"));
+        assert!(syms_go
+            .iter()
+            .any(|s| s.name == "NewServer" && s.kind == "function"));
+
+        let cpp_code = r#"
+class DatabaseConnection {
+public:
+    void connect() {}
+};
+int query(int q) { return q; }
+"#;
+        let syms_cpp = extract_symbols_from_code(cpp_code, SupportedLanguage::Cpp, "db.cpp");
+        assert!(syms_cpp
+            .iter()
+            .any(|s| s.name == "DatabaseConnection" && s.kind == "class"));
+        assert!(syms_cpp
+            .iter()
+            .any(|s| s.name == "connect" && s.kind == "method"));
+        assert!(syms_cpp
+            .iter()
+            .any(|s| s.name == "query" && s.kind == "function"));
+
+        let java_code = r#"
+package com.example;
+public class AuthProvider {
+    public boolean verifyToken(String token) {
+        return true;
+    }
+}
+"#;
+        let syms_java =
+            extract_symbols_from_code(java_code, SupportedLanguage::Java, "AuthProvider.java");
+        assert!(syms_java
+            .iter()
+            .any(|s| s.name == "AuthProvider" && s.kind == "class"));
+        assert!(syms_java
+            .iter()
+            .any(|s| s.name == "verifyToken" && s.kind == "method"));
     }
 
     #[test]

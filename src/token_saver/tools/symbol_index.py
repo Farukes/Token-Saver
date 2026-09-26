@@ -180,28 +180,38 @@ class SymbolIndexer:
             kind = None
             if node.type in ("function_definition", "function_declaration", "function_item"):
                 kind = "method" if parent_kind in ("class", "interface") else "function"
-            elif node.type in ("class_definition", "class_declaration", "class"):
+            elif node.type in ("class_definition", "class_declaration", "class", "class_specifier"):
                 kind = "class"
             elif node.type in ("method_definition", "method_declaration", "method"):
                 kind = "method"
-            elif node.type in ("struct_item", "struct_declaration"):
+            elif node.type in ("struct_item", "struct_declaration", "struct_specifier"):
                 kind = "struct"
             elif node.type in ("module", "module_declaration"):
                 kind = "module"
+            elif node.type in ("interface_declaration", "interface"):
+                kind = "interface"
 
             if kind:
-                name_node = None
-                for child in node.children:
-                    if child.type in (
-                        "identifier",
-                        "type_identifier",
-                        "property_identifier",
-                        "name",
-                        "simple_identifier",
-                        "constant",
-                    ):
-                        name_node = child
-                        break
+
+                def get_symbol_name_node(n):
+                    for child in n.children:
+                        if child.type in (
+                            "identifier",
+                            "type_identifier",
+                            "property_identifier",
+                            "name",
+                            "simple_identifier",
+                            "constant",
+                            "field_identifier",
+                        ):
+                            return child
+                        elif child.type in ("function_declarator", "declarator"):
+                            nested = get_symbol_name_node(child)
+                            if nested:
+                                return nested
+                    return None
+
+                name_node = get_symbol_name_node(node)
 
                 if name_node:
                     sym_name = source_bytes[name_node.start_byte : name_node.end_byte].decode("utf-8", errors="replace")

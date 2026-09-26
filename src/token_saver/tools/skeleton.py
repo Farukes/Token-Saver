@@ -130,14 +130,34 @@ def _find_symbol(source_code: str, language: str, symbol_name: str) -> str:
         return ""
 
     root_node = tree.root_node
+    source_bytes = source_code.encode("utf-8")
+
+    def get_node_name(node) -> str | None:
+        for child in node.children:
+            if child.type in [
+                "identifier",
+                "type_identifier",
+                "property_identifier",
+                "name",
+                "simple_identifier",
+                "constant",
+                "field_identifier",
+            ]:
+                return source_bytes[child.start_byte : child.end_byte].decode("utf-8", errors="replace")
+            elif child.type in ["function_declarator", "declarator"]:
+                nested = get_node_name(child)
+                if nested:
+                    return nested
+        return None
 
     def walk(node):
-        # Look for identifiers that match the symbol name
         if node.type in [
             "function_definition",
             "class_definition",
             "function_declaration",
             "class_declaration",
+            "class_specifier",
+            "struct_specifier",
             "method_definition",
             "method_declaration",
             "function_item",
@@ -146,26 +166,11 @@ def _find_symbol(source_code: str, language: str, symbol_name: str) -> str:
             "singleton_method",
             "class",
             "module",
+            "interface_declaration",
         ]:
-            name_node = None
-            for child in node.children:
-                if child.type in [
-                    "identifier",
-                    "type_identifier",
-                    "property_identifier",
-                    "name",
-                    "simple_identifier",
-                    "constant",
-                ]:
-                    name_node = child
-                    break
-
-            if (
-                name_node
-                and source_code.encode("utf-8")[name_node.start_byte : name_node.end_byte].decode("utf-8")
-                == symbol_name
-            ):
-                return source_code.encode("utf-8")[node.start_byte : node.end_byte].decode("utf-8")
+            name = get_node_name(node)
+            if name == symbol_name:
+                return source_bytes[node.start_byte : node.end_byte].decode("utf-8", errors="replace")
 
         for child in node.children:
             res = walk(child)
