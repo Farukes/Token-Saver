@@ -65,4 +65,6 @@ esac
 echo ""
 echo "✨ Token-Saver has been successfully installed!"
 echo "============================================================"
+echo "🔌 Auto-configuring MCP server across detected AI assistants..."
+"$EXE_PATH" on --global || true
 "$EXE_PATH" status || true

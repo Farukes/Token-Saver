@@ -52,6 +52,8 @@ Write-Host "`n✨ Token-Saver has been successfully installed!" -ForegroundColor
 Write-Host "============================================================" -ForegroundColor Cyan
 
 if (Test-Path -Path $ExePath) {
+    Write-Host "🔌 Auto-configuring MCP server across detected AI assistants..." -ForegroundColor Green
+    & $ExePath on --global
     & $ExePath status
 } else {
     Write-Host "Please restart your terminal to start using 'token-saver'." -ForegroundColor Yellow
