@@ -26,6 +26,7 @@ struct Cli {
 }
 
 #[derive(Subcommand)]
+#[allow(clippy::enum_variant_names)]
 enum Commands {
     /// Turn on Token-Saver for current project (or use --global for all IDEs)
     #[command(alias = "enable")]

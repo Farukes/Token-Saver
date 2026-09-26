@@ -209,15 +209,13 @@ pub fn remove_rules(target_dir: &Path) -> Vec<RuleInstallResult> {
 
     // Also remove project-level config if present
     let toml_path = target_dir.join("token-saver.toml");
-    if toml_path.exists() {
-        if fs::remove_file(&toml_path).is_ok() {
-            results.push(RuleInstallResult {
-                file_name: "token-saver.toml".to_string(),
-                path: toml_path,
-                success: true,
-                message: "Removed token-saver.toml configuration.".to_string(),
-            });
-        }
+    if toml_path.exists() && fs::remove_file(&toml_path).is_ok() {
+        results.push(RuleInstallResult {
+            file_name: "token-saver.toml".to_string(),
+            path: toml_path,
+            success: true,
+            message: "Removed token-saver.toml configuration.".to_string(),
+        });
     }
 
     results

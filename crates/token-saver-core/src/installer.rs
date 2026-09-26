@@ -228,7 +228,7 @@ pub fn install_mcp_all(all_ides: bool, custom_exe: Option<&str>) -> Vec<McpInsta
         } else {
             let parent_exists = cfg_path
                 .parent()
-                .map(|p| p.exists() && p != &home)
+                .map(|p| p.exists() && p != home)
                 .unwrap_or(false);
             parent_exists || file_exists
         };
@@ -272,7 +272,8 @@ pub fn install_mcp_all(all_ides: bool, custom_exe: Option<&str>) -> Vec<McpInsta
 
         // Insert or update token-saver configuration
         json_data["mcpServers"]["token-saver"] = json!({
-            "command": exe_path
+            "command": exe_path,
+            "args": []
         });
 
         match serde_json::to_string_pretty(&json_data) {

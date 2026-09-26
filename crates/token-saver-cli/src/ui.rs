@@ -87,7 +87,7 @@ pub fn build_system_status(tracker: &TelemetryTracker) -> serde_json::Value {
         } else {
             let parent_exists = path
                 .parent()
-                .map(|p| p.exists() && p != &home)
+                .map(|p| p.exists() && p != home)
                 .unwrap_or(false);
             file_exists || parent_exists
         };
@@ -368,7 +368,8 @@ pub async fn start_ui_server(port: u16) -> Result<(), Box<dyn std::error::Error>
                             json_data["mcpServers"] = json!({});
                         }
                         json_data["mcpServers"]["token-saver"] = json!({
-                            "command": exe
+                            "command": exe,
+                            "args": []
                         });
                         if let Ok(formatted) = serde_json::to_string_pretty(&json_data) {
                             let _ = std::fs::write(cfg_path, formatted);

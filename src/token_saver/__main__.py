@@ -28,7 +28,7 @@ def main() -> None:
         prog="token-saver",
         description="Token-Saver: Zero-cost token optimization engine for AI coding assistants and developers.",
     )
-    subparsers = parser.add_subparsers(dest="subcommand", help="Available subcommands")
+    subparsers = parser.add_subparsers(dest="subcommand", metavar="<command>", help="Available subcommands")
 
     # Subcommand: server (default if no args)
     subparsers.add_parser("server", help="Start the MCP server (stdio transport)")
@@ -234,12 +234,21 @@ def main() -> None:
         help="Skip confirmation prompt and immediately purge all Token-Saver traces",
     )
 
-    # If called with no arguments, default to launching the MCP server
+    # If called with no arguments:
+    # If piped by AI assistant (Cursor / Claude Desktop / Windsurf) -> run Stdio MCP Server!
+    # If user runs interactively in terminal -> open Web Dashboard UI in browser (matching Rust binary)!
     if len(sys.argv) == 1:
-        from token_saver.server import mcp
+        if sys.stdin.isatty():
+            print("🚀 Launching Token-Saver Web Dashboard in your browser...")
+            from token_saver.ui.server import start_ui_server
 
-        mcp.run(transport="stdio")
-        return
+            start_ui_server(port=4141, open_browser=True)
+            return
+        else:
+            from token_saver.server import mcp
+
+            mcp.run(transport="stdio")
+            return
 
     args = parser.parse_args()
 

@@ -196,10 +196,10 @@ fn glob_match(pattern: &str, text: &str) -> bool {
             star_p = Some(p_chars.clone());
             star_t = Some(t_chars.clone());
             p_next = p_chars.next();
-        } else if star_p.is_some() {
-            p_chars = star_p.as_ref().unwrap().clone();
+        } else if let (Some(sp), Some(st)) = (&star_p, &star_t) {
+            p_chars = sp.clone();
             p_next = p_chars.next();
-            t_chars = star_t.as_ref().unwrap().clone();
+            t_chars = st.clone();
             t_next = t_chars.next();
             star_t = Some(t_chars.clone());
         } else {

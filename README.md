@@ -45,7 +45,7 @@ Works with **Claude Code**, **Cursor**, **Antigravity (AGY)**, **Windsurf**, **C
 
 ---
 
-## 🚀 Quick Start & Installation (v1.0.0 GA)
+## 🚀 Quick Start & Installation (v1.0.1 GA)
 
 Token-Saver is distributed in two official editions:
 1. **🦀 Rust Native Engine (Recommended):** High-performance, self-contained single binary with microsecond AST, 14 MB RAM, and zero Python dependencies.
@@ -53,7 +53,7 @@ Token-Saver is distributed in two official editions:
 
 ### 📥 1-Click Direct Downloads (Precompiled Binaries)
 
-Click your operating system below to download the latest v1.0.0 release:
+Click your operating system below to download the latest v1.0.1 release:
 
 | Platform | Architecture | Click to Download | Format |
 |:---|:---|:---|:---|
@@ -104,7 +104,7 @@ pip install git+https://github.com/Farukes/Token-Saver.git
 
 Empirical results from our rigorous **100-Step Real-Life Developer Stress Test** and **50-Cycle MCP Head-to-Head Benchmark** comparing Standard Raw AI vs Token-Saver Python vs Token-Saver Rust Native Engine:
 
-| Metric | 1. Raw AI (No Token-Saver) | 2. Token-Saver Python | 3. Token-Saver Rust (v1.0.0) | Rust Advantage |
+| Metric | 1. Raw AI (No Token-Saver) | 2. Token-Saver Python | 3. Token-Saver Rust (v1.0.1) | Rust Advantage |
 |:---|:---|:---|:---|:---|
 | **Consumed Tokens (100 Steps)** | 622,892 tokens | 95,492 tokens | **68,641 tokens** | **89.0% net savings (554k tokens saved)** |
 | **End-to-End Coding Savings** | 166,513 tokens | 12,400 tokens | **6,585 tokens** | **🚀 96.0% net savings (Surgical edits)** |

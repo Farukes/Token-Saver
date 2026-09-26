@@ -45,15 +45,15 @@ Token-Saver, yapay zeka kodlama asistanınız ile kod tabanınız arasında yer 
 
 ---
 
-## 🚀 Hızlı Başlangıç ve Kurulum (v1.0.0 GA)
+## 🚀 Hızlı Başlangıç ve Kurulum (v1.0.1 GA)
 
 Token-Saver iki resmi sürüm halinde dağıtılmaktadır:
 1. **🦀 Rust Yerel Motoru (Önerilen):** Mikrosaniyelik AST ayrıştırma, 14 MB RAM ve sıfır Python bağımlılığı içeren yüksek performanslı tekil ikili dosya.
 2. **🐍 Python Sürümü:** pip ve sanal ortamlar (venv) için saf Python FastMCP paketi.
 
-### 📥 Doğrudan İndirme Bağlantıları (Derlenmiş v1.0.0 İkili Dosyaları)
+### 📥 Doğrudan İndirme Bağlantıları (Derlenmiş v1.0.1 İkili Dosyaları)
 
-İşletim sisteminize tıklayarak en güncel v1.0.0 sürümünü anında indirin:
+İşletim sisteminize tıklayarak en güncel v1.0.1 sürümünü anında indirin:
 
 | Platform | Mimari | Tıkla ve İndir | Format |
 |:---|:---|:---|:---|
@@ -104,7 +104,7 @@ pip install git+https://github.com/Farukes/Token-Saver.git
 
 100 adımlık gerçek geliştirici stres testi ve 50 döngülük eşit şartlardaki MCP testinden elde edilen net ölçüm sonuçları:
 
-| Metrik | 1. Düz AI (Token-Saver Yok) | 2. Token-Saver Python | 3. Token-Saver Rust (v1.0.0) | Rust Avantajı |
+| Metrik | 1. Düz AI (Token-Saver Yok) | 2. Token-Saver Python | 3. Token-Saver Rust (v1.0.1) | Rust Avantajı |
 |:---|:---|:---|:---|:---|
 | **Tüketilen Token (100 Adım)** | 622.892 tokens | 95.492 tokens | **68.641 tokens** | **%89.0 net tasarruf (554k token kurtarıldı)** |
 | **Uçtan Uca Kodlama Tasarrufu** | 166.513 tokens | 12.400 tokens | **6.585 tokens** | **🚀 %96.0 net tasarruf (Cerrahi bloklar)** |

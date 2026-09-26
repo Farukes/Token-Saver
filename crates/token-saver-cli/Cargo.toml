@@ -14,7 +14,7 @@ name = "token-saver"
 path = "src/main.rs"
 
 [dependencies]
-token-saver-core = { version = "1.0.0", path = "../token-saver-core" }
+token-saver-core = { version = "1.0.1", path = "../token-saver-core" }
 clap = { version = "4.5", features = ["derive", "cargo"] }
 tokio = { version = "1.38", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }

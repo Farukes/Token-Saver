@@ -12,6 +12,7 @@ use crate::telemetry::TelemetryTracker;
 use crate::token_counter::format_savings;
 
 /// Intelligently reads a file with session caching, line slicing, and lockfile protection.
+#[allow(clippy::too_many_arguments)]
 pub fn read_file_smart(
     file_path: &str,
     force_full: bool,

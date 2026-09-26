@@ -76,6 +76,7 @@ pub fn get_repo_map(root_path: &Path, max_tokens: usize, focus_files: &[String])
         .unwrap_or_else(|_| root_path.to_path_buf());
     let config = TokenSaverConfig::load_from_dir(&root);
 
+    #[allow(clippy::type_complexity)]
     let mut raw_files: Vec<(
         String,
         String,
@@ -208,6 +209,7 @@ pub fn get_repo_map(root_path: &Path, max_tokens: usize, focus_files: &[String])
     let mut current_tokens = estimate_tokens(&output_lines.join("\n"));
     let mut included_count = 0;
 
+    #[allow(clippy::explicit_counter_loop)]
     for f in &file_infos {
         let mut file_lines = Vec::new();
         file_lines.push(format!("{}:", f.rel_path));
