@@ -8,6 +8,7 @@
 [![CI](https://github.com/Farukes/Token-Saver/actions/workflows/ci.yml/badge.svg)](https://github.com/Farukes/Token-Saver/actions/workflows/ci.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](https://www.python.org/downloads/)
 [![Enterprise Native: Rust](https://img.shields.io/badge/Enterprise%20Native-Rust%20v1.0.0-orange.svg)](#-enterprise--high-performance-native-engine-rust-edition)
+[![Crates.io](https://img.shields.io/crates/v/token-saver.svg?color=orange)](https://crates.io/crates/token-saver)
 [![PyPI](https://img.shields.io/pypi/v/token-saver-engine.svg?color=blue)](https://pypi.org/project/token-saver-engine/)
 [![Token Reduction](https://img.shields.io/badge/Token%20Savings-89%25%20to%2096%25-brightgreen.svg)](#-proven-performance--stress-test-benchmark)
 [![License: BSL 1.1](https://img.shields.io/badge/License-BSL%201.1-blue.svg)](LICENSE)
@@ -74,9 +75,14 @@ Copy and paste one line into your terminal to install and add `token-saver` to y
 iwr -useb https://raw.githubusercontent.com/Farukes/Token-Saver/main/install.ps1 | iex
 ```
 
-**Linux & macOS (Bash):**
 ```bash
+# Linux & macOS (Bash):
 curl -fsSL https://raw.githubusercontent.com/Farukes/Token-Saver/main/install.sh | bash
+```
+
+**Or install via Cargo (crates.io):**
+```bash
+cargo install token-saver
 ```
 
 ---

@@ -8,6 +8,7 @@
 [![CI](https://github.com/Farukes/Token-Saver/actions/workflows/ci.yml/badge.svg)](https://github.com/Farukes/Token-Saver/actions/workflows/ci.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](https://www.python.org/downloads/)
 [![Kurumsal Yerel Motor: Rust](https://img.shields.io/badge/Kurumsal%20Yerel%20Motor-Rust%20v1.0.0-orange.svg)](#-kurumsal-ve-y%C3%BCksek-performansl%C4%B1-yerel-motor-rust-s%C3%BCr%C3%BCm%C3%BC)
+[![Crates.io](https://img.shields.io/crates/v/token-saver.svg?color=orange)](https://crates.io/crates/token-saver)
 [![PyPI](https://img.shields.io/pypi/v/token-saver-engine.svg?color=blue)](https://pypi.org/project/token-saver-engine/)
 [![Token Tasarrufu](https://img.shields.io/badge/Token%20Tasarrufu-%2589%20ile%20%2596-brightgreen.svg)](#-kan%C4%B1tlanm%C4%B1%C5%9F-performans-ve-stres-testi-sonu%C3%A7lar%C4%B1)
 [![Lisans: BSL 1.1](https://img.shields.io/badge/Lisans-BSL%201.1-blue.svg)](LICENSE)
@@ -74,9 +75,14 @@ Terminalinize tek satır yapıştırarak `token-saver`'ı otomatik yükleyin ve 
 iwr -useb https://raw.githubusercontent.com/Farukes/Token-Saver/main/install.ps1 | iex
 ```
 
-**Linux ve macOS (Bash):**
 ```bash
+# Linux ve macOS (Bash):
 curl -fsSL https://raw.githubusercontent.com/Farukes/Token-Saver/main/install.sh | bash
+```
+
+**Veya Cargo (crates.io) ile kurulum:**
+```bash
+cargo install token-saver
 ```
 
 ---
