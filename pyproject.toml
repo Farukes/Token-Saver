@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "token-saver"
+name = "token-saver-engine"
 version = "1.0.0"
 description = "MCP server that saves 70-95% tokens for AI coding assistants without losing functionality"
 readme = "README.md"

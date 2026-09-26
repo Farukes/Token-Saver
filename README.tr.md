@@ -8,6 +8,7 @@
 [![CI](https://github.com/Farukes/Token-Saver/actions/workflows/ci.yml/badge.svg)](https://github.com/Farukes/Token-Saver/actions/workflows/ci.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](https://www.python.org/downloads/)
 [![Kurumsal Yerel Motor: Rust](https://img.shields.io/badge/Kurumsal%20Yerel%20Motor-Rust%20v1.0.0-orange.svg)](#-kurumsal-ve-y%C3%BCksek-performansl%C4%B1-yerel-motor-rust-s%C3%BCr%C3%BCm%C3%BC)
+[![PyPI](https://img.shields.io/pypi/v/token-saver-engine.svg?color=blue)](https://pypi.org/project/token-saver-engine/)
 [![Token Tasarrufu](https://img.shields.io/badge/Token%20Tasarrufu-%2589%20ile%20%2596-brightgreen.svg)](#-kan%C4%B1tlanm%C4%B1%C5%9F-performans-ve-stres-testi-sonu%C3%A7lar%C4%B1)
 [![Lisans: BSL 1.1](https://img.shields.io/badge/Lisans-BSL%201.1-blue.svg)](LICENSE)
 [![Zero Telemetry](https://img.shields.io/badge/telemetri-0%25%20(100%25%20yerel)-success.svg)](#-kurumsal-gizlilik-ve-g%C3%BCvenlik-garantisi)
@@ -84,8 +85,8 @@ curl -fsSL https://raw.githubusercontent.com/Farukes/Token-Saver/main/install.sh
 > **En İyisi:** Python odaklı geliştirme ortamları, özel betik entegrasyonları veya pip iş akışları.
 
 ```bash
-# pip ile kurulum
-pip install token-saver
+# PyPI üzerinden kurulum
+pip install token-saver-engine
 
 # Veya doğrudan GitHub main dalından kurulum:
 pip install git+https://github.com/Farukes/Token-Saver.git

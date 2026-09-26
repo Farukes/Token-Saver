@@ -8,6 +8,7 @@
 [![CI](https://github.com/Farukes/Token-Saver/actions/workflows/ci.yml/badge.svg)](https://github.com/Farukes/Token-Saver/actions/workflows/ci.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](https://www.python.org/downloads/)
 [![Enterprise Native: Rust](https://img.shields.io/badge/Enterprise%20Native-Rust%20v1.0.0-orange.svg)](#-enterprise--high-performance-native-engine-rust-edition)
+[![PyPI](https://img.shields.io/pypi/v/token-saver-engine.svg?color=blue)](https://pypi.org/project/token-saver-engine/)
 [![Token Reduction](https://img.shields.io/badge/Token%20Savings-89%25%20to%2096%25-brightgreen.svg)](#-proven-performance--stress-test-benchmark)
 [![License: BSL 1.1](https://img.shields.io/badge/License-BSL%201.1-blue.svg)](LICENSE)
 [![Zero Telemetry](https://img.shields.io/badge/telemetry-0%25%20(100%25%20local)-success.svg)](#-enterprise-privacy--security-guarantee)
@@ -84,8 +85,8 @@ curl -fsSL https://raw.githubusercontent.com/Farukes/Token-Saver/main/install.sh
 > **Best for:** Python-centric environments, custom script integration, or pip workflows.
 
 ```bash
-# Install via pip
-pip install token-saver
+# Install from PyPI
+pip install token-saver-engine
 
 # Or install directly from GitHub main:
 pip install git+https://github.com/Farukes/Token-Saver.git
