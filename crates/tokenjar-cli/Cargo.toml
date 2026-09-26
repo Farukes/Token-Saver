@@ -8,6 +8,7 @@ repository.workspace = true
 description = "Zero-cost, zero-latency token optimization engine and intelligent MCP middleware"
 documentation = "https://docs.rs/tokenjar"
 readme = "../../README.md"
+build = "build.rs"
 
 [[bin]]
 name = "tokenjar"
@@ -24,3 +25,6 @@ ureq = { version = "2.10", features = ["json"] }
 zip = { version = "2.1", default-features = false, features = ["deflate"] }
 tar = "0.4"
 flate2 = "1.0"
+
+[build-dependencies]
+winres = "0.1"
