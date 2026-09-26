@@ -49,7 +49,7 @@ jobs:
       uses: Swatinem/rust-cache@v2
 
     - name: Build release binary
-      run: cargo build --release --target ${{ matrix.target }}
+      run: cargo build --release --bin tokenjar --target ${{ matrix.target }}
 
     - name: Package archive (Windows)
       if: runner.os == 'Windows'
