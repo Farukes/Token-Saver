@@ -373,7 +373,9 @@ def find_symbol_global(
             lines.append(f"   Signature: {m.signature}")
 
     result_text = "\n".join(lines)
-    estimated_raw = max(len(symbols), 10) * 150
+    # Realistic raw cost: without symbol search, an AI would grep or inspect matching candidate files (~250 tokens per unique matched file, min 150, max 1500)
+    unique_files = {m.file_path for m in matches}
+    estimated_raw = min(max(len(unique_files) * 250, 150), 1500) if matches else 50
     estimated_opt = estimate_tokens(result_text)
     if estimated_raw > estimated_opt:
         try:
@@ -467,8 +469,9 @@ def find_symbol_references(
 
     result_text = "\n".join(lines)
 
-    # Estimate savings: AI would have had to open and read candidate files
-    estimated_raw = max(scanned_candidate_files, 1) * 800
+    # Realistic raw cost: without reference index, an AI inspects occurrences across files containing references (~300 tokens per file with references, max 2000)
+    ref_files = {r.file_path for r in all_refs}
+    estimated_raw = min(max(len(ref_files) * 300, 200), 2000) if all_refs else 100
     estimated_opt = estimate_tokens(result_text)
     if estimated_raw > estimated_opt:
         try:

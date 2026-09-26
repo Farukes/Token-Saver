@@ -60,8 +60,8 @@ def run_50_step_real_life_test():
     repo_map = get_repo_map(str(repo_root), max_tokens=1000)
     dt = (time.perf_counter() - t0) * 1000
     map_tok = estimate_tokens(repo_map)
-    # Estimated token savings: full repo would be ~15,000 tokens
-    est_full_repo = 15000
+    # Realistic baseline without repo_map: exploring root manifest, entry files is ~6,000 tokens
+    est_full_repo = 6000
     saved_map = max(0, est_full_repo - map_tok)
     total_raw_tokens += est_full_repo
     total_saved_tokens += saved_map

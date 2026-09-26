@@ -504,7 +504,7 @@ impl McpServer {
 
                 let res = find_symbol_global(query, Path::new(root_path_str), exact, max_results);
                 let opt_tok = (res.len() / 4) as u64;
-                let raw_tok = (opt_tok.max(10) * 10) as u64;
+                let raw_tok = opt_tok.saturating_mul(3).clamp(150, 1500);
                 if raw_tok > opt_tok {
                     self.tracker
                         .record_savings("symbol_search", raw_tok, opt_tok);
@@ -529,7 +529,7 @@ impl McpServer {
                 let res =
                     find_symbol_references(symbol_name, Path::new(root_path_str), max_results);
                 let opt_tok = (res.len() / 4) as u64;
-                let raw_tok = (opt_tok.max(5) * 8) as u64;
+                let raw_tok = opt_tok.saturating_mul(3).clamp(200, 2000);
                 if raw_tok > opt_tok {
                     self.tracker
                         .record_savings("symbol_search", raw_tok, opt_tok);
@@ -598,7 +598,7 @@ impl McpServer {
 
                 let res = get_repo_map(Path::new(root_path_str), max_tokens, &focus_files);
                 let opt_tok = (res.len() / 4) as u64;
-                let raw_tok = (opt_tok * 15).max(3000);
+                let raw_tok = opt_tok.saturating_mul(4).clamp(1000, 5000);
                 self.tracker.record_savings("repo_map", raw_tok, opt_tok);
                 Ok(res)
             }

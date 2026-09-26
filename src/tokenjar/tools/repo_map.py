@@ -416,7 +416,10 @@ def get_repo_map(root_path: str = ".", max_tokens: int = 1000, focus_files: list
         from tokenjar.telemetry.stats import tracker
 
         map_tokens = len(output) // 4
-        tracker.record_savings("repo_map", total_raw_tokens, map_tokens)
+        # Realistic raw cost: without repo_map, an AI explores key manifest/entry files (~3000-6000 tokens max)
+        realistic_raw_tokens = min(total_raw_tokens, 6000)
+        if realistic_raw_tokens > map_tokens:
+            tracker.record_savings("repo_map", realistic_raw_tokens, map_tokens)
     except Exception:
         pass
 

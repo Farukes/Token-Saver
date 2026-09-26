@@ -63,7 +63,7 @@ fn test_real_life_50_steps_rust() {
     let repo_map = get_repo_map(&repo_root, 1000, &[]);
     let dt = t0.elapsed().as_secs_f64() * 1000.0;
     let map_tok = estimate_tokens(&repo_map);
-    let est_full_repo: usize = 15000;
+    let est_full_repo: usize = 6000;
     let saved_map = est_full_repo.saturating_sub(map_tok);
     total_raw_tokens += est_full_repo;
     total_saved_tokens += saved_map;
