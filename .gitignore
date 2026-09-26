@@ -44,3 +44,7 @@ target/
 # OS
 .DS_Store
 Thumbs.db
+
+# Assets (Local design prototypes)
+assets/
+
