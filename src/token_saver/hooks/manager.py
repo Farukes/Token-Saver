@@ -502,7 +502,62 @@ npm() {{ if [ "$1" = "test" ]; then token-saver run "npm $@"; else command npm "
 
         # Also install slash commands
         cls.install_all_slash_commands(only_installed=only_installed)
+
+        # Ensure CLI binary directory is in user's PATH
+        path_ok, path_msg = cls.ensure_in_user_path()
+        if path_ok and "Added" in path_msg:
+            results.append(("System PATH", True, path_msg))
+
         return results
+
+    @classmethod
+    def ensure_in_user_path(cls) -> tuple[bool, str]:
+        """Ensure the directory containing token-saver CLI is in Windows User PATH or shell PATH."""
+        try:
+            exe_path = Path(sys.argv[0]).resolve()
+            exe_dir = exe_path.parent
+            exe_dir_str = str(exe_dir)
+
+            if exe_path.name.lower() in ("python.exe", "python3.exe", "__main__.py", "pythonw.exe"):
+                scripts_dir = Path(sys.executable).parent / ("Scripts" if os.name == "nt" else "bin")
+                if scripts_dir.exists():
+                    exe_dir_str = str(scripts_dir)
+
+            current_paths = [os.path.normpath(p).lower() for p in os.environ.get("PATH", "").split(os.pathsep) if p]
+            if os.path.normpath(exe_dir_str).lower() in current_paths:
+                return True, f"Already in PATH: {exe_dir_str}"
+
+            if os.name == "nt":
+                import winreg
+                with winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment", 0, winreg.KEY_READ | winreg.KEY_WRITE) as key:
+                    try:
+                        val, reg_type = winreg.QueryValueEx(key, "Path")
+                    except FileNotFoundError:
+                        val, reg_type = "", winreg.REG_EXPAND_SZ
+
+                    parts = [p.strip() for p in val.split(";") if p.strip()]
+                    if os.path.normpath(exe_dir_str).lower() not in [os.path.normpath(p).lower() for p in parts]:
+                        new_val = (val.rstrip(";") + ";" + exe_dir_str) if val else exe_dir_str
+                        winreg.SetValueEx(key, "Path", 0, reg_type, new_val)
+                        os.environ["PATH"] = f"{exe_dir_str};{os.environ.get('PATH', '')}"
+                        return True, f"Added {exe_dir_str} to Windows User PATH"
+                return True, f"Already in User PATH: {exe_dir_str}"
+            else:
+                home = Path.home()
+                updated = False
+                for rc_name in (".bashrc", ".zshrc"):
+                    rc_file = home / rc_name
+                    if rc_file.exists():
+                        content = rc_file.read_text(encoding="utf-8", errors="replace")
+                        if exe_dir_str not in content:
+                            with rc_file.open("a", encoding="utf-8") as f:
+                                f.write(f'\nexport PATH="{exe_dir_str}:$PATH"\n')
+                            updated = True
+                if updated:
+                    return True, f"Added {exe_dir_str} to shell profile PATH"
+                return True, f"PATH verified: {exe_dir_str}"
+        except Exception as e:
+            return False, f"Could not update PATH: {e}"
 
     @classmethod
     def disable_all(cls) -> list[tuple[str, bool, str]]:

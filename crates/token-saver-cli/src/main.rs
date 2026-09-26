@@ -239,6 +239,12 @@ async fn main() {
                     let icon = if r.success { "🟢" } else { "❌" };
                     println!("  {icon} {}: {}", r.file_name, r.message);
                 }
+
+                let (path_ok, path_msg) = token_saver_core::installer::ensure_in_user_path();
+                if path_ok && path_msg.contains("Added") {
+                    println!("  🟢 System PATH: {path_msg}");
+                }
+
                 println!("\n✨ Token-Saver is now ACTIVE for this project!");
                 println!("💡 Other projects remain unaffected unless explicitly enabled.");
             }

@@ -5,6 +5,7 @@
 
 use std::fs;
 use std::path::PathBuf;
+use std::process::Command;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
@@ -224,6 +225,17 @@ pub fn install_mcp_all(all_ides: bool, custom_exe: Option<&str>) -> Vec<McpInsta
     // Auto-install /token-saver slash commands into AGY CLI and Claude Code
     let _ = install_all_slash_commands(true);
 
+    // Ensure binary directory is in user's PATH so 'token-saver' works everywhere
+    let (path_ok, path_msg) = ensure_in_user_path();
+    if path_ok && path_msg.contains("Added") {
+        results.push(McpInstallResult {
+            ide_name: "System PATH".to_string(),
+            config_path: PathBuf::from("PATH"),
+            success: true,
+            message: path_msg,
+        });
+    }
+
     results
 }
 
@@ -411,6 +423,110 @@ pub fn install_all_slash_commands(only_installed: bool) -> Vec<(&'static str, bo
     }
 
     results
+}
+
+/// Ensures the directory containing the Token-Saver binary is present in the User's PATH.
+/// On Windows, checks and updates the User Environment PATH in the Windows Registry.
+/// On Unix, checks if the binary directory is in PATH and updates shell profiles if needed.
+pub fn ensure_in_user_path() -> (bool, String) {
+    let exe_path = match std::env::current_exe() {
+        Ok(p) => p,
+        Err(e) => return (false, format!("Could not get current executable path: {e}")),
+    };
+    let exe_dir = match exe_path.parent() {
+        Some(d) => d,
+        None => return (false, "Could not determine binary directory".to_string()),
+    };
+    let exe_dir_str = exe_dir.to_string_lossy().to_string();
+
+    // 1. Check if already present in the active process PATH
+    if let Ok(path_var) = std::env::var("PATH") {
+        for p in std::env::split_paths(&path_var) {
+            if p == exe_dir {
+                return (true, format!("Already present in PATH: {exe_dir_str}"));
+            }
+        }
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        // Query current User PATH from registry
+        let query_output = Command::new("reg")
+            .args(["query", "HKCU\\Environment", "/v", "Path"])
+            .output();
+
+        let mut current_user_path = String::new();
+        if let Ok(out) = query_output {
+            let stdout = String::from_utf8_lossy(&out.stdout);
+            for line in stdout.lines() {
+                let trimmed = line.trim();
+                if trimmed.starts_with("Path") {
+                    let parts: Vec<&str> = trimmed.split_whitespace().collect();
+                    if parts.len() >= 3 {
+                        current_user_path = parts[2..].join(" ");
+                    }
+                }
+            }
+        }
+
+        // Check if already in user path
+        let parts: Vec<&str> = current_user_path.split(';').map(|s| s.trim()).collect();
+        for p in &parts {
+            if p.eq_ignore_ascii_case(&exe_dir_str) {
+                return (true, format!("Already present in User PATH: {exe_dir_str}"));
+            }
+        }
+
+        let new_user_path = if current_user_path.is_empty() {
+            exe_dir_str.clone()
+        } else {
+            format!("{};{}", current_user_path.trim_end_matches(';'), exe_dir_str)
+        };
+
+        let add_res = Command::new("reg")
+            .args(["add", "HKCU\\Environment", "/v", "Path", "/t", "REG_EXPAND_SZ", "/d", &new_user_path, "/f"])
+            .output();
+
+        match add_res {
+            Ok(res) if res.status.success() => {
+                if let Ok(path_var) = std::env::var("PATH") {
+                    std::env::set_var("PATH", format!("{};{}", exe_dir_str, path_var));
+                }
+                (true, format!("Added {} to Windows User PATH", exe_dir_str))
+            }
+            Ok(res) => (false, format!("Failed adding to PATH: {}", String::from_utf8_lossy(&res.stderr))),
+            Err(e) => (false, format!("Failed executing reg command: {e}")),
+        }
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    {
+        let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
+        let bashrc = home.join(".bashrc");
+        let zshrc = home.join(".zshrc");
+        let export_line = format!("\nexport PATH=\"{}:$PATH\"\n", exe_dir_str);
+
+        let mut updated = false;
+        for rc_file in [bashrc, zshrc] {
+            if rc_file.exists() {
+                if let Ok(content) = fs::read_to_string(&rc_file) {
+                    if !content.contains(&exe_dir_str) {
+                        let _ = fs::OpenOptions::new().append(true).open(&rc_file).and_then(|mut f| {
+                            use std::io::Write;
+                            f.write_all(export_line.as_bytes())
+                        });
+                        updated = true;
+                    }
+                }
+            }
+        }
+
+        if updated {
+            (true, format!("Added {} to shell profile PATH", exe_dir_str))
+        } else {
+            (true, format!("PATH verified: {}", exe_dir_str))
+        }
+    }
 }
 
 #[cfg(test)]
