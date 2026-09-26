@@ -461,3 +461,7 @@ def start_ui_server(
     finally:
         server.server_close()
         print("\n[TokenJar UI] Dashboard closed. Zero background processes active.")
+
+
+if __name__ == "__main__":
+    start_ui_server()
