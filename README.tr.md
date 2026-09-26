@@ -80,6 +80,11 @@ Terminalinize tek satır yapıştırarak `tokenjar`'ı otomatik yükleyin ve sis
 iwr -useb https://raw.githubusercontent.com/Farukes/TokenJar/main/install.ps1 | iex
 ```
 
+**Windows (CMD / Komut İstemi):**
+```cmd
+powershell -ExecutionPolicy Bypass -Command "iwr -useb https://raw.githubusercontent.com/Farukes/TokenJar/main/install.ps1 | iex"
+```
+
 ```bash
 # Linux ve macOS (Bash):
 curl -fsSL https://raw.githubusercontent.com/Farukes/TokenJar/main/install.sh | bash

@@ -80,6 +80,11 @@ Copy and paste one line into your terminal to install and add `tokenjar` to your
 iwr -useb https://raw.githubusercontent.com/Farukes/TokenJar/main/install.ps1 | iex
 ```
 
+**Windows (CMD / Command Prompt):**
+```cmd
+powershell -ExecutionPolicy Bypass -Command "iwr -useb https://raw.githubusercontent.com/Farukes/TokenJar/main/install.ps1 | iex"
+```
+
 ```bash
 # Linux & macOS (Bash):
 curl -fsSL https://raw.githubusercontent.com/Farukes/TokenJar/main/install.sh | bash

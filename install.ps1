@@ -1,11 +1,11 @@
 # TokenJar Windows 1-Click PowerShell Installer
 # Usage:
-#   iwr -useb https://raw.githubusercontent.com/Farukes/TokenJar/main/install.ps1 | iex
+#   powershell -ExecutionPolicy Bypass -Command "iwr -useb https://raw.githubusercontent.com/Farukes/TokenJar/main/install.ps1 | iex"
 
 $ErrorActionPreference = 'Stop'
 
 Write-Host "============================================================" -ForegroundColor Cyan
-Write-Host "🍯 Installing TokenJar Native Engine for Windows..." -ForegroundColor Cyan
+Write-Host "Installing TokenJar Native Engine for Windows..." -ForegroundColor Cyan
 Write-Host "============================================================" -ForegroundColor Cyan
 
 $Repo = "Farukes/TokenJar"
@@ -32,27 +32,28 @@ try {
     $DownloadUrl = "https://github.com/$Repo/releases/latest/download/tokenjar-windows-x64.zip"
 }
 
-Write-Host "📥 Downloading TokenJar binary from $DownloadUrl..." -ForegroundColor Green
+Write-Host "Downloading TokenJar binary from $DownloadUrl..." -ForegroundColor Green
 Invoke-WebRequest -Uri $DownloadUrl -OutFile $ZipPath -UseBasicParsing
 
 # 3. Extract executable
-Write-Host "📦 Extracting into $InstallDir..." -ForegroundColor Green
+Write-Host "Extracting into $InstallDir..." -ForegroundColor Green
 Expand-Archive -Path $ZipPath -DestinationPath $InstallDir -Force
 Remove-Item -Path $ZipPath -Force -ErrorAction SilentlyContinue
 
 # 4. Add to User PATH if not present
 $UserPath = [Environment]::GetEnvironmentVariable("PATH", "User")
 if ($UserPath -notlike "*$InstallDir*") {
-    Write-Host "🔗 Adding $InstallDir to User PATH environment variable..." -ForegroundColor Yellow
+    Write-Host "Adding $InstallDir to User PATH environment variable..." -ForegroundColor Yellow
     [Environment]::SetEnvironmentVariable("PATH", "$InstallDir;$UserPath", "User")
     $env:PATH = "$InstallDir;$env:PATH"
 }
 
-Write-Host "`n✨ TokenJar has been successfully installed!" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "TokenJar has been successfully installed!" -ForegroundColor Cyan
 Write-Host "============================================================" -ForegroundColor Cyan
 
 if (Test-Path -Path $ExePath) {
-    Write-Host "🔌 Auto-configuring MCP server across detected AI assistants..." -ForegroundColor Green
+    Write-Host "Auto-configuring MCP server across detected AI assistants..." -ForegroundColor Green
     & $ExePath on --global
     & $ExePath status
 } else {
