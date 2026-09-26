@@ -105,4 +105,3 @@ max_source_files = 4
     )
     files_configured = walk_source_files(str(tmp_path))
     assert len(files_configured) == 4
-

@@ -60,6 +60,7 @@ def test_cli_update_subcommand(capsys):
     with patch.object(sys, "argv", ["token-saver", "update"]):
         with patch("urllib.request.urlopen") as mock_url:
             from unittest.mock import MagicMock
+
             mock_resp = MagicMock()
             mock_resp.read.return_value = b'{"info": {"version": "1.0.0"}}'
             mock_resp.__enter__.return_value = mock_resp

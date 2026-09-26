@@ -3,10 +3,10 @@
 //! Provides the complete Model Context Protocol interface over stdio,
 //! serving 10 tools, 3 live resources, and prompt templates with zero Python dependency.
 
-use std::io::{self, BufRead, Write};
-use std::path::Path;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
+use std::io::{self, BufRead, Write};
+use std::path::Path;
 
 use token_saver_core::cache::session_cache::SessionCache;
 use token_saver_core::config::TokenSaverConfig;
@@ -122,22 +122,24 @@ impl McpServer {
         Ok(())
     }
 
-    fn handle_method(&mut self, method: &str, params: Option<Value>) -> Result<Value, (i32, String)> {
+    fn handle_method(
+        &mut self,
+        method: &str,
+        params: Option<Value>,
+    ) -> Result<Value, (i32, String)> {
         match method {
-            "initialize" => {
-                Ok(json!({
-                    "protocolVersion": "2024-11-05",
-                    "capabilities": {
-                        "tools": {},
-                        "resources": {},
-                        "prompts": {}
-                    },
-                    "serverInfo": {
-                        "name": "token-saver",
-                        "version": env!("CARGO_PKG_VERSION")
-                    }
-                }))
-            }
+            "initialize" => Ok(json!({
+                "protocolVersion": "2024-11-05",
+                "capabilities": {
+                    "tools": {},
+                    "resources": {},
+                    "prompts": {}
+                },
+                "serverInfo": {
+                    "name": "token-saver",
+                    "version": env!("CARGO_PKG_VERSION")
+                }
+            })),
 
             "notifications/initialized" | "initialized" => Ok(json!({})),
 
@@ -149,7 +151,8 @@ impl McpServer {
 
             "tools/call" => {
                 let params = params.ok_or((-32602, "Missing params for tools/call".to_string()))?;
-                let tool_name = params.get("name")
+                let tool_name = params
+                    .get("name")
                     .and_then(|v| v.as_str())
                     .ok_or((-32602, "Missing 'name' in tools/call params".to_string()))?;
                 let arguments = params.get("arguments").cloned().unwrap_or(json!({}));
@@ -189,8 +192,10 @@ impl McpServer {
             })),
 
             "resources/read" => {
-                let params = params.ok_or((-32602, "Missing params for resources/read".to_string()))?;
-                let uri = params.get("uri")
+                let params =
+                    params.ok_or((-32602, "Missing params for resources/read".to_string()))?;
+                let uri = params
+                    .get("uri")
                     .and_then(|v| v.as_str())
                     .ok_or((-32602, "Missing 'uri' in resources/read params".to_string()))?;
 
@@ -240,13 +245,16 @@ impl McpServer {
             })),
 
             "prompts/get" => {
-                let params = params.ok_or((-32602, "Missing params for prompts/get".to_string()))?;
-                let prompt_name = params.get("name")
+                let params =
+                    params.ok_or((-32602, "Missing params for prompts/get".to_string()))?;
+                let prompt_name = params
+                    .get("name")
                     .and_then(|v| v.as_str())
                     .ok_or((-32602, "Missing 'name' in prompts/get params".to_string()))?;
 
                 if prompt_name == "optimize_coding_task" {
-                    let task = params.get("arguments")
+                    let task = params
+                        .get("arguments")
                         .and_then(|a| a.get("task_description"))
                         .and_then(|t| t.as_str())
                         .unwrap_or("coding task");
@@ -412,17 +420,23 @@ impl McpServer {
     fn call_tool(&mut self, name: &str, args: &Value) -> Result<String, (i32, String)> {
         match name {
             "read_file_smart" => {
-                let file_path = args.get("file_path")
+                let file_path = args
+                    .get("file_path")
                     .or_else(|| args.get("path"))
                     .and_then(|v| v.as_str())
                     .ok_or((-32602, "Missing 'file_path'".to_string()))?;
-                let force_full = args.get("force_full").and_then(|v| v.as_bool()).unwrap_or(false);
+                let force_full = args
+                    .get("force_full")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(false);
                 let query = args.get("query").and_then(|v| v.as_str());
-                let start_line = args.get("start_line")
+                let start_line = args
+                    .get("start_line")
                     .or_else(|| args.get("offset"))
                     .and_then(|v| v.as_u64())
                     .map(|v| v as usize);
-                let end_line = args.get("end_line")
+                let end_line = args
+                    .get("end_line")
                     .and_then(|v| v.as_u64())
                     .map(|v| v as usize)
                     .or_else(|| {
@@ -444,7 +458,8 @@ impl McpServer {
             }
 
             "tool_get_code_skeleton" => {
-                let file_path = args.get("file_path")
+                let file_path = args
+                    .get("file_path")
                     .or_else(|| args.get("path"))
                     .and_then(|v| v.as_str())
                     .ok_or((-32602, "Missing 'file_path'".to_string()))?;
@@ -460,76 +475,125 @@ impl McpServer {
             }
 
             "tool_get_symbol" => {
-                let file_path = args.get("file_path")
+                let file_path = args
+                    .get("file_path")
                     .or_else(|| args.get("path"))
                     .and_then(|v| v.as_str())
                     .ok_or((-32602, "Missing 'file_path'".to_string()))?;
-                let symbol_name = args.get("symbol_name")
+                let symbol_name = args
+                    .get("symbol_name")
                     .and_then(|v| v.as_str())
                     .ok_or((-32602, "Missing 'symbol_name'".to_string()))?;
                 Ok(get_symbol_file(file_path, symbol_name))
             }
 
             "find_symbol_global" => {
-                let query = args.get("query")
+                let query = args
+                    .get("query")
                     .and_then(|v| v.as_str())
                     .ok_or((-32602, "Missing 'query'".to_string()))?;
-                let root_path_str = args.get("root_path").and_then(|v| v.as_str()).unwrap_or(".");
+                let root_path_str = args
+                    .get("root_path")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or(".");
                 let exact = args.get("exact").and_then(|v| v.as_bool()).unwrap_or(false);
-                let max_results = args.get("max_results").and_then(|v| v.as_u64()).unwrap_or(15) as usize;
+                let max_results = args
+                    .get("max_results")
+                    .and_then(|v| v.as_u64())
+                    .unwrap_or(15) as usize;
 
                 let res = find_symbol_global(query, Path::new(root_path_str), exact, max_results);
                 let opt_tok = (res.len() / 4) as u64;
                 let raw_tok = (opt_tok.max(10) * 10) as u64;
                 if raw_tok > opt_tok {
-                    self.tracker.record_savings("symbol_search", raw_tok, opt_tok);
+                    self.tracker
+                        .record_savings("symbol_search", raw_tok, opt_tok);
                 }
                 Ok(res)
             }
 
             "find_symbol_references" => {
-                let symbol_name = args.get("symbol_name")
+                let symbol_name = args
+                    .get("symbol_name")
                     .and_then(|v| v.as_str())
                     .ok_or((-32602, "Missing 'symbol_name'".to_string()))?;
-                let root_path_str = args.get("root_path").and_then(|v| v.as_str()).unwrap_or(".");
-                let max_results = args.get("max_results").and_then(|v| v.as_u64()).unwrap_or(25) as usize;
+                let root_path_str = args
+                    .get("root_path")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or(".");
+                let max_results = args
+                    .get("max_results")
+                    .and_then(|v| v.as_u64())
+                    .unwrap_or(25) as usize;
 
-                let res = find_symbol_references(symbol_name, Path::new(root_path_str), max_results);
+                let res =
+                    find_symbol_references(symbol_name, Path::new(root_path_str), max_results);
                 let opt_tok = (res.len() / 4) as u64;
                 let raw_tok = (opt_tok.max(5) * 8) as u64;
                 if raw_tok > opt_tok {
-                    self.tracker.record_savings("symbol_search", raw_tok, opt_tok);
+                    self.tracker
+                        .record_savings("symbol_search", raw_tok, opt_tok);
                 }
                 Ok(res)
             }
 
             "run_command_smart" => {
-                let command = args.get("command")
+                let command = args
+                    .get("command")
                     .and_then(|v| v.as_str())
                     .ok_or((-32602, "Missing 'command'".to_string()))?;
                 let cwd = args.get("cwd").and_then(|v| v.as_str()).unwrap_or(".");
                 let timeout = args.get("timeout").and_then(|v| v.as_u64()).unwrap_or(120);
-                let background = args.get("background").and_then(|v| v.as_bool()).unwrap_or(false);
+                let background = args
+                    .get("background")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(false);
 
-                Ok(run_command_smart(command, cwd, timeout, background, &self.tracker))
+                Ok(run_command_smart(
+                    command,
+                    cwd,
+                    timeout,
+                    background,
+                    &self.tracker,
+                ))
             }
 
             "filter_output" => {
-                let raw_output = args.get("raw_output")
+                let raw_output = args
+                    .get("raw_output")
                     .or_else(|| args.get("output"))
                     .and_then(|v| v.as_str())
                     .ok_or((-32602, "Missing 'raw_output'".to_string()))?;
-                let output_type = args.get("output_type").and_then(|v| v.as_str()).unwrap_or("auto");
+                let output_type = args
+                    .get("output_type")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("auto");
 
-                Ok(filter_output_logic(raw_output, output_type, 0, &self.tracker))
+                Ok(filter_output_logic(
+                    raw_output,
+                    output_type,
+                    0,
+                    &self.tracker,
+                ))
             }
 
             "get_repo_map_tool" => {
-                let root_path_str = args.get("root_path").and_then(|v| v.as_str()).unwrap_or(".");
-                let max_tokens = args.get("max_tokens").and_then(|v| v.as_u64()).unwrap_or(1000) as usize;
-                let focus_files: Vec<String> = args.get("focus_files")
+                let root_path_str = args
+                    .get("root_path")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or(".");
+                let max_tokens = args
+                    .get("max_tokens")
+                    .and_then(|v| v.as_u64())
+                    .unwrap_or(1000) as usize;
+                let focus_files: Vec<String> = args
+                    .get("focus_files")
                     .and_then(|v| v.as_array())
-                    .map(|arr| arr.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect())
+                    .map(|arr| {
+                        arr.iter()
+                            .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                            .collect()
+                    })
                     .unwrap_or_default();
 
                 let res = get_repo_map(Path::new(root_path_str), max_tokens, &focus_files);
@@ -540,8 +604,12 @@ impl McpServer {
             }
 
             "get_directory_tree_tool" => {
-                let root_path_str = args.get("root_path").and_then(|v| v.as_str()).unwrap_or(".");
-                let max_depth = args.get("max_depth").and_then(|v| v.as_u64()).unwrap_or(4) as usize;
+                let root_path_str = args
+                    .get("root_path")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or(".");
+                let max_depth =
+                    args.get("max_depth").and_then(|v| v.as_u64()).unwrap_or(4) as usize;
 
                 Ok(get_directory_tree(Path::new(root_path_str), max_depth))
             }

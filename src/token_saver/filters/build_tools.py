@@ -7,50 +7,55 @@ import re
 
 def filter_npm_yarn(output: str) -> str:
     """Remove individual package download lines, keep summary and warnings/errors."""
-    lines = output.split('\n')
+    lines = output.split("\n")
     filtered = []
     for line in lines:
         if (
-            re.match(r'^(npm |yarn |pnpm ).*(fetch|add|install)', line, re.IGNORECASE)
-            or re.match(r'^\s*\[[0-9/]+\]\s+', line)
+            re.match(r"^(npm |yarn |pnpm ).*(fetch|add|install)", line, re.IGNORECASE)
+            or re.match(r"^\s*\[[0-9/]+\]\s+", line)
             or "GET" in line
             or "fetch" in line.lower()
             or "download" in line.lower()
         ):
             continue
         filtered.append(line)
-    return '\n'.join(filtered)
+    return "\n".join(filtered)
 
 
 def filter_cargo(output: str) -> str:
-    """Remove successful compilation lines, keep warnings and errors."""
-    lines = output.split('\n')
+    """Remove successful compilation and test execution lines, keep summaries, warnings and errors."""
+    if "test result:" in output or "... ok" in output:
+        from token_saver.filters.test_runners import filter_cargo as filter_cargo_test
+
+        return filter_cargo_test(output)
+
+    lines = output.split("\n")
     filtered = []
     for line in lines:
-        if re.match(r'^\s*Compiling\s+', line) or re.match(r'^\s*Downloaded\s+', line):
+        if re.match(r"^\s*Compiling\s+", line) or re.match(r"^\s*Downloaded\s+", line):
             continue
         filtered.append(line)
-    return '\n'.join(filtered)
+    return "\n".join(filtered)
 
 
 def filter_docker(output: str) -> str:
     """Filter verbose docker build/compose logs, keeping step headers, warnings, and errors."""
-    lines = output.split('\n')
+    lines = output.split("\n")
     filtered = []
     for line in lines:
         stripped = line.strip()
         # Skip intermediate hash lines and cache notes
-        if re.match(r'^\s*--->\s+[a-f0-9]+', stripped) or stripped == "---> Using cache":
+        if re.match(r"^\s*--->\s+[a-f0-9]+", stripped) or stripped == "---> Using cache":
             continue
         if stripped.startswith("Removing intermediate container"):
             continue
         filtered.append(line)
-    return '\n'.join(filtered)
+    return "\n".join(filtered)
 
 
 def filter_maven_gradle(output: str) -> str:
     """Filter Maven and Gradle build output, removing repetitive download/task logs."""
-    lines = output.split('\n')
+    lines = output.split("\n")
     filtered = []
     for line in lines:
         stripped = line.strip()
@@ -60,21 +65,21 @@ def filter_maven_gradle(output: str) -> str:
         if stripped.startswith("Download http"):
             continue
         # Skip intermediate task execution progress
-        if re.match(r'^>\s*Task\s+:[a-zA-Z0-9_:]+\s+UP-TO-DATE$', stripped):
+        if re.match(r"^>\s*Task\s+:[a-zA-Z0-9_:]+\s+UP-TO-DATE$", stripped):
             continue
         filtered.append(line)
-    return '\n'.join(filtered)
+    return "\n".join(filtered)
 
 
 def filter_generic_build(output: str) -> str:
     """Remove progress indicators, keep errors."""
-    lines = output.split('\n')
+    lines = output.split("\n")
     filtered = []
     for line in lines:
-        if re.match(r'^[\[\d+%\]|\.]', line.strip()) and len(line) < 20:
+        if re.match(r"^[\[\d+%\]|\.]", line.strip()) and len(line) < 20:
             continue
         filtered.append(line)
-    return '\n'.join(filtered)
+    return "\n".join(filtered)
 
 
 def detect_and_filter_build(output: str) -> str | None:

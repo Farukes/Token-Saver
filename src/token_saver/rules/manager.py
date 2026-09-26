@@ -32,11 +32,13 @@ def generate_rules(compact_output: bool = True, prevent_truncation: bool = True)
         "   - Use `run_command_smart` or `filter_output` for test runners (`pytest`, `npm test`, `cargo test`, `jest`) to prune repetitive passing logs.",
     ]
     if compact_output:
-        lines.extend([
-            "4. **Output Optimization & Code Quality Mandate (STRICT):**",
-            "   - Targeted File Slices: When inspecting specific functions or line ranges, pass `start_line` and `end_line` to `read_file_smart` to avoid dumping whole files into context.",
-            "   - Surgical File Edits: When modifying code, use surgical replacement blocks targeting precise line ranges instead of rewriting entire unchanged files.",
-        ])
+        lines.extend(
+            [
+                "4. **Output Optimization & Code Quality Mandate (STRICT):**",
+                "   - Targeted File Slices: When inspecting specific functions or line ranges, pass `start_line` and `end_line` to `read_file_smart` to avoid dumping whole files into context.",
+                "   - Surgical File Edits: When modifying code, use surgical replacement blocks targeting precise line ranges instead of rewriting entire unchanged files.",
+            ]
+        )
         if prevent_truncation:
             lines.append(
                 "   - ZERO TRUNCATION MANDATE (Anti-Lazy Coder): NEVER use placeholder comments (e.g. '// ... rest of code unchanged ...' or 'TODO: keep existing logic') or omit required logic. Every generated or replaced code block must be complete, functional, and syntactically valid."
@@ -193,8 +195,7 @@ class RulesManager:
                         )
                 else:
                     new_content = (
-                        content.rstrip()
-                        + f"\n\n[output]\ncompact_mode = {val_str}\nprevent_truncation = true\n"
+                        content.rstrip() + f"\n\n[output]\ncompact_mode = {val_str}\nprevent_truncation = true\n"
                     )
                 toml_path.write_text(new_content, encoding="utf-8")
             else:

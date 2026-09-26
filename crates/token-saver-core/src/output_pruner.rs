@@ -13,8 +13,8 @@ use crate::telemetry::TelemetryTracker;
 use crate::token_counter::estimate_tokens;
 
 const MAX_STREAM_BYTES: usize = 2 * 1024 * 1024; // 2MB
-const STREAM_HEAD_BYTES: usize = 1024 * 1024;    // 1MB
-const STREAM_TAIL_BYTES: usize = 512 * 1024;     // 512KB
+const STREAM_HEAD_BYTES: usize = 1024 * 1024; // 1MB
+const STREAM_TAIL_BYTES: usize = 512 * 1024; // 512KB
 
 /// Core output filtering logic.
 pub fn filter_output_logic(
@@ -55,13 +55,19 @@ pub fn filter_output_logic(
         "generic" => clean.clone(),
         _ => {
             // Auto-detect
-            if clean.contains("pytest") || clean.contains("=== test session starts ===") || clean.contains("passed in") {
+            if clean.contains("pytest")
+                || clean.contains("=== test session starts ===")
+                || clean.contains("passed in")
+            {
                 filter_pytest(&clean)
             } else if clean.contains("running ") && clean.contains("test result:") {
                 filter_cargo(&clean)
             } else if let Some(b) = detect_and_filter_build(&clean) {
                 b
-            } else if clean.contains("git ") || clean.contains("On branch ") || clean.contains("Untracked files:") {
+            } else if clean.contains("git ")
+                || clean.contains("On branch ")
+                || clean.contains("Untracked files:")
+            {
                 filter_git_output(&clean)
             } else {
                 clean.clone()
@@ -72,8 +78,15 @@ pub fn filter_output_logic(
     // Fallback safety guard: preserve full error context if exit_code != 0
     if exit_code != 0 {
         let error_keywords = [
-            "traceback", "error", "failed", "exception", "fatal", "panic", "cannot",
-            "syntaxerror", "importerror",
+            "traceback",
+            "error",
+            "failed",
+            "exception",
+            "fatal",
+            "panic",
+            "cannot",
+            "syntaxerror",
+            "importerror",
         ];
         let raw_lower = clean.to_lowercase();
         let filtered_lower = filtered.to_lowercase();
@@ -131,7 +144,10 @@ pub fn run_command_smart(
             .stderr(Stdio::null());
 
         match cmd.spawn() {
-            Ok(child) => format!("[BACKGROUND PROCESS LAUNCHED] PID: {} | Command: {command_str}", child.id()),
+            Ok(child) => format!(
+                "[BACKGROUND PROCESS LAUNCHED] PID: {} | Command: {command_str}",
+                child.id()
+            ),
             Err(e) => format!("Error launching background command: {e}"),
         }
     } else {

@@ -48,9 +48,7 @@ class PersistentCache:
                     )
                     """
                 )
-                conn.execute(
-                    "CREATE INDEX IF NOT EXISTS idx_cache_updated ON file_cache(updated_at);"
-                )
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_cache_updated ON file_cache(updated_at);")
                 conn.execute(
                     """
                     CREATE TABLE IF NOT EXISTS symbol_index (
@@ -65,9 +63,7 @@ class PersistentCache:
                     )
                     """
                 )
-                conn.execute(
-                    "CREATE INDEX IF NOT EXISTS idx_symbol_project_name ON symbol_index(project_root, name);"
-                )
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_symbol_project_name ON symbol_index(project_root, name);")
                 conn.execute(
                     "CREATE INDEX IF NOT EXISTS idx_symbol_project_file ON symbol_index(project_root, file_path);"
                 )

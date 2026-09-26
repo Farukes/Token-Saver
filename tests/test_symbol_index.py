@@ -168,4 +168,3 @@ def test_persistent_symbol_cache_project_isolation(tmp_path):
     )
     assert len(cache.search_symbols(proj_a, "vault_key")) == 1
     assert len(cache.search_symbols(proj_b, "vault_key")) == 0
-

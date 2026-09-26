@@ -3,9 +3,9 @@
 //! Zero background RAM: runs an asynchronous local HTTP server on demand,
 //! serves the embedded dashboard UI, and cleanly shuts down on exit.
 
+use serde_json::json;
 use std::net::SocketAddr;
 use std::process::Command;
-use serde_json::json;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
 
@@ -85,7 +85,10 @@ pub fn build_system_status(tracker: &TelemetryTracker) -> serde_json::Value {
         let installed = if name == "Claude Code" {
             token_saver_core::installer::is_claude_code_installed()
         } else {
-            let parent_exists = path.parent().map(|p| p.exists() && p != &home).unwrap_or(false);
+            let parent_exists = path
+                .parent()
+                .map(|p| p.exists() && p != &home)
+                .unwrap_or(false);
             file_exists || parent_exists
         };
         let mut active = false;
@@ -202,7 +205,10 @@ pub async fn start_ui_server(port: u16) -> Result<(), Box<dyn std::error::Error>
             }
         }
 
-        if !host_header.is_empty() && !host_header.starts_with("127.0.0.1") && !host_header.starts_with("localhost") {
+        if !host_header.is_empty()
+            && !host_header.starts_with("127.0.0.1")
+            && !host_header.starts_with("localhost")
+        {
             let resp = "HTTP/1.1 403 Forbidden\r\nContent-Type: text/plain\r\n\r\nForbidden Host";
             let _ = socket.write_all(resp.as_bytes()).await;
             continue;
@@ -220,7 +226,8 @@ pub async fn start_ui_server(port: u16) -> Result<(), Box<dyn std::error::Error>
         }
 
         let post_json: Option<serde_json::Value> = if method == "POST" {
-            request.find("\r\n\r\n")
+            request
+                .find("\r\n\r\n")
                 .or_else(|| request.find("\n\n"))
                 .and_then(|pos| serde_json::from_str(request[pos..].trim()).ok())
         } else {
@@ -228,9 +235,11 @@ pub async fn start_ui_server(port: u16) -> Result<(), Box<dyn std::error::Error>
         };
 
         let (status_code, content_type, body) = match (method, path) {
-            ("GET", "/") | ("GET", "/index.html") => {
-                ("200 OK", "text/html; charset=utf-8", HTML_CONTENT.to_string())
-            }
+            ("GET", "/") | ("GET", "/index.html") => (
+                "200 OK",
+                "text/html; charset=utf-8",
+                HTML_CONTENT.to_string(),
+            ),
             ("GET", "/api/status") => {
                 let status_json = build_system_status(&tracker);
                 ("200 OK", "application/json", status_json.to_string())
@@ -238,17 +247,29 @@ pub async fn start_ui_server(port: u16) -> Result<(), Box<dyn std::error::Error>
             ("POST", "/api/reset-stats") => {
                 tracker.reset();
                 let status_json = build_system_status(&tracker);
-                ("200 OK", "application/json", json!({ "ok": true, "msg": "Stats reset", "status": status_json }).to_string())
+                (
+                    "200 OK",
+                    "application/json",
+                    json!({ "ok": true, "msg": "Stats reset", "status": status_json }).to_string(),
+                )
             }
             ("POST", "/api/shutdown") => {
                 tokio::spawn(async {
                     tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
                     std::process::exit(0);
                 });
-                ("200 OK", "application/json", json!({ "ok": true, "msg": "Server shutting down" }).to_string())
+                (
+                    "200 OK",
+                    "application/json",
+                    json!({ "ok": true, "msg": "Server shutting down" }).to_string(),
+                )
             }
             ("POST", "/api/toggle-output") => {
-                let compact = post_json.as_ref().and_then(|j| j.get("compact")).and_then(|v| v.as_bool()).unwrap_or(true);
+                let compact = post_json
+                    .as_ref()
+                    .and_then(|j| j.get("compact"))
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(true);
                 token_saver_core::rules::install_rules(std::path::Path::new("."), compact, true);
                 let status_json = build_system_status(&tracker);
                 ("200 OK", "application/json", json!({
@@ -258,7 +279,11 @@ pub async fn start_ui_server(port: u16) -> Result<(), Box<dyn std::error::Error>
                 }).to_string())
             }
             ("POST", "/api/toggle-all") => {
-                let enable = post_json.as_ref().and_then(|j| j.get("enable")).and_then(|v| v.as_bool()).unwrap_or(true);
+                let enable = post_json
+                    .as_ref()
+                    .and_then(|j| j.get("enable"))
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(true);
                 if enable {
                     token_saver_core::installer::install_mcp_all(false, None);
                     token_saver_core::rules::install_rules(std::path::Path::new("."), true, true);
@@ -274,7 +299,11 @@ pub async fn start_ui_server(port: u16) -> Result<(), Box<dyn std::error::Error>
                 }).to_string())
             }
             ("POST", "/api/toggle-rules") => {
-                let enable = post_json.as_ref().and_then(|j| j.get("enable")).and_then(|v| v.as_bool()).unwrap_or(true);
+                let enable = post_json
+                    .as_ref()
+                    .and_then(|j| j.get("enable"))
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(true);
                 if enable {
                     token_saver_core::rules::install_rules(std::path::Path::new("."), true, true);
                 } else {
@@ -288,8 +317,16 @@ pub async fn start_ui_server(port: u16) -> Result<(), Box<dyn std::error::Error>
                 }).to_string())
             }
             ("POST", "/api/toggle-ide") => {
-                let ide_name = post_json.as_ref().and_then(|j| j.get("name")).and_then(|v| v.as_str()).unwrap_or("");
-                let enable = post_json.as_ref().and_then(|j| j.get("enable")).and_then(|v| v.as_bool()).unwrap_or(true);
+                let ide_name = post_json
+                    .as_ref()
+                    .and_then(|j| j.get("name"))
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("");
+                let enable = post_json
+                    .as_ref()
+                    .and_then(|j| j.get("enable"))
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(true);
 
                 let ide_configs = token_saver_core::installer::get_supported_ide_configs();
                 if let Some((_, cfg_path)) = ide_configs.iter().find(|(n, _)| *n == ide_name) {
@@ -312,7 +349,9 @@ pub async fn start_ui_server(port: u16) -> Result<(), Box<dyn std::error::Error>
                         if !json_data.is_object() {
                             json_data = json!({});
                         }
-                        if json_data.get("mcpServers").is_none() || !json_data["mcpServers"].is_object() {
+                        if json_data.get("mcpServers").is_none()
+                            || !json_data["mcpServers"].is_object()
+                        {
                             json_data["mcpServers"] = json!({});
                         }
                         json_data["mcpServers"]["token-saver"] = json!({
@@ -323,8 +362,13 @@ pub async fn start_ui_server(port: u16) -> Result<(), Box<dyn std::error::Error>
                         }
                     } else if cfg_path.exists() {
                         if let Ok(content) = std::fs::read_to_string(cfg_path) {
-                            if let Ok(mut json_data) = serde_json::from_str::<serde_json::Value>(&content) {
-                                if let Some(servers) = json_data.get_mut("mcpServers").and_then(|s| s.as_object_mut()) {
+                            if let Ok(mut json_data) =
+                                serde_json::from_str::<serde_json::Value>(&content)
+                            {
+                                if let Some(servers) = json_data
+                                    .get_mut("mcpServers")
+                                    .and_then(|s| s.as_object_mut())
+                                {
                                     servers.remove("token-saver");
                                 }
                                 if let Ok(formatted) = serde_json::to_string_pretty(&json_data) {
@@ -350,11 +394,13 @@ pub async fn start_ui_server(port: u16) -> Result<(), Box<dyn std::error::Error>
                     Err(e) => format!("Cache connection failed: {e}"),
                 };
                 let status_json = build_system_status(&tracker);
-                ("200 OK", "application/json", json!({ "ok": true, "msg": msg, "status": status_json }).to_string())
+                (
+                    "200 OK",
+                    "application/json",
+                    json!({ "ok": true, "msg": msg, "status": status_json }).to_string(),
+                )
             }
-            _ => {
-                ("404 Not Found", "text/plain", "Not Found".to_string())
-            }
+            _ => ("404 Not Found", "text/plain", "Not Found".to_string()),
         };
 
         let response = format!(

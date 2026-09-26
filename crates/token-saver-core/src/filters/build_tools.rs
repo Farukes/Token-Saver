@@ -51,7 +51,9 @@ pub fn detect_and_filter_build(output: &str) -> Option<String> {
         || output.contains("node_modules")
     {
         Some(filter_npm_yarn(output))
-    } else if output.contains("Step ") && (output.contains("--->") || output.to_lowercase().contains("docker")) {
+    } else if output.contains("Step ")
+        && (output.contains("--->") || output.to_lowercase().contains("docker"))
+    {
         Some(filter_docker(output))
     } else {
         None

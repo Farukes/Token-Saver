@@ -3,14 +3,15 @@
 //! Enables instant repository-wide symbol lookup and blast radius analysis
 //! without reading dozens of files or triggering context window compaction.
 
+use sha2::{Digest, Sha256};
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
 use std::sync::{LazyLock, Mutex};
 use std::time::{Duration, Instant};
-use sha2::{Digest, Sha256};
 use walkdir::WalkDir;
 
-static LAST_INDEX_TIME: LazyLock<Mutex<HashMap<String, Instant>>> = LazyLock::new(|| Mutex::new(HashMap::new()));
+static LAST_INDEX_TIME: LazyLock<Mutex<HashMap<String, Instant>>> =
+    LazyLock::new(|| Mutex::new(HashMap::new()));
 
 use crate::cache::persistent_cache::PersistentCache;
 use crate::config::TokenSaverConfig;
@@ -52,13 +53,19 @@ pub fn extract_symbols_from_code(
         let node_kind = node.kind();
         let mut kind = None;
 
-        if matches!(node_kind, "function_definition" | "function_declaration" | "function_item") {
+        if matches!(
+            node_kind,
+            "function_definition" | "function_declaration" | "function_item"
+        ) {
             kind = Some(if parent_kind == "class" || parent_kind == "impl" {
                 "method"
             } else {
                 "function"
             });
-        } else if matches!(node_kind, "class_definition" | "class_declaration" | "class") {
+        } else if matches!(
+            node_kind,
+            "class_definition" | "class_declaration" | "class"
+        ) {
             kind = Some("class");
         } else if matches!(node_kind, "method_definition" | "method_declaration") {
             kind = Some("method");
@@ -81,7 +88,9 @@ pub fn extract_symbols_from_code(
             }
 
             if let Some(n) = name_node {
-                if let Ok(name_str) = std::str::from_utf8(&source_bytes[n.start_byte()..n.end_byte()]) {
+                if let Ok(name_str) =
+                    std::str::from_utf8(&source_bytes[n.start_byte()..n.end_byte()])
+                {
                     let line = node.start_position().row + 1;
                     let signature = get_signature(node, lines);
                     let body_slice = &source_bytes[node.start_byte()..node.end_byte()];
@@ -110,11 +119,25 @@ pub fn extract_symbols_from_code(
         };
 
         for child in node.children(&mut node.walk()) {
-            walk(child, lines, source_bytes, rel_path, next_parent_kind, symbols);
+            walk(
+                child,
+                lines,
+                source_bytes,
+                rel_path,
+                next_parent_kind,
+                symbols,
+            );
         }
     }
 
-    walk(tree.root_node(), &lines, source_bytes, rel_path, "", &mut symbols);
+    walk(
+        tree.root_node(),
+        &lines,
+        source_bytes,
+        rel_path,
+        "",
+        &mut symbols,
+    );
     symbols
 }
 
@@ -147,9 +170,15 @@ pub fn extract_references_from_code(
             let kind = node.kind();
             if matches!(
                 kind,
-                "identifier" | "type_identifier" | "property_identifier" | "name" | "field_identifier"
+                "identifier"
+                    | "type_identifier"
+                    | "property_identifier"
+                    | "name"
+                    | "field_identifier"
             ) {
-                if let Ok(text) = std::str::from_utf8(&source_bytes[node.start_byte()..node.end_byte()]) {
+                if let Ok(text) =
+                    std::str::from_utf8(&source_bytes[node.start_byte()..node.end_byte()])
+                {
                     if text == target_symbol {
                         let line_no = node.start_position().row + 1;
                         if !def_locations.contains(&(rel_path.to_string(), line_no)) {
@@ -157,7 +186,10 @@ pub fn extract_references_from_code(
                             let mut parent = node.parent();
                             while let Some(p) = parent {
                                 let ptype = p.kind();
-                                if matches!(ptype, "call_expression" | "call" | "invocation_expression") {
+                                if matches!(
+                                    ptype,
+                                    "call_expression" | "call" | "invocation_expression"
+                                ) {
                                     ref_kind = ReferenceKind::Call;
                                     break;
                                 } else if matches!(
@@ -172,7 +204,10 @@ pub fn extract_references_from_code(
                                     break;
                                 } else if matches!(
                                     ptype,
-                                    "class_inheritance" | "extends_clause" | "implements_clause" | "base_class_clause"
+                                    "class_inheritance"
+                                        | "extends_clause"
+                                        | "implements_clause"
+                                        | "base_class_clause"
                                 ) {
                                     ref_kind = ReferenceKind::Inheritance;
                                     break;
@@ -199,11 +234,27 @@ pub fn extract_references_from_code(
             }
 
             for child in node.children(&mut node.walk()) {
-                walk(child, lines, source_bytes, rel_path, target_symbol, def_locations, refs);
+                walk(
+                    child,
+                    lines,
+                    source_bytes,
+                    rel_path,
+                    target_symbol,
+                    def_locations,
+                    refs,
+                );
             }
         }
 
-        walk(tree.root_node(), &lines, source_bytes, rel_path, target_symbol, def_locations, &mut refs);
+        walk(
+            tree.root_node(),
+            &lines,
+            source_bytes,
+            rel_path,
+            target_symbol,
+            def_locations,
+            &mut refs,
+        );
     } else {
         // Fallback line scan
         for (idx, line) in lines.iter().enumerate() {
@@ -261,7 +312,9 @@ fn is_skip_dir(entry: &walkdir::DirEntry) -> bool {
 
 /// Recursively scans and indexes the repository incrementally into SQLite.
 pub fn index_repository(root_path: &Path) -> Vec<IndexedSymbol> {
-    let root = root_path.canonicalize().unwrap_or_else(|_| root_path.to_path_buf());
+    let root = root_path
+        .canonicalize()
+        .unwrap_or_else(|_| root_path.to_path_buf());
     let root_str = root.to_string_lossy().to_string();
 
     {
@@ -315,7 +368,11 @@ pub fn index_repository(root_path: &Path) -> Vec<IndexedSymbol> {
 
         let mtime = std::fs::metadata(p)
             .and_then(|m| m.modified())
-            .map(|t| t.duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_secs_f64())
+            .map(|t| {
+                t.duration_since(std::time::UNIX_EPOCH)
+                    .unwrap_or_default()
+                    .as_secs_f64()
+            })
             .unwrap_or(0.0);
 
         // Incremental cache check: skip file if mtime is unchanged
@@ -357,7 +414,9 @@ pub fn find_symbol_global(
         return "Error: Empty query provided.".to_string();
     }
 
-    let root = root_path.canonicalize().unwrap_or_else(|_| root_path.to_path_buf());
+    let root = root_path
+        .canonicalize()
+        .unwrap_or_else(|_| root_path.to_path_buf());
     let root_str = root.to_string_lossy().to_string();
 
     // Ensure index is populated
@@ -378,11 +437,21 @@ pub fn find_symbol_global(
     }
 
     let mut lines = Vec::new();
-    lines.push(format!("[SYMBOLS] Found {} symbol(s) matching '{query}':", matches.len()));
+    lines.push(format!(
+        "[SYMBOLS] Found {} symbol(s) matching '{query}':",
+        matches.len()
+    ));
     lines.push("----------------------------------------".to_string());
 
     for (i, m) in matches.iter().enumerate() {
-        lines.push(format!("{}. [{}] {} -> {}:{}", i + 1, m.kind.to_uppercase(), m.name, m.file_path, m.line));
+        lines.push(format!(
+            "{}. [{}] {} -> {}:{}",
+            i + 1,
+            m.kind.to_uppercase(),
+            m.name,
+            m.file_path,
+            m.line
+        ));
         if !m.signature.is_empty() {
             lines.push(format!("   Signature: {}", m.signature));
         }
@@ -392,17 +461,15 @@ pub fn find_symbol_global(
 }
 
 /// Finds all usages, calls, and imports of a symbol across the entire codebase.
-pub fn find_symbol_references(
-    symbol_name: &str,
-    root_path: &Path,
-    max_results: usize,
-) -> String {
+pub fn find_symbol_references(symbol_name: &str, root_path: &Path, max_results: usize) -> String {
     let sym = symbol_name.trim();
     if sym.is_empty() {
         return "Error: Empty symbol_name provided.".to_string();
     }
 
-    let root = root_path.canonicalize().unwrap_or_else(|_| root_path.to_path_buf());
+    let root = root_path
+        .canonicalize()
+        .unwrap_or_else(|_| root_path.to_path_buf());
     let root_str = root.to_string_lossy().to_string();
     let _ = index_repository(&root);
 
@@ -411,7 +478,9 @@ pub fn find_symbol_references(
         Err(e) => return format!("Cache Error: {e}"),
     };
 
-    let cached_defs = cache.search_symbols(&root_str, sym, true, 10).unwrap_or_default();
+    let cached_defs = cache
+        .search_symbols(&root_str, sym, true, 10)
+        .unwrap_or_default();
     let def_locations: HashSet<(String, usize)> = cached_defs
         .iter()
         .map(|d| (d.file_path.clone(), d.line))
@@ -467,7 +536,9 @@ pub fn find_symbol_references(
     }
 
     if all_refs.is_empty() && cached_defs.is_empty() {
-        return format!("No references or definitions found for '{symbol_name}' across the codebase.");
+        return format!(
+            "No references or definitions found for '{symbol_name}' across the codebase."
+        );
     }
 
     let mut lines = Vec::new();
@@ -492,14 +563,23 @@ pub fn find_symbol_references(
     lines.push("-".repeat(60));
 
     for (i, r) in all_refs.iter().take(max_results).enumerate() {
-        lines.push(format!("{}. [{}] {}:{}", i + 1, r.kind, r.file_path, r.line));
+        lines.push(format!(
+            "{}. [{}] {}:{}",
+            i + 1,
+            r.kind,
+            r.file_path,
+            r.line
+        ));
         if !r.snippet.is_empty() {
             lines.push(format!("   Line {}: {}", r.line, r.snippet));
         }
     }
 
     if all_refs.len() > max_results {
-        lines.push(format!("\n... and {} more reference(s) omitted.", all_refs.len() - max_results));
+        lines.push(format!(
+            "\n... and {} more reference(s) omitted.",
+            all_refs.len() - max_results
+        ));
     }
 
     lines.join("\n")
@@ -529,7 +609,9 @@ pub fn greet() {
         let syms = extract_symbols_from_code(code, SupportedLanguage::Rust, "src/user.rs");
         assert!(syms.iter().any(|s| s.name == "User" && s.kind == "struct"));
         assert!(syms.iter().any(|s| s.name == "new" && s.kind == "method"));
-        assert!(syms.iter().any(|s| s.name == "greet" && s.kind == "function"));
+        assert!(syms
+            .iter()
+            .any(|s| s.name == "greet" && s.kind == "function"));
     }
 
     #[test]
@@ -542,7 +624,13 @@ def process_login(user):
     return token
 "#;
         let def_locs = HashSet::new();
-        let refs = extract_references_from_code(code, SupportedLanguage::Python, "app.py", "login_user", &def_locs);
+        let refs = extract_references_from_code(
+            code,
+            SupportedLanguage::Python,
+            "app.py",
+            "login_user",
+            &def_locs,
+        );
         assert_eq!(refs.len(), 2);
         assert!(refs.iter().any(|r| r.kind == ReferenceKind::Import));
         assert!(refs.iter().any(|r| r.kind == ReferenceKind::Call));
@@ -552,7 +640,11 @@ def process_login(user):
     fn test_find_symbol_global_repo() {
         let temp = tempfile::tempdir().unwrap();
         let file = temp.path().join("service.rs");
-        std::fs::write(&file, "pub struct PaymentService;\nimpl PaymentService {\n    pub fn pay() {}\n}\n").unwrap();
+        std::fs::write(
+            &file,
+            "pub struct PaymentService;\nimpl PaymentService {\n    pub fn pay() {}\n}\n",
+        )
+        .unwrap();
 
         let result = find_symbol_global("PaymentService", temp.path(), false, 10);
         assert!(result.contains("PaymentService"));

@@ -1,8 +1,8 @@
 //! Session-level in-memory cache with ultra-fast unified diffing via `similar`.
 
+use similar::TextDiff;
 use std::collections::HashMap;
 use std::sync::Mutex;
-use similar::TextDiff;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum CacheStatus {
@@ -93,7 +93,8 @@ impl SessionCache {
                     .and_then(|n| n.to_str())
                     .unwrap_or(file_path);
 
-                let cached_msg = format!("[CACHED] {file_name} — unchanged since last read (read #{read_no})");
+                let cached_msg =
+                    format!("[CACHED] {file_name} — unchanged since last read (read #{read_no})");
                 let opt_tokens = crate::token_counter::estimate_tokens(&cached_msg);
 
                 return CacheResult {
@@ -107,7 +108,10 @@ impl SessionCache {
                 stats.diffs += 1;
                 // File modified: generate unified diff
                 let diff = TextDiff::from_lines(entry.content.as_str(), current_content);
-                let unified = diff.unified_diff().header("original", "modified").to_string();
+                let unified = diff
+                    .unified_diff()
+                    .header("original", "modified")
+                    .to_string();
 
                 let diff_tokens = crate::token_counter::estimate_tokens(&unified);
 

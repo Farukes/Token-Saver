@@ -70,15 +70,20 @@ fn is_skip_dir(entry: &walkdir::DirEntry) -> bool {
 }
 
 /// Generates a structural map of the entire repository fitted to a token budget.
-pub fn get_repo_map(
-    root_path: &Path,
-    max_tokens: usize,
-    focus_files: &[String],
-) -> String {
-    let root = root_path.canonicalize().unwrap_or_else(|_| root_path.to_path_buf());
+pub fn get_repo_map(root_path: &Path, max_tokens: usize, focus_files: &[String]) -> String {
+    let root = root_path
+        .canonicalize()
+        .unwrap_or_else(|_| root_path.to_path_buf());
     let config = TokenSaverConfig::load_from_dir(&root);
 
-    let mut raw_files: Vec<(String, String, &'static str, usize, Vec<IndexedSymbol>, usize)> = Vec::new();
+    let mut raw_files: Vec<(
+        String,
+        String,
+        &'static str,
+        usize,
+        Vec<IndexedSymbol>,
+        usize,
+    )> = Vec::new();
     let mut symbol_to_file: HashMap<String, String> = HashMap::new();
 
     for entry in WalkDir::new(&root)
@@ -164,11 +169,17 @@ pub fn get_repo_map(
         let top_level_symbols = symbols.len();
         let base_score = (top_level_symbols * 10) as f64;
         let import_score = (import_count * 5) as f64;
-        let focus_boost = if focus_files.contains(&rel_path) { 100.0 } else { 0.0 };
+        let focus_boost = if focus_files.contains(&rel_path) {
+            100.0
+        } else {
+            0.0
+        };
         let length_penalty = -0.001 * (line_count as f64);
-        let call_graph_centrality = (inbound_references.get(&rel_path).copied().unwrap_or(0) * 12) as f64;
+        let call_graph_centrality =
+            (inbound_references.get(&rel_path).copied().unwrap_or(0) * 12) as f64;
 
-        let score = base_score + import_score + focus_boost + length_penalty + call_graph_centrality;
+        let score =
+            base_score + import_score + focus_boost + length_penalty + call_graph_centrality;
 
         file_infos.push(FileInfo {
             rel_path,
@@ -180,7 +191,11 @@ pub fn get_repo_map(
     }
 
     // Sort descending by centrality score
-    file_infos.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal));
+    file_infos.sort_by(|a, b| {
+        b.score
+            .partial_cmp(&a.score)
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
 
     let mut output_lines = Vec::new();
     output_lines.push(format!(
@@ -215,7 +230,8 @@ pub fn get_repo_map(
                     file_infos.len() - included_count
                 ));
             } else {
-                output_lines.push("\n... (budget too small to include even the top file)".to_string());
+                output_lines
+                    .push("\n... (budget too small to include even the top file)".to_string());
             }
             break;
         }
@@ -230,7 +246,9 @@ pub fn get_repo_map(
 
 /// Lightweight directory tree generator honoring ignore patterns.
 pub fn get_directory_tree(root_path: &Path, max_depth: usize) -> String {
-    let root = root_path.canonicalize().unwrap_or_else(|_| root_path.to_path_buf());
+    let root = root_path
+        .canonicalize()
+        .unwrap_or_else(|_| root_path.to_path_buf());
     if !root.exists() || !root.is_dir() {
         return format!("Error: Directory {} does not exist.", root_path.display());
     }
@@ -273,7 +291,11 @@ pub fn get_directory_tree(root_path: &Path, max_depth: usize) -> String {
                 if name.starts_with('.') && name != ".gitignore" && name != ".env.example" {
                     return false;
                 }
-                if name == "target" || name == "node_modules" || name == "__pycache__" || name == ".git" {
+                if name == "target"
+                    || name == "node_modules"
+                    || name == "__pycache__"
+                    || name == ".git"
+                {
                     return false;
                 }
                 !config.is_ignored(&e.path())
@@ -304,7 +326,10 @@ pub fn get_directory_tree(root_path: &Path, max_depth: usize) -> String {
         }
     }
 
-    let root_name = root.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| "root".to_string());
+    let root_name = root
+        .file_name()
+        .map(|n| n.to_string_lossy().to_string())
+        .unwrap_or_else(|| "root".to_string());
     lines.push(format!("{root_name}/"));
     walk_dir(&root, 1, max_depth, "", &config, &mut lines);
 

@@ -12,6 +12,7 @@ def test_strip_ansi():
     text_with_ansi = "\x1b[32mSuccess\x1b[0m"
     assert strip_ansi(text_with_ansi) == "Success"
 
+
 def test_filter_pytest():
     pytest_out = """
 test session starts
@@ -36,6 +37,7 @@ FAILED test_2.py::test_2 - assert False
     assert "=== FAILURES ===" in filtered
     assert "assert False" in filtered
 
+
 def test_filter_npm():
     npm_out = """
 npm WARN deprecated request@2.88.2: request has been deprecated
@@ -48,6 +50,24 @@ added 1 package, and audited 2 packages in 1s
     assert "[1/4]" not in filtered
     assert "added 1 package" in filtered
     assert "npm WARN" in filtered
+
+
+def test_filter_cargo():
+    from token_saver.filters.test_runners import filter_cargo
+
+    cargo_out = """
+   Compiling token-saver-core v0.2.0
+    Finished test [unoptimized + debuginfo] target(s) in 0.15s
+     Running unittests src/lib.rs
+test filters::test_runners::tests::test_filter_cargo ... ok
+test filters::test_runners::tests::test_filter_pytest ... ok
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out
+"""
+    filtered = filter_cargo(cargo_out)
+    assert "test result: ok. 2 passed" in filtered
+    assert "test filters::test_runners" not in filtered
+    assert "Compiling" not in filtered
+
 
 def test_filter_git():
     git_out = """
@@ -64,6 +84,7 @@ nothing added to commit but untracked files present (use "git add" to track)
     assert '(use "git add <file>..."' not in filtered
     assert '(use "git add" to track)' not in filtered
     assert "Untracked files:" in filtered
+
 
 def test_token_savings(monkeypatch):
     monkeypatch.setattr(token_saver.utils.token_counter, "estimate_tokens", lambda x: len(x) // 4)
@@ -91,7 +112,8 @@ FAILED tests/test_100.py::test_100 - assert False
     assert "Token-Saver" in filtered
 
     import re
-    match = re.search(r'\((\d+)% saved\)', filtered)
+
+    match = re.search(r"\((\d+)% saved\)", filtered)
     assert match is not None
     saved = int(match.group(1))
     assert saved >= 50
@@ -172,4 +194,3 @@ def test_command_timeout():
     cmd = f'"{sys.executable}" -c "import time; time.sleep(3)"'
     res = run_cmd(cmd, timeout=1)
     assert "Command timed out" in res
-

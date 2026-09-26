@@ -2,9 +2,9 @@
 //!
 //! Stores AST digests and symbol indexes across sessions and IDE reboots in ~/.token-saver/cache.db.
 
-use std::path::PathBuf;
-use rusqlite::{params, Connection, Result};
 use crate::models::IndexedSymbol;
+use rusqlite::{params, Connection, Result};
+use std::path::PathBuf;
 
 pub struct PersistentCache {
     db_path: PathBuf,
@@ -66,7 +66,10 @@ impl PersistentCache {
         )?;
 
         // Auto-migration: ensure mtime column exists if table was created in earlier beta
-        let _ = conn.execute("ALTER TABLE symbol_index ADD COLUMN mtime REAL DEFAULT 0.0", []);
+        let _ = conn.execute(
+            "ALTER TABLE symbol_index ADD COLUMN mtime REAL DEFAULT 0.0",
+            [],
+        );
 
         Ok(())
     }
@@ -102,7 +105,10 @@ impl PersistentCache {
                 symbols.push(s?);
             }
         } else {
-            let escaped = query.replace('\\', "\\\\").replace('%', "\\%").replace('_', "\\_");
+            let escaped = query
+                .replace('\\', "\\\\")
+                .replace('%', "\\%")
+                .replace('_', "\\_");
             let pattern = format!("%{escaped}%");
             let mut stmt = conn.prepare(
                 "SELECT name, kind, file_path, line, signature, file_hash
@@ -169,7 +175,11 @@ impl PersistentCache {
         Ok(())
     }
 
-    pub fn get_file_meta(&self, project_root: &str, file_path: &str) -> Result<Option<(String, f64)>> {
+    pub fn get_file_meta(
+        &self,
+        project_root: &str,
+        file_path: &str,
+    ) -> Result<Option<(String, f64)>> {
         let conn = self.connect()?;
         let mut stmt = conn.prepare(
             "SELECT file_hash, mtime FROM symbol_index WHERE project_root = ? AND file_path = ? LIMIT 1",
@@ -186,7 +196,9 @@ impl PersistentCache {
 
     pub fn prune(&self, max_entries: usize) -> Result<usize> {
         let conn = self.connect()?;
-        let count: usize = conn.query_row("SELECT COUNT(*) FROM file_cache", [], |r| r.get(0)).unwrap_or(0);
+        let count: usize = conn
+            .query_row("SELECT COUNT(*) FROM file_cache", [], |r| r.get(0))
+            .unwrap_or(0);
         if count > max_entries {
             let to_remove = count - max_entries;
             conn.execute(
@@ -217,15 +229,21 @@ mod tests {
             content_hash: "hash123".to_string(),
         }];
 
-        cache.set_file_symbols("/test_root", "src/counter.rs", "hash123", 1000.0, &syms).unwrap();
+        cache
+            .set_file_symbols("/test_root", "src/counter.rs", "hash123", 1000.0, &syms)
+            .unwrap();
 
         // Exact search
-        let exact = cache.search_symbols("/test_root", "calculate_tokens", true, 10).unwrap();
+        let exact = cache
+            .search_symbols("/test_root", "calculate_tokens", true, 10)
+            .unwrap();
         assert_eq!(exact.len(), 1);
         assert_eq!(exact[0].name, "calculate_tokens");
 
         // Fuzzy/substring search
-        let fuzzy = cache.search_symbols("/test_root", "tokens", false, 10).unwrap();
+        let fuzzy = cache
+            .search_symbols("/test_root", "tokens", false, 10)
+            .unwrap();
         assert_eq!(fuzzy.len(), 1);
     }
 }

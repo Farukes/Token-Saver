@@ -3,11 +3,11 @@
 //! Automatically detects and configures Token-Saver MCP server in Claude Desktop,
 //! Cursor, Windsurf, Claude Code, and VS Code (Cline / Roo Code).
 
+use serde::{Deserialize, Serialize};
+use serde_json::{json, Value};
 use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
-use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct McpInstallResult {
@@ -26,50 +26,128 @@ pub fn get_supported_ide_configs() -> Vec<(&'static str, PathBuf)> {
     #[cfg(target_os = "windows")]
     {
         if let Ok(appdata) = std::env::var("APPDATA") {
-            configs.push(("Claude Desktop", PathBuf::from(appdata).join("Claude").join("claude_desktop_config.json")));
+            configs.push((
+                "Claude Desktop",
+                PathBuf::from(appdata)
+                    .join("Claude")
+                    .join("claude_desktop_config.json"),
+            ));
         } else {
-            configs.push(("Claude Desktop", home.join("AppData").join("Roaming").join("Claude").join("claude_desktop_config.json")));
+            configs.push((
+                "Claude Desktop",
+                home.join("AppData")
+                    .join("Roaming")
+                    .join("Claude")
+                    .join("claude_desktop_config.json"),
+            ));
         }
     }
     #[cfg(target_os = "macos")]
     {
-        configs.push(("Claude Desktop", home.join("Library").join("Application Support").join("Claude").join("claude_desktop_config.json")));
+        configs.push((
+            "Claude Desktop",
+            home.join("Library")
+                .join("Application Support")
+                .join("Claude")
+                .join("claude_desktop_config.json"),
+        ));
     }
     #[cfg(all(not(target_os = "windows"), not(target_os = "macos")))]
     {
-        configs.push(("Claude Desktop", home.join(".config").join("Claude").join("claude_desktop_config.json")));
+        configs.push((
+            "Claude Desktop",
+            home.join(".config")
+                .join("Claude")
+                .join("claude_desktop_config.json"),
+        ));
     }
 
     // 2. Cursor
     configs.push(("Cursor", home.join(".cursor").join("mcp.json")));
 
     // 3. Windsurf
-    configs.push(("Windsurf", home.join(".codeium").join("windsurf").join("mcp_config.json")));
+    configs.push((
+        "Windsurf",
+        home.join(".codeium")
+            .join("windsurf")
+            .join("mcp_config.json"),
+    ));
 
     // 4. Claude Code
     configs.push(("Claude Code", home.join(".claude.json")));
 
     // 5. Antigravity (AGY)
-    configs.push(("Antigravity (AGY)", home.join(".gemini").join("config").join("mcp_config.json")));
+    configs.push((
+        "Antigravity (AGY)",
+        home.join(".gemini").join("config").join("mcp_config.json"),
+    ));
 
     // 6. VS Code (Cline / Roo Code)
     #[cfg(target_os = "windows")]
     if let Ok(appdata) = std::env::var("APPDATA") {
-        let code_storage = PathBuf::from(appdata).join("Code").join("User").join("globalStorage");
-        configs.push(("VS Code (Cline)", code_storage.join("saoudrizwan.claude-dev").join("settings").join("cline_mcp_settings.json")));
-        configs.push(("VS Code (Roo)", code_storage.join("rooveterinaryinc.roo-cline").join("settings").join("cline_mcp_settings.json")));
+        let code_storage = PathBuf::from(appdata)
+            .join("Code")
+            .join("User")
+            .join("globalStorage");
+        configs.push((
+            "VS Code (Cline)",
+            code_storage
+                .join("saoudrizwan.claude-dev")
+                .join("settings")
+                .join("cline_mcp_settings.json"),
+        ));
+        configs.push((
+            "VS Code (Roo)",
+            code_storage
+                .join("rooveterinaryinc.roo-cline")
+                .join("settings")
+                .join("cline_mcp_settings.json"),
+        ));
     }
     #[cfg(target_os = "macos")]
     {
-        let code_storage = home.join("Library").join("Application Support").join("Code").join("User").join("globalStorage");
-        configs.push(("VS Code (Cline)", code_storage.join("saoudrizwan.claude-dev").join("settings").join("cline_mcp_settings.json")));
-        configs.push(("VS Code (Roo)", code_storage.join("rooveterinaryinc.roo-cline").join("settings").join("cline_mcp_settings.json")));
+        let code_storage = home
+            .join("Library")
+            .join("Application Support")
+            .join("Code")
+            .join("User")
+            .join("globalStorage");
+        configs.push((
+            "VS Code (Cline)",
+            code_storage
+                .join("saoudrizwan.claude-dev")
+                .join("settings")
+                .join("cline_mcp_settings.json"),
+        ));
+        configs.push((
+            "VS Code (Roo)",
+            code_storage
+                .join("rooveterinaryinc.roo-cline")
+                .join("settings")
+                .join("cline_mcp_settings.json"),
+        ));
     }
     #[cfg(all(not(target_os = "windows"), not(target_os = "macos")))]
     {
-        let code_storage = home.join(".config").join("Code").join("User").join("globalStorage");
-        configs.push(("VS Code (Cline)", code_storage.join("saoudrizwan.claude-dev").join("settings").join("cline_mcp_settings.json")));
-        configs.push(("VS Code (Roo)", code_storage.join("rooveterinaryinc.roo-cline").join("settings").join("cline_mcp_settings.json")));
+        let code_storage = home
+            .join(".config")
+            .join("Code")
+            .join("User")
+            .join("globalStorage");
+        configs.push((
+            "VS Code (Cline)",
+            code_storage
+                .join("saoudrizwan.claude-dev")
+                .join("settings")
+                .join("cline_mcp_settings.json"),
+        ));
+        configs.push((
+            "VS Code (Roo)",
+            code_storage
+                .join("rooveterinaryinc.roo-cline")
+                .join("settings")
+                .join("cline_mcp_settings.json"),
+        ));
     }
 
     configs
@@ -148,7 +226,10 @@ pub fn install_mcp_all(all_ides: bool, custom_exe: Option<&str>) -> Vec<McpInsta
         let is_detected = if ide_name == "Claude Code" {
             is_claude_code_installed()
         } else {
-            let parent_exists = cfg_path.parent().map(|p| p.exists() && p != &home).unwrap_or(false);
+            let parent_exists = cfg_path
+                .parent()
+                .map(|p| p.exists() && p != &home)
+                .unwrap_or(false);
             parent_exists || file_exists
         };
 
@@ -171,7 +252,9 @@ pub fn install_mcp_all(all_ides: bool, custom_exe: Option<&str>) -> Vec<McpInsta
         // Read or initialize JSON
         let mut json_data = if file_exists {
             match fs::read_to_string(&cfg_path) {
-                Ok(content) => serde_json::from_str::<Value>(&content).unwrap_or_else(|_| json!({})),
+                Ok(content) => {
+                    serde_json::from_str::<Value>(&content).unwrap_or_else(|_| json!({}))
+                }
                 Err(_) => json!({}),
             }
         } else {
@@ -282,7 +365,10 @@ pub fn uninstall_mcp_all() -> Vec<McpInstallResult> {
         };
 
         let mut modified = false;
-        if let Some(servers) = json_data.get_mut("mcpServers").and_then(|s| s.as_object_mut()) {
+        if let Some(servers) = json_data
+            .get_mut("mcpServers")
+            .and_then(|s| s.as_object_mut())
+        {
             if servers.remove("token-saver").is_some() {
                 modified = true;
             }
@@ -332,7 +418,11 @@ pub fn uninstall_mcp_all() -> Vec<McpInstallResult> {
 
 pub fn install_agy_slash_command() -> (bool, String) {
     let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
-    let skill_dir = home.join(".gemini").join("config").join("skills").join("token-saver");
+    let skill_dir = home
+        .join(".gemini")
+        .join("config")
+        .join("skills")
+        .join("token-saver");
     if let Err(e) = fs::create_dir_all(&skill_dir) {
         return (false, format!("Failed creating directory: {e}"));
     }
@@ -373,7 +463,13 @@ When this command is invoked with an argument:
    Show options: `/token-saver status`, `/token-saver on`, `/token-saver off`, `/token-saver output on`, `/token-saver output off`, `/token-saver stats`.
 "#;
     match fs::write(&skill_file, content) {
-        Ok(_) => (true, format!("Installed /token-saver command for AGY CLI at {:?}", skill_file)),
+        Ok(_) => (
+            true,
+            format!(
+                "Installed /token-saver command for AGY CLI at {:?}",
+                skill_file
+            ),
+        ),
         Err(e) => (false, format!("Failed writing skill file: {e}")),
     }
 }
@@ -400,7 +496,13 @@ Instructions:
 5. If empty or help, show usage instructions.
 "#;
     match fs::write(&command_file, content) {
-        Ok(_) => (true, format!("Installed /token-saver command for Claude Code at {:?}", command_file)),
+        Ok(_) => (
+            true,
+            format!(
+                "Installed /token-saver command for Claude Code at {:?}",
+                command_file
+            ),
+        ),
         Err(e) => (false, format!("Failed writing command file: {e}")),
     }
 }
@@ -480,11 +582,25 @@ pub fn ensure_in_user_path() -> (bool, String) {
         let new_user_path = if current_user_path.is_empty() {
             exe_dir_str.clone()
         } else {
-            format!("{};{}", current_user_path.trim_end_matches(';'), exe_dir_str)
+            format!(
+                "{};{}",
+                current_user_path.trim_end_matches(';'),
+                exe_dir_str
+            )
         };
 
         let add_res = Command::new("reg")
-            .args(["add", "HKCU\\Environment", "/v", "Path", "/t", "REG_EXPAND_SZ", "/d", &new_user_path, "/f"])
+            .args([
+                "add",
+                "HKCU\\Environment",
+                "/v",
+                "Path",
+                "/t",
+                "REG_EXPAND_SZ",
+                "/d",
+                &new_user_path,
+                "/f",
+            ])
             .output();
 
         match add_res {
@@ -494,7 +610,13 @@ pub fn ensure_in_user_path() -> (bool, String) {
                 }
                 (true, format!("Added {} to Windows User PATH", exe_dir_str))
             }
-            Ok(res) => (false, format!("Failed adding to PATH: {}", String::from_utf8_lossy(&res.stderr))),
+            Ok(res) => (
+                false,
+                format!(
+                    "Failed adding to PATH: {}",
+                    String::from_utf8_lossy(&res.stderr)
+                ),
+            ),
             Err(e) => (false, format!("Failed executing reg command: {e}")),
         }
     }
@@ -511,10 +633,14 @@ pub fn ensure_in_user_path() -> (bool, String) {
             if rc_file.exists() {
                 if let Ok(content) = fs::read_to_string(&rc_file) {
                     if !content.contains(&exe_dir_str) {
-                        let _ = fs::OpenOptions::new().append(true).open(&rc_file).and_then(|mut f| {
-                            use std::io::Write;
-                            f.write_all(export_line.as_bytes())
-                        });
+                        let _ =
+                            fs::OpenOptions::new()
+                                .append(true)
+                                .open(&rc_file)
+                                .and_then(|mut f| {
+                                    use std::io::Write;
+                                    f.write_all(export_line.as_bytes())
+                                });
                         updated = true;
                     }
                 }

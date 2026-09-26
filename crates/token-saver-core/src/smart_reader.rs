@@ -25,7 +25,10 @@ pub fn read_file_smart(
     let p = Path::new(file_path);
 
     if !force_full && config.is_ignored(p) {
-        let base = p.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| file_path.to_string());
+        let base = p
+            .file_name()
+            .map(|n| n.to_string_lossy().to_string())
+            .unwrap_or_else(|| file_path.to_string());
         return format!(
             "[TOKEN-SAVER SECURITY] '{base}' matches security ignore patterns \
             (credentials/secrets/exclusions). Pass force_full=true if you explicitly \
@@ -34,19 +37,22 @@ pub fn read_file_smart(
     }
 
     // Binary file safeguard
-    if let Some(ext) = p.extension().and_then(|e| e.to_str()).map(|s| s.to_lowercase()) {
+    if let Some(ext) = p
+        .extension()
+        .and_then(|e| e.to_str())
+        .map(|s| s.to_lowercase())
+    {
         const BINARY_EXTS: &[&str] = &[
-            "png", "jpg", "jpeg", "gif", "bmp", "ico", "svg", "webp",
-            "mp3", "mp4", "wav", "avi", "mov", "mkv", "webm",
-            "zip", "tar", "gz", "bz2", "xz", "7z", "rar",
-            "exe", "dll", "so", "dylib", "bin", "o", "a",
-            "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx",
-            "woff", "woff2", "ttf", "otf", "eot",
-            "pyc", "pyo", "class", "jar",
-            "db", "sqlite", "sqlite3",
+            "png", "jpg", "jpeg", "gif", "bmp", "ico", "svg", "webp", "mp3", "mp4", "wav", "avi",
+            "mov", "mkv", "webm", "zip", "tar", "gz", "bz2", "xz", "7z", "rar", "exe", "dll", "so",
+            "dylib", "bin", "o", "a", "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "woff",
+            "woff2", "ttf", "otf", "eot", "pyc", "pyo", "class", "jar", "db", "sqlite", "sqlite3",
         ];
         if BINARY_EXTS.contains(&ext.as_str()) {
-            return format!("[TOKEN-SAVER] Binary file '{}' skipped to prevent context window corruption.", p.display());
+            return format!(
+                "[TOKEN-SAVER] Binary file '{}' skipped to prevent context window corruption.",
+                p.display()
+            );
         }
     }
 
@@ -131,7 +137,11 @@ pub fn read_file_smart(
     }
 
     let savings_msg = format_savings(&content, &entry.content);
-    tracker.record_savings("cache", entry.original_tokens as u64, entry.optimized_tokens as u64);
+    tracker.record_savings(
+        "cache",
+        entry.original_tokens as u64,
+        entry.optimized_tokens as u64,
+    );
 
     format!("{}\n\nToken savings: {savings_msg}", entry.content)
 }
@@ -181,7 +191,16 @@ mod tests {
         let p_str = file_path.to_str().unwrap();
 
         // Slice lines 2 to 4
-        let r = read_file_smart(p_str, false, None, Some(2), Some(4), &cache, &config, &tracker);
+        let r = read_file_smart(
+            p_str,
+            false,
+            None,
+            Some(2),
+            Some(4),
+            &cache,
+            &config,
+            &tracker,
+        );
         assert!(r.contains("Lines 2-4 of 5"));
         assert!(r.contains("2: line 2"));
         assert!(r.contains("3: line 3"));
@@ -190,11 +209,29 @@ mod tests {
         assert!(!r.contains("5: line 5"));
 
         // Out-of-bounds start line
-        let r_err = read_file_smart(p_str, false, None, Some(10), Some(12), &cache, &config, &tracker);
+        let r_err = read_file_smart(
+            p_str,
+            false,
+            None,
+            Some(10),
+            Some(12),
+            &cache,
+            &config,
+            &tracker,
+        );
         assert!(r_err.contains("exceeds total line count"));
 
         // Invalid range (start > end)
-        let r_inv = read_file_smart(p_str, false, None, Some(4), Some(2), &cache, &config, &tracker);
+        let r_inv = read_file_smart(
+            p_str,
+            false,
+            None,
+            Some(4),
+            Some(2),
+            &cache,
+            &config,
+            &tracker,
+        );
         assert!(r_inv.contains("Invalid line range"));
     }
 

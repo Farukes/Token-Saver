@@ -67,18 +67,26 @@ def main() -> None:
     subparsers.add_parser("unhook", help="Safely remove all installed shell hooks")
 
     # Subcommand: on / enable
-    on_parser = subparsers.add_parser("on", aliases=["enable"], help="Activate Token-Saver for current project (or use --global for all IDEs)")
+    on_parser = subparsers.add_parser(
+        "on", aliases=["enable"], help="Activate Token-Saver for current project (or use --global for all IDEs)"
+    )
     on_parser.add_argument(
-        "-g", "--global",
+        "-g",
+        "--global",
         dest="global_scope",
         action="store_true",
         help="Configure MCP server globally in all detected IDEs without modifying project files",
     )
 
     # Subcommand: off / disable
-    off_parser = subparsers.add_parser("off", aliases=["disable"], help="Deactivate Token-Saver for current project (or use --global to uninstall from IDEs)")
+    off_parser = subparsers.add_parser(
+        "off",
+        aliases=["disable"],
+        help="Deactivate Token-Saver for current project (or use --global to uninstall from IDEs)",
+    )
     off_parser.add_argument(
-        "-g", "--global",
+        "-g",
+        "--global",
         dest="global_scope",
         action="store_true",
         help="Uninstall Token-Saver MCP configuration globally from all IDEs",
@@ -210,6 +218,7 @@ def main() -> None:
     # If called with no arguments, default to launching the MCP server
     if len(sys.argv) == 1:
         from token_saver.server import mcp
+
         mcp.run(transport="stdio")
         return
 
@@ -217,10 +226,12 @@ def main() -> None:
 
     if args.subcommand in (None, "server"):
         from token_saver.server import mcp
+
         mcp.run(transport="stdio")
 
     elif args.subcommand == "stats":
         from token_saver.telemetry.stats import tracker
+
         print(tracker.render_dashboard())
 
     elif args.subcommand == "status":
@@ -269,7 +280,9 @@ def main() -> None:
 
         # 2. Check Output Optimization Status
         output_active = RulesManager.get_output_mode(project_path)
-        out_badge = "🟢 ON (Compact surgical diffs & zero-truncation)" if output_active else "⚪ OFF (Default full output)"
+        out_badge = (
+            "🟢 ON (Compact surgical diffs & zero-truncation)" if output_active else "⚪ OFF (Default full output)"
+        )
         print(f"\nOutput Optimization   : {out_badge}")
 
         # 3. Check Project Steering Rules
@@ -311,6 +324,7 @@ def main() -> None:
 
     elif args.subcommand == "reset-stats":
         from token_saver.telemetry.stats import tracker
+
         tracker.reset()
         print("Telemetry metrics have been successfully reset.")
 
@@ -319,11 +333,13 @@ def main() -> None:
             print("Error: No command provided to run. Example: token-saver run pytest")
             sys.exit(1)
         from token_saver.hooks.manager import execute_filtered_command
+
         exit_code = execute_filtered_command(args.command)
         sys.exit(exit_code)
 
     elif args.subcommand == "hook":
         from token_saver.hooks.manager import HookManager
+
         success, msg = HookManager.install_shell_hook(target_shell=args.shell)
         print(msg)
         if not success:
@@ -331,6 +347,7 @@ def main() -> None:
 
     elif args.subcommand == "unhook":
         from token_saver.hooks.manager import HookManager
+
         success, msg = HookManager.uninstall_shell_hook()
         print(msg)
         if not success:
@@ -339,6 +356,7 @@ def main() -> None:
     elif args.subcommand in ("on", "enable"):
         from token_saver.hooks.manager import HookManager
         from token_saver.rules.manager import RulesManager
+
         if getattr(args, "global_scope", False):
             results = HookManager.enable_all()
             for name, ok, msg in results:
@@ -362,6 +380,7 @@ def main() -> None:
     elif args.subcommand in ("off", "disable"):
         from token_saver.hooks.manager import HookManager
         from token_saver.rules.manager import RulesManager
+
         if getattr(args, "global_scope", False):
             results = HookManager.disable_all()
             for name, ok, msg in results:
@@ -381,6 +400,7 @@ def main() -> None:
 
     elif args.subcommand in ("install-mcp", "enable-mcp"):
         from token_saver.hooks.manager import HookManager
+
         results = HookManager.enable_all(only_installed=not getattr(args, "all", False))
         for name, ok, msg in results:
             if "skipped" in msg.lower():
@@ -391,6 +411,7 @@ def main() -> None:
 
     elif args.subcommand in ("uninstall-mcp", "disable-mcp"):
         from token_saver.hooks.manager import HookManager
+
         results = HookManager.disable_all()
         for name, ok, msg in results:
             if "skipped" in msg.lower():
@@ -401,6 +422,7 @@ def main() -> None:
 
     elif args.subcommand in ("setup-commands", "install-commands"):
         from token_saver.hooks.manager import HookManager
+
         results = HookManager.install_all_slash_commands(only_installed=True)
         all_ok = True
         for name, ok, msg in results:
@@ -416,6 +438,7 @@ def main() -> None:
 
     elif args.subcommand in ("init", "init-rules"):
         from token_saver.rules.manager import RulesManager
+
         if getattr(args, "clean", False):
             results = RulesManager.remove_rules(args.path)
             for name, ok, msg in results:
@@ -440,6 +463,7 @@ def main() -> None:
 
     elif args.subcommand == "output":
         from token_saver.rules.manager import RulesManager
+
         if args.state == "on":
             ok, msg, files = RulesManager.set_output_mode(args.path, enabled=True)
             if ok:
@@ -470,6 +494,7 @@ def main() -> None:
 
     elif args.subcommand == "cache-prune":
         from token_saver.cache.persistent_cache import PersistentCache
+
         p = PersistentCache()
         before = p.count_entries()
         deleted = p.prune(max_entries=args.max_entries, max_age_days=args.ttl_days)
@@ -478,8 +503,10 @@ def main() -> None:
 
     elif args.subcommand == "ui":
         from token_saver.hooks.manager import HookManager
+
         HookManager.ensure_in_user_path()
         from token_saver.ui.server import start_ui_server
+
         start_ui_server(port=args.port, open_browser=not args.no_open)
 
     elif args.subcommand in ("update", "upgrade"):

@@ -81,7 +81,7 @@ def find_package_in_lockfile(base_name: str, content: str, query: str) -> str | 
 
     # 2. Rust: Cargo.lock or Python: poetry.lock
     if "cargo.lock" in lower_name or "poetry.lock" in lower_name:
-        blocks = re.split(r'(?:\r?\n)(?=\[\[package\]\])', content)
+        blocks = re.split(r"(?:\r?\n)(?=\[\[package\]\])", content)
         matches = []
         for block in blocks:
             b = block.strip()
@@ -130,7 +130,7 @@ def find_package_in_lockfile(base_name: str, content: str, query: str) -> str | 
             start_idx = max(0, idx - 3)
             end_idx = min(len(lines), idx + 8)
             snippet = "\n".join(lines[start_idx:end_idx])
-            return f"... [matching context lines {start_idx+1}-{end_idx}] ...\n{snippet}"
+            return f"... [matching context lines {start_idx + 1}-{end_idx}] ...\n{snippet}"
     else:
         # Single-line minified file
         idx = content.lower().find(q.lower())
@@ -164,10 +164,7 @@ def extract_lockfile_summary(base_name: str, content: str) -> str:
             lines = [f"• Lockfile Version: v{version} (Total locked packages: {total_count:,})"]
             if direct_deps:
                 dep_items = list(direct_deps.items())[:15]
-                formatted = [
-                    f"{k}@{v if isinstance(v, str) else v.get('version', '')}"
-                    for k, v in dep_items
-                ]
+                formatted = [f"{k}@{v if isinstance(v, str) else v.get('version', '')}" for k, v in dep_items]
                 lines.append(f"• Sample Direct Dependencies (first {len(dep_items)}):")
                 lines.append("  " + ", ".join(formatted))
                 if len(direct_deps) > 15:

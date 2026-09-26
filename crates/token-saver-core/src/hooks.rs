@@ -63,8 +63,16 @@ pub fn get_profile_paths() -> Vec<(String, PathBuf)> {
     {
         // PowerShell 7+ and Windows PowerShell 5.1
         let docs = dirs::document_dir().unwrap_or_else(|| home.join("Documents"));
-        profiles.push(("PowerShell Core".to_string(), docs.join("PowerShell").join("Microsoft.PowerShell_profile.ps1")));
-        profiles.push(("Windows PowerShell".to_string(), docs.join("WindowsPowerShell").join("Microsoft.PowerShell_profile.ps1")));
+        profiles.push((
+            "PowerShell Core".to_string(),
+            docs.join("PowerShell")
+                .join("Microsoft.PowerShell_profile.ps1"),
+        ));
+        profiles.push((
+            "Windows PowerShell".to_string(),
+            docs.join("WindowsPowerShell")
+                .join("Microsoft.PowerShell_profile.ps1"),
+        ));
     }
 
     #[cfg(not(target_os = "windows"))]
@@ -92,8 +100,14 @@ pub fn install_hooks() -> Vec<HookResult> {
         }
 
         let existing = fs::read_to_string(&path).unwrap_or_default();
-        let updated = if existing.contains(HOOK_MARKER_START) && existing.contains(HOOK_MARKER_END) {
-            let re = regex::Regex::new(&format!(r"(?s){}.*?{}", regex::escape(HOOK_MARKER_START), regex::escape(HOOK_MARKER_END))).unwrap();
+        let updated = if existing.contains(HOOK_MARKER_START) && existing.contains(HOOK_MARKER_END)
+        {
+            let re = regex::Regex::new(&format!(
+                r"(?s){}.*?{}",
+                regex::escape(HOOK_MARKER_START),
+                regex::escape(HOOK_MARKER_END)
+            ))
+            .unwrap();
             re.replace(&existing, hook_code.as_str()).to_string()
         } else if !existing.is_empty() {
             format!("{existing}\n\n{hook_code}\n")
@@ -143,7 +157,12 @@ pub fn remove_hooks() -> Vec<HookResult> {
         };
 
         if existing.contains(HOOK_MARKER_START) && existing.contains(HOOK_MARKER_END) {
-            let re = regex::Regex::new(&format!(r"(?s)\n*{}.*?{}\n*", regex::escape(HOOK_MARKER_START), regex::escape(HOOK_MARKER_END))).unwrap();
+            let re = regex::Regex::new(&format!(
+                r"(?s)\n*{}.*?{}\n*",
+                regex::escape(HOOK_MARKER_START),
+                regex::escape(HOOK_MARKER_END)
+            ))
+            .unwrap();
             let cleaned = re.replace(&existing, "\n").trim_matches('\n').to_string();
             let _ = fs::write(&path, format!("{cleaned}\n"));
 

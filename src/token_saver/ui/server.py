@@ -45,12 +45,14 @@ def get_system_status() -> dict[str, Any]:
             except Exception:
                 pass
 
-        ide_list.append({
-            "name": name,
-            "installed": is_installed,
-            "active": is_active,
-            "path": str(cfg_path),
-        })
+        ide_list.append(
+            {
+                "name": name,
+                "installed": is_installed,
+                "active": is_active,
+                "path": str(cfg_path),
+            }
+        )
 
     # Telemetry
     t_data = tracker.data
@@ -281,7 +283,9 @@ class DashboardHandler(BaseHTTPRequestHandler):
 
         if self.path == "/api/reset-stats":
             tracker.reset()
-            self._send_json({"ok": True, "msg": "Cumulative telemetry statistics reset to zero", "status": get_system_status()})
+            self._send_json(
+                {"ok": True, "msg": "Cumulative telemetry statistics reset to zero", "status": get_system_status()}
+            )
             return
 
         if self.path == "/api/shutdown":

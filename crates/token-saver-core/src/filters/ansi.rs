@@ -3,9 +3,8 @@
 use regex::Regex;
 use std::sync::LazyLock;
 
-static ANSI_REGEX: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])").unwrap()
-});
+static ANSI_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])").unwrap());
 
 /// Strip all ANSI color and cursor escape sequences from terminal output.
 pub fn strip_ansi(text: &str) -> String {

@@ -54,6 +54,7 @@ def test_enable_all_skips_uninstalled_clis(tmp_path: Path):
 
     # Patch home and simulate that only AGY is installed, Claude/Cursor/Windsurf are not
     with patch("pathlib.Path.home", return_value=fake_home):
+
         def fake_is_installed(name):
             return name == "Antigravity (AGY)"
 
@@ -171,5 +172,3 @@ def test_mcp_revert_preserves_newly_added_user_servers(tmp_path: Path):
     assert "token-saver" not in after_data["mcpServers"]
     assert "github" in after_data["mcpServers"]
     assert after_data["mcpServers"]["github"]["command"] == "npx"
-
-

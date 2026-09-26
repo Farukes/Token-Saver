@@ -34,11 +34,7 @@ DEFAULT_WRAPPED_COMMANDS = ["pytest", "jest", "vitest", "npm", "cargo"]
 
 def is_bypass_active() -> bool:
     """Check if transparent filtering should be bypassed."""
-    return (
-        os.environ.get("RAW") == "1"
-        or os.environ.get("TOKEN_SAVER_BYPASS") == "1"
-        or "--raw" in sys.argv
-    )
+    return os.environ.get("RAW") == "1" or os.environ.get("TOKEN_SAVER_BYPASS") == "1" or "--raw" in sys.argv
 
 
 def execute_filtered_command(command: str | list[str], cwd: str = ".") -> int:
@@ -194,6 +190,7 @@ npm() {{ if [ "$1" = "test" ]; then token-saver run "npm $@"; else command npm "
     def _apply_mcp_config_with_backup(config_path: Path) -> tuple[bool, str]:
         """Apply Token-Saver MCP configuration while safely creating a backup of original state."""
         import json
+
         config_path.parent.mkdir(parents=True, exist_ok=True)
         bak_path = config_path.with_name(config_path.name + ".ts_bak")
 
@@ -226,9 +223,7 @@ npm() {{ if [ "$1" = "test" ]; then token-saver run "npm $@"; else command npm "
         config["mcpServers"]["token-saver"] = {
             "command": python_cmd,
             "args": ["-m", "token_saver"],
-            "env": {
-                "PYTHONUNBUFFERED": "1"
-            }
+            "env": {"PYTHONUNBUFFERED": "1"},
         }
 
         try:
@@ -242,6 +237,7 @@ npm() {{ if [ "$1" = "test" ]; then token-saver run "npm $@"; else command npm "
     def _revert_mcp_config_with_backup(config_path: Path) -> tuple[bool, str]:
         """Revert MCP configuration back to pre-activation state, safely preserving any newly added user configurations."""
         import json
+
         bak_path = config_path.with_name(config_path.name + ".ts_bak")
 
         # 1. Parse current config to inspect live state
@@ -297,7 +293,10 @@ npm() {{ if [ "$1" = "test" ]; then token-saver run "npm $@"; else command npm "
                     json.dump(current_config, f, indent=2)
                 bak_path.unlink(missing_ok=True)
                 server_count = len(other_servers)
-                return True, f"Deactivated token-saver from {config_path.name} (preserved {server_count} user servers/settings)"
+                return (
+                    True,
+                    f"Deactivated token-saver from {config_path.name} (preserved {server_count} user servers/settings)",
+                )
             except Exception as e:
                 return False, f"Failed updating {config_path}: {e}"
 
@@ -343,14 +342,11 @@ npm() {{ if [ "$1" = "test" ]; then token-saver run "npm $@"; else command npm "
     def is_cli_installed(cls, name: str) -> bool:
         """Check if a specific AI coding CLI or assistant is installed on the host system."""
         import shutil
+
         home = Path.home()
 
         if name == "Antigravity (AGY)":
-            return bool(
-                shutil.which("agy")
-                or shutil.which("antigravity")
-                or (home / ".gemini").is_dir()
-            )
+            return bool(shutil.which("agy") or shutil.which("antigravity") or (home / ".gemini").is_dir())
 
         if name == "Claude Code":
             if shutil.which("claude") or shutil.which("claude.cmd"):
@@ -376,10 +372,15 @@ npm() {{ if [ "$1" = "test" ]; then token-saver run "npm $@"; else command npm "
             if shutil.which("cursor") or shutil.which("cursor.cmd"):
                 return True
             if os.name == "nt":
-                if (home / "AppData" / "Roaming" / "Cursor").is_dir() or (home / "AppData" / "Local" / "Programs" / "cursor").is_dir():
+                if (home / "AppData" / "Roaming" / "Cursor").is_dir() or (
+                    home / "AppData" / "Local" / "Programs" / "cursor"
+                ).is_dir():
                     return True
             elif sys.platform == "darwin":
-                if Path("/Applications/Cursor.app").is_dir() or (home / "Library" / "Application Support" / "Cursor").is_dir():
+                if (
+                    Path("/Applications/Cursor.app").is_dir()
+                    or (home / "Library" / "Application Support" / "Cursor").is_dir()
+                ):
                     return True
             else:
                 if (home / ".config" / "Cursor").is_dir():
@@ -400,10 +401,17 @@ npm() {{ if [ "$1" = "test" ]; then token-saver run "npm $@"; else command npm "
             if shutil.which("windsurf") or shutil.which("windsurf.cmd"):
                 return True
             if os.name == "nt":
-                if (home / "AppData" / "Roaming" / "Windsurf").is_dir() or (home / "AppData" / "Local" / "Programs" / "Windsurf").is_dir() or (home / "AppData" / "Roaming" / "Codeium").is_dir():
+                if (
+                    (home / "AppData" / "Roaming" / "Windsurf").is_dir()
+                    or (home / "AppData" / "Local" / "Programs" / "Windsurf").is_dir()
+                    or (home / "AppData" / "Roaming" / "Codeium").is_dir()
+                ):
                     return True
             elif sys.platform == "darwin":
-                if Path("/Applications/Windsurf.app").is_dir() or (home / "Library" / "Application Support" / "Windsurf").is_dir():
+                if (
+                    Path("/Applications/Windsurf.app").is_dir()
+                    or (home / "Library" / "Application Support" / "Windsurf").is_dir()
+                ):
                     return True
             else:
                 if (home / ".config" / "Windsurf").is_dir():
@@ -427,7 +435,10 @@ npm() {{ if [ "$1" = "test" ]; then token-saver run "npm $@"; else command npm "
                 if (roaming / "Claude").is_dir() or (home / "AppData" / "Local" / "Programs" / "Claude").is_dir():
                     return True
             elif sys.platform == "darwin":
-                if Path("/Applications/Claude.app").is_dir() or (home / "Library" / "Application Support" / "Claude").is_dir():
+                if (
+                    Path("/Applications/Claude.app").is_dir()
+                    or (home / "Library" / "Application Support" / "Claude").is_dir()
+                ):
                     return True
             else:
                 if (home / ".config" / "Claude").is_dir():
@@ -468,7 +479,9 @@ npm() {{ if [ "$1" = "test" ]; then token-saver run "npm $@"; else command npm "
             roaming = Path(appdata) if appdata else home / "AppData" / "Roaming"
             configs["Claude Desktop"] = roaming / "Claude" / "claude_desktop_config.json"
         elif sys.platform == "darwin":
-            configs["Claude Desktop"] = home / "Library" / "Application Support" / "Claude" / "claude_desktop_config.json"
+            configs["Claude Desktop"] = (
+                home / "Library" / "Application Support" / "Claude" / "claude_desktop_config.json"
+            )
         else:
             configs["Claude Desktop"] = home / ".config" / "Claude" / "claude_desktop_config.json"
 
@@ -529,7 +542,10 @@ npm() {{ if [ "$1" = "test" ]; then token-saver run "npm $@"; else command npm "
 
             if os.name == "nt":
                 import winreg
-                with winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment", 0, winreg.KEY_READ | winreg.KEY_WRITE) as key:
+
+                with winreg.OpenKey(
+                    winreg.HKEY_CURRENT_USER, "Environment", 0, winreg.KEY_READ | winreg.KEY_WRITE
+                ) as key:
                     try:
                         val, reg_type = winreg.QueryValueEx(key, "Path")
                     except FileNotFoundError:
@@ -603,7 +619,6 @@ npm() {{ if [ "$1" = "test" ]; then token-saver run "npm $@"; else command npm "
     def disable_agy(cls) -> tuple[bool, str]:
         """Deactivate Token-Saver from AGY CLI global configuration."""
         return cls._revert_mcp_config_with_backup(cls.get_agy_config_path())
-
 
     @classmethod
     def install_agy_slash_command(cls) -> tuple[bool, str]:
@@ -697,5 +712,3 @@ Instructions:
             results.append(("Claude Code", False, "Not installed (skipped)"))
 
         return results
-
-

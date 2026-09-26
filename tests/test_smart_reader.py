@@ -13,13 +13,16 @@ class MockMCP:
         def decorator(func):
             self.tools[func.__name__] = func
             return func
+
         return decorator
+
 
 @pytest.fixture(autouse=True)
 def reset_cache():
     _cache.clear()
     yield
     _cache.clear()
+
 
 def test_smart_reader(tmp_path):
     mcp = MockMCP()
@@ -80,6 +83,7 @@ def test_smart_reader(tmp_path):
 
 def test_persistent_cache(tmp_path):
     from token_saver.cache.session_cache import SessionCache
+
     db_file = tmp_path / "test_cache.db"
 
     # Session 1: Read a file
@@ -98,6 +102,7 @@ def test_persistent_cache(tmp_path):
 def test_large_file_cache_protection(tmp_path):
     from token_saver.cache.persistent_cache import PersistentCache
     from token_saver.cache.session_cache import SessionCache
+
     db_file = tmp_path / "large_cache.db"
 
     # Create content larger than MAX_CACHEABLE_BYTES (5MB)
@@ -108,6 +113,7 @@ def test_large_file_cache_protection(tmp_path):
     assert res1.status == "first_read"
 
     import os
+
     norm_path = os.path.normpath(os.path.abspath("huge_bundle.js"))
 
     # Check that SQLite stored the marker rather than 6MB blob
@@ -150,5 +156,3 @@ def test_smart_reader_line_slicing(tmp_path):
     # 3. Invalid range (start > end)
     res_inv = read_file_smart(file_path, start_line=7, end_line=4)
     assert "Invalid line range" in res_inv
-
-

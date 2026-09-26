@@ -39,6 +39,7 @@ def test_telemetry_tracker_record_and_reset(tmp_path: Path):
 
 def test_telemetry_cross_instance_reset_sync(tmp_path: Path):
     import time
+
     test_storage = tmp_path / "telemetry_cross_test.json"
 
     with patch("token_saver.telemetry.stats._get_storage_path", return_value=test_storage):

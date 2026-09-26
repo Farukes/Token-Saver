@@ -109,18 +109,19 @@ def _build_skeleton(source_code: str, language: str) -> str:
                 filtered_ranges.append(r)
 
     # Reconstruct the string
-    source_bytes = source_code.encode('utf-8')
+    source_bytes = source_code.encode("utf-8")
     result_bytes = bytearray()
     last_end = 0
 
     for start, end, replacement in filtered_ranges:
         result_bytes.extend(source_bytes[last_end:start])
-        result_bytes.extend(replacement.encode('utf-8'))
+        result_bytes.extend(replacement.encode("utf-8"))
         last_end = end
 
     result_bytes.extend(source_bytes[last_end:])
 
-    return result_bytes.decode('utf-8')
+    return result_bytes.decode("utf-8")
+
 
 def _find_symbol(source_code: str, language: str, symbol_name: str) -> str:
     """Finds and returns the full text of a symbol by name."""
@@ -175,6 +176,7 @@ def _find_symbol(source_code: str, language: str, symbol_name: str) -> str:
     res = walk(root_node)
     return res if res else f"Symbol '{symbol_name}' not found."
 
+
 def get_code_skeleton(file_path: str) -> str:
     """
     Extracts a structural skeleton from a source file.
@@ -201,10 +203,12 @@ def get_code_skeleton(file_path: str) -> str:
     skeleton += f"\n# Token-Saver: {orig_tokens} → {skel_tokens} tokens ({savings_pct}% saved)"
     try:
         from token_saver.telemetry.stats import tracker
+
         tracker.record_savings("skeleton", orig_tokens, skel_tokens)
     except Exception:
         pass
     return skeleton
+
 
 def get_symbol(file_path: str, symbol_name: str) -> str:
     """
@@ -222,13 +226,18 @@ def get_symbol(file_path: str, symbol_name: str) -> str:
 
     return _find_symbol(content, language, symbol_name)
 
+
 def register_skeleton_tools(mcp: Any) -> None:
     """Registers skeleton tools with the FastMCP application."""
 
-    @mcp.tool(description="Extracts a structural skeleton from a source file, replacing bodies with '...'. Use this INSTEAD of reading full files to understand structure.")
+    @mcp.tool(
+        description="Extracts a structural skeleton from a source file, replacing bodies with '...'. Use this INSTEAD of reading full files to understand structure."
+    )
     def tool_get_code_skeleton(file_path: str) -> str:
         return get_code_skeleton(file_path)
 
-    @mcp.tool(description="Extracts the FULL implementation of a specific function, method, or class from a file by name.")
+    @mcp.tool(
+        description="Extracts the FULL implementation of a specific function, method, or class from a file by name."
+    )
     def tool_get_symbol(file_path: str, symbol_name: str) -> str:
         return get_symbol(file_path, symbol_name)

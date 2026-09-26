@@ -1,5 +1,5 @@
-use std::path::Path;
 use serde::{Deserialize, Serialize};
+use std::path::Path;
 
 pub const DEFAULT_IGNORE_PATTERNS: &[&str] = &[
     "*.env*",
@@ -63,11 +63,17 @@ pub struct TokenSaverConfig {
 }
 
 fn default_ignore_patterns() -> Vec<String> {
-    DEFAULT_IGNORE_PATTERNS.iter().map(|s| s.to_string()).collect()
+    DEFAULT_IGNORE_PATTERNS
+        .iter()
+        .map(|s| s.to_string())
+        .collect()
 }
 
 fn default_lockfile_patterns() -> Vec<String> {
-    DEFAULT_LOCKFILE_PATTERNS.iter().map(|s| s.to_string()).collect()
+    DEFAULT_LOCKFILE_PATTERNS
+        .iter()
+        .map(|s| s.to_string())
+        .collect()
 }
 
 fn default_true() -> bool {
@@ -215,7 +221,10 @@ mod tests {
     #[test]
     fn test_glob_match() {
         assert!(glob_match("*.env*", ".env.local"));
-        assert!(glob_match("*package-lock.json", "/path/to/package-lock.json"));
+        assert!(glob_match(
+            "*package-lock.json",
+            "/path/to/package-lock.json"
+        ));
         assert!(!glob_match("*.env*", "main.rs"));
     }
 

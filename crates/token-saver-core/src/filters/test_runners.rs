@@ -3,9 +3,8 @@
 use regex::Regex;
 use std::sync::LazyLock;
 
-static PYTEST_PROGRESS_RE: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"^(?:tests[/\\].*?\s+\[\s*\d+%\]|[.sF]{5,})").unwrap()
-});
+static PYTEST_PROGRESS_RE: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^(?:tests[/\\].*?\s+\[\s*\d+%\]|[.sF]{5,})").unwrap());
 
 /// Filter pytest output, pruning passing dots and retaining failure tracebacks.
 pub fn filter_pytest(output: &str) -> String {
@@ -46,14 +45,18 @@ pub fn filter_pytest(output: &str) -> String {
 
         // If it's repetitive passing progress, count and skip
         if PYTEST_PROGRESS_RE.is_match(trimmed)
-            && (trimmed.ends_with(".PASSED") || (trimmed.ends_with("[100%]") && !trimmed.contains("FAILED")))
+            && (trimmed.ends_with(".PASSED")
+                || (trimmed.ends_with("[100%]") && !trimmed.contains("FAILED")))
         {
             passed_count += 1;
             continue;
         }
 
         // Keep warnings and other summary lines
-        if trimmed.starts_with("warning:") || trimmed.starts_with("AssertionError") || trimmed.contains("passed in") {
+        if trimmed.starts_with("warning:")
+            || trimmed.starts_with("AssertionError")
+            || trimmed.contains("passed in")
+        {
             kept_lines.push(*line);
         }
     }
@@ -62,7 +65,8 @@ pub fn filter_pytest(output: &str) -> String {
         return output.to_string();
     }
 
-    let summary = format!("pytest: {failed_count} FAILED, {passed_count} passed (repetitive logs pruned)");
+    let summary =
+        format!("pytest: {failed_count} FAILED, {passed_count} passed (repetitive logs pruned)");
     format!("{}\n{summary}", kept_lines.join("\n"))
 }
 
@@ -73,7 +77,10 @@ pub fn filter_cargo(output: &str) -> String {
 
     for line in output.lines() {
         let trimmed = line.trim();
-        if trimmed.starts_with("error") || trimmed.starts_with("error:") || trimmed.starts_with("failures:") {
+        if trimmed.starts_with("error")
+            || trimmed.starts_with("error:")
+            || trimmed.starts_with("failures:")
+        {
             in_failure = true;
         } else if trimmed.starts_with("test result:") {
             in_failure = false;

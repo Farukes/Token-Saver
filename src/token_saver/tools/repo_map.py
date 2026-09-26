@@ -18,6 +18,7 @@ from token_saver.utils.token_counter import estimate_tokens
 @dataclass
 class SymbolInfo:
     """Information about a code symbol (class, function, method)."""
+
     name: str
     kind: str  # 'class', 'function', 'method', 'interface', 'struct'
     signature: str  # Full signature line
@@ -28,6 +29,7 @@ class SymbolInfo:
 @dataclass
 class FileInfo:
     """Information about a source file."""
+
     path: str  # relative path
     language: str
     symbols: list[SymbolInfo] = field(default_factory=list)
@@ -43,7 +45,7 @@ def extract_symbols(node, language: str, source_code: bytes, is_root: bool = Tru
         target_types = ["function_definition", "class_definition"]
         if node.type in target_types:
             name_node = next((n for n in node.children if n.type == "identifier"), None)
-            name = name_node.text.decode('utf-8') if name_node else "unknown"
+            name = name_node.text.decode("utf-8") if name_node else "unknown"
             kind = "class" if node.type == "class_definition" else ("method" if not is_root else "function")
 
             # Extract signature
@@ -53,7 +55,7 @@ def extract_symbols(node, language: str, source_code: bytes, is_root: bool = Tru
             else:
                 end_byte = node.end_byte
 
-            signature = source_code[node.start_byte:end_byte].decode('utf-8').strip()
+            signature = source_code[node.start_byte : end_byte].decode("utf-8").strip()
             # Clean up trailing colons
             if signature.endswith(":"):
                 signature = signature[:-1].strip()
@@ -64,7 +66,9 @@ def extract_symbols(node, language: str, source_code: bytes, is_root: bool = Tru
                 for child in body_node.children:
                     children.extend(extract_symbols(child, language, source_code, is_root=False))
 
-            symbols.append(SymbolInfo(name=name, kind=kind, signature=signature, children=children, line=node.start_point[0]))
+            symbols.append(
+                SymbolInfo(name=name, kind=kind, signature=signature, children=children, line=node.start_point[0])
+            )
 
         elif node.type == "decorated_definition":
             # Extract from decorated definition
@@ -90,8 +94,12 @@ def extract_symbols(node, language: str, source_code: bytes, is_root: bool = Tru
                     if not arrow:
                         return []
 
-            name = name_node.text.decode('utf-8') if name_node else "unknown"
-            kind = "class" if node.type == "class_declaration" else ("method" if node.type == "method_definition" else "function")
+            name = name_node.text.decode("utf-8") if name_node else "unknown"
+            kind = (
+                "class"
+                if node.type == "class_declaration"
+                else ("method" if node.type == "method_definition" else "function")
+            )
 
             body_node = next((n for n in node.children if n.type == "statement_block" or n.type == "class_body"), None)
             if body_node:
@@ -99,7 +107,7 @@ def extract_symbols(node, language: str, source_code: bytes, is_root: bool = Tru
             else:
                 end_byte = node.end_byte
 
-            signature = source_code[node.start_byte:end_byte].decode('utf-8').strip()
+            signature = source_code[node.start_byte : end_byte].decode("utf-8").strip()
             if signature.endswith("{"):
                 signature = signature[:-1].strip()
 
@@ -108,7 +116,9 @@ def extract_symbols(node, language: str, source_code: bytes, is_root: bool = Tru
                 for child in body_node.children:
                     children.extend(extract_symbols(child, language, source_code, is_root=False))
 
-            symbols.append(SymbolInfo(name=name, kind=kind, signature=signature, children=children, line=node.start_point[0]))
+            symbols.append(
+                SymbolInfo(name=name, kind=kind, signature=signature, children=children, line=node.start_point[0])
+            )
 
         elif node.type == "export_statement":
             for child in node.children:
@@ -128,7 +138,7 @@ def extract_symbols(node, language: str, source_code: bytes, is_root: bool = Tru
                 if type_spec:
                     name_node = next((n for n in type_spec.children if n.type == "type_identifier"), None)
 
-            name = name_node.text.decode('utf-8') if name_node else "unknown"
+            name = name_node.text.decode("utf-8") if name_node else "unknown"
             kind = "struct" if node.type == "type_declaration" else "function"
 
             body_node = next((n for n in node.children if n.type == "block"), None)
@@ -137,7 +147,7 @@ def extract_symbols(node, language: str, source_code: bytes, is_root: bool = Tru
             else:
                 end_byte = node.end_byte
 
-            signature = source_code[node.start_byte:end_byte].decode('utf-8').strip()
+            signature = source_code[node.start_byte : end_byte].decode("utf-8").strip()
             if signature.endswith("{"):
                 signature = signature[:-1].strip()
 
@@ -152,7 +162,7 @@ def extract_symbols(node, language: str, source_code: bytes, is_root: bool = Tru
         target_types = ["function_item", "struct_item", "enum_item"]
         if node.type in target_types:
             name_node = next((n for n in node.children if n.type == "identifier" or n.type == "type_identifier"), None)
-            name = name_node.text.decode('utf-8') if name_node else "unknown"
+            name = name_node.text.decode("utf-8") if name_node else "unknown"
 
             if node.type == "function_item":
                 kind = "method" if not is_root else "function"
@@ -161,13 +171,15 @@ def extract_symbols(node, language: str, source_code: bytes, is_root: bool = Tru
             else:
                 kind = "enum"
 
-            body_node = next((n for n in node.children if n.type == "block" or n.type == "field_declaration_list"), None)
+            body_node = next(
+                (n for n in node.children if n.type == "block" or n.type == "field_declaration_list"), None
+            )
             if body_node:
                 end_byte = body_node.start_byte
             else:
                 end_byte = node.end_byte
 
-            signature = source_code[node.start_byte:end_byte].decode('utf-8').strip()
+            signature = source_code[node.start_byte : end_byte].decode("utf-8").strip()
             if signature.endswith("{"):
                 signature = signature[:-1].strip()
 
@@ -188,16 +200,23 @@ def extract_symbols(node, language: str, source_code: bytes, is_root: bool = Tru
         target_types = ["class_declaration", "method_declaration", "interface_declaration"]
         if node.type in target_types:
             name_node = next((n for n in node.children if n.type == "identifier"), None)
-            name = name_node.text.decode('utf-8') if name_node else "unknown"
-            kind = "class" if node.type == "class_declaration" else ("interface" if node.type == "interface_declaration" else "method")
+            name = name_node.text.decode("utf-8") if name_node else "unknown"
+            kind = (
+                "class"
+                if node.type == "class_declaration"
+                else ("interface" if node.type == "interface_declaration" else "method")
+            )
 
-            body_node = next((n for n in node.children if n.type == "class_body" or n.type == "block" or n.type == "interface_body"), None)
+            body_node = next(
+                (n for n in node.children if n.type == "class_body" or n.type == "block" or n.type == "interface_body"),
+                None,
+            )
             if body_node:
                 end_byte = body_node.start_byte
             else:
                 end_byte = node.end_byte
 
-            signature = source_code[node.start_byte:end_byte].decode('utf-8').strip()
+            signature = source_code[node.start_byte : end_byte].decode("utf-8").strip()
             if signature.endswith("{"):
                 signature = signature[:-1].strip()
 
@@ -206,15 +225,27 @@ def extract_symbols(node, language: str, source_code: bytes, is_root: bool = Tru
                 for child in body_node.children:
                     children.extend(extract_symbols(child, language, source_code, is_root=False))
 
-            symbols.append(SymbolInfo(name=name, kind=kind, signature=signature, children=children, line=node.start_point[0]))
+            symbols.append(
+                SymbolInfo(name=name, kind=kind, signature=signature, children=children, line=node.start_point[0])
+            )
 
         elif is_root:
             for child in node.children:
                 symbols.extend(extract_symbols(child, language, source_code, is_root))
 
     # Fallback to root children iteration if no specific language match but we need to traverse
-    elif is_root and language not in ["python", "typescript", "javascript", "tsx", "jsx", "go", "rust", "java", "c_sharp"]:
-         pass # No extraction for unknown languages
+    elif is_root and language not in [
+        "python",
+        "typescript",
+        "javascript",
+        "tsx",
+        "jsx",
+        "go",
+        "rust",
+        "java",
+        "c_sharp",
+    ]:
+        pass  # No extraction for unknown languages
 
     return symbols
 
@@ -241,6 +272,7 @@ def extract_import_count(node, language: str) -> int:
         count += extract_import_count(child, language)
 
     return count
+
 
 def format_repo_map(file_infos: list[FileInfo], root_path: str, max_tokens: int) -> str:
     # Sort files by score descending
@@ -278,7 +310,9 @@ def format_repo_map(file_infos: list[FileInfo], root_path: str, max_tokens: int)
 
         if current_tokens + file_tokens > max_tokens:
             if included_files:
-                output_lines.append(f"\n... (truncating remaining {len(sorted_files) - len(included_files)} files to respect token budget)")
+                output_lines.append(
+                    f"\n... (truncating remaining {len(sorted_files) - len(included_files)} files to respect token budget)"
+                )
             else:
                 output_lines.append("\n... (budget too small to include even the top file)")
             break
@@ -288,6 +322,7 @@ def format_repo_map(file_infos: list[FileInfo], root_path: str, max_tokens: int)
         current_tokens += file_tokens
 
     return "\n".join(output_lines)
+
 
 def get_repo_map(root_path: str = ".", max_tokens: int = 1000, focus_files: list[str] | None = None) -> str:
     """
@@ -325,14 +360,14 @@ def get_repo_map(root_path: str = ".", max_tokens: int = 1000, focus_files: list
         if not text:
             continue
 
-        line_count = text.count('\n') + 1
+        line_count = text.count("\n") + 1
         total_raw_tokens += len(text) // 4
 
         tree = parse_code(text, language)
         if not tree:
             continue
 
-        symbols = extract_symbols(tree.root_node, language, text.encode('utf-8'))
+        symbols = extract_symbols(tree.root_node, language, text.encode("utf-8"))
         import_count = extract_import_count(tree.root_node, language)
 
         # Map defined top-level symbols to this file
@@ -371,18 +406,15 @@ def get_repo_map(root_path: str = ".", max_tokens: int = 1000, focus_files: list
 
         score = base_score + import_score + focus_boost + length_penalty + call_graph_centrality
 
-        file_infos.append(FileInfo(
-            path=rel_path,
-            language=language,
-            symbols=symbols,
-            import_count=import_count,
-            score=score
-        ))
+        file_infos.append(
+            FileInfo(path=rel_path, language=language, symbols=symbols, import_count=import_count, score=score)
+        )
 
     output = format_repo_map(file_infos, str(root), max_tokens)
 
     try:
         from token_saver.telemetry.stats import tracker
+
         map_tokens = len(output) // 4
         tracker.record_savings("repo_map", total_raw_tokens, map_tokens)
     except Exception:

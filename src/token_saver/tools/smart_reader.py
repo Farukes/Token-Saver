@@ -8,6 +8,7 @@ from token_saver.utils.token_counter import format_savings
 _cache = SessionCache()
 _config = load_config()
 
+
 def read_file_smart(
     file_path: str,
     force_full: bool = False,
@@ -124,6 +125,7 @@ def read_file_smart(
     savings = format_savings(content, result.content)
     try:
         from token_saver.telemetry.stats import tracker
+
         tracker.record_savings("cache", result.original_tokens, result.optimized_tokens)
     except Exception:
         pass
@@ -167,5 +169,3 @@ def register_smart_reader_tools(mcp) -> None:
 
 _cache_read_impl = read_file_smart
 _cache_stats_impl = cache_stats
-
-

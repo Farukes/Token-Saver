@@ -10,12 +10,8 @@ use std::path::{Path, PathBuf};
 pub const RULES_MARKER_START: &str = "# >>> token-saver-rules >>>";
 pub const RULES_MARKER_END: &str = "# <<< token-saver-rules <<<";
 
-pub const SUPPORTED_RULE_FILES: &[&str] = &[
-    "AGENTS.md",
-    ".cursorrules",
-    ".windsurfrules",
-    "CLAUDE.md",
-];
+pub const SUPPORTED_RULE_FILES: &[&str] =
+    &["AGENTS.md", ".cursorrules", ".windsurfrules", "CLAUDE.md"];
 
 /// Generates steering rules instructions with optional output optimization.
 pub fn generate_rules(compact_output: bool, prevent_truncation: bool) -> String {
@@ -70,14 +66,20 @@ pub fn install_rules(
         let file_path = target_dir.join(file_name);
         let existing = fs::read_to_string(&file_path).unwrap_or_default();
 
-        let updated = if existing.contains(RULES_MARKER_START) && existing.contains(RULES_MARKER_END) {
-            let re = regex::Regex::new(&format!(r"(?s){}.*?{}", regex::escape(RULES_MARKER_START), regex::escape(RULES_MARKER_END))).unwrap();
-            re.replace(&existing, rules_text.as_str()).to_string()
-        } else if !existing.is_empty() {
-            format!("{existing}\n\n{rules_text}\n")
-        } else {
-            format!("{rules_text}\n")
-        };
+        let updated =
+            if existing.contains(RULES_MARKER_START) && existing.contains(RULES_MARKER_END) {
+                let re = regex::Regex::new(&format!(
+                    r"(?s){}.*?{}",
+                    regex::escape(RULES_MARKER_START),
+                    regex::escape(RULES_MARKER_END)
+                ))
+                .unwrap();
+                re.replace(&existing, rules_text.as_str()).to_string()
+            } else if !existing.is_empty() {
+                format!("{existing}\n\n{rules_text}\n")
+            } else {
+                format!("{rules_text}\n")
+            };
 
         match fs::write(&file_path, updated) {
             Ok(_) => results.push(RuleInstallResult {
@@ -122,7 +124,12 @@ pub fn remove_rules(target_dir: &Path) -> Vec<RuleInstallResult> {
         };
 
         if existing.contains(RULES_MARKER_START) && existing.contains(RULES_MARKER_END) {
-            let re = regex::Regex::new(&format!(r"(?s)\n*{}.*?{}\n*", regex::escape(RULES_MARKER_START), regex::escape(RULES_MARKER_END))).unwrap();
+            let re = regex::Regex::new(&format!(
+                r"(?s)\n*{}.*?{}\n*",
+                regex::escape(RULES_MARKER_START),
+                regex::escape(RULES_MARKER_END)
+            ))
+            .unwrap();
             let cleaned = re.replace(&existing, "\n").trim_matches('\n').to_string();
 
             if cleaned.is_empty() {

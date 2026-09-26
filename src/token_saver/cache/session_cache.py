@@ -110,9 +110,7 @@ class SessionCache:
         entry.content = current_content
         entry.hash = current_hash
         if self._persistent_cache:
-            self._persistent_cache.set_entry(
-                normalized_path, current_hash, current_content, entry.read_count
-            )
+            self._persistent_cache.set_entry(normalized_path, current_hash, current_content, entry.read_count)
 
         # Guardrail (Tiny File Anomaly Guard):
         # If the diff (including headers) is larger than or equal to the file itself,

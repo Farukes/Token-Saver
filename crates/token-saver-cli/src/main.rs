@@ -1,9 +1,11 @@
+use clap::{Parser, Subcommand};
 use std::io::IsTerminal;
 use std::path::Path;
-use clap::{Parser, Subcommand};
 
 use token_saver_core::hooks::{install_hooks, remove_hooks};
-use token_saver_core::installer::{get_supported_ide_configs, install_all_slash_commands, install_mcp_all, uninstall_mcp_all};
+use token_saver_core::installer::{
+    get_supported_ide_configs, install_all_slash_commands, install_mcp_all, uninstall_mcp_all,
+};
 use token_saver_core::output_pruner::run_command_smart;
 use token_saver_core::rules::{install_rules, remove_rules};
 use token_saver_core::telemetry::TelemetryTracker;
@@ -156,7 +158,10 @@ async fn main() {
                 if path.exists() {
                     if let Ok(content) = std::fs::read_to_string(&path) {
                         if content.contains("token-saver") {
-                            println!("  • 🟢 {name} (Active in {})", path.file_name().unwrap_or_default().to_string_lossy());
+                            println!(
+                                "  • 🟢 {name} (Active in {})",
+                                path.file_name().unwrap_or_default().to_string_lossy()
+                            );
                             continue;
                         }
                     }
@@ -182,12 +187,21 @@ async fn main() {
                 }
             }
             if active_rule_files.is_empty() {
-                println!("  • Project Rules       : ⚪ INACTIVE (No steering rules found in project)");
+                println!(
+                    "  • Project Rules       : ⚪ INACTIVE (No steering rules found in project)"
+                );
             } else {
-                println!("  • Project Rules       : 🟢 ACTIVE in {}", active_rule_files.join(", "));
+                println!(
+                    "  • Project Rules       : 🟢 ACTIVE in {}",
+                    active_rule_files.join(", ")
+                );
             }
             let config = token_saver_core::config::TokenSaverConfig::load_from_dir(&cwd);
-            let mode_str = if config.compact_output { "🟢 COMPACT (Surgical diffs active)" } else { "⚪ STANDARD (Verbose output)" };
+            let mode_str = if config.compact_output {
+                "🟢 COMPACT (Surgical diffs active)"
+            } else {
+                "⚪ STANDARD (Verbose output)"
+            };
             println!("  • Output Optimization : {mode_str}");
 
             println!("============================================================");
@@ -216,7 +230,9 @@ async fn main() {
                     println!("  {icon} {}: {}", r.ide_name, r.message);
                 }
                 println!("\n✨ Token-Saver is now GLOBALLY ACTIVE across detected IDEs!");
-                println!("💡 Projects remain clean by default. To enable for a specific project, run:");
+                println!(
+                    "💡 Projects remain clean by default. To enable for a specific project, run:"
+                );
                 println!("     token-saver on");
             } else {
                 let ide_configs = get_supported_ide_configs();
@@ -339,7 +355,10 @@ async fn main() {
                 }
             } else {
                 let results = install_rules(target_path, true, true);
-                println!("🚀 Injected Token-Saver steering rules into {} file(s).", results.len());
+                println!(
+                    "🚀 Injected Token-Saver steering rules into {} file(s).",
+                    results.len()
+                );
                 for r in results {
                     let status = if r.success { "✅" } else { "❌" };
                     println!("  {status} {}: {}", r.file_name, r.message);
@@ -348,7 +367,10 @@ async fn main() {
         }
         Some(Commands::Hook) => {
             let results = install_hooks();
-            println!("⚡ Installed transparent CLI interceptor hooks into {} profile(s).", results.len());
+            println!(
+                "⚡ Installed transparent CLI interceptor hooks into {} profile(s).",
+                results.len()
+            );
             for r in results {
                 let status = if r.success { "✅" } else { "❌" };
                 println!("  {status} [{}]: {}", r.shell, r.message);
@@ -356,7 +378,10 @@ async fn main() {
         }
         Some(Commands::Unhook) => {
             let results = remove_hooks();
-            println!("🧹 Removed CLI interceptor hooks from {} profile(s).", results.len());
+            println!(
+                "🧹 Removed CLI interceptor hooks from {} profile(s).",
+                results.len()
+            );
             for r in results {
                 let status = if r.success { "✅" } else { "❌" };
                 println!("  {status} [{}]: {}", r.shell, r.message);
@@ -386,8 +411,13 @@ async fn main() {
                 eprintln!("[token-saver] Server encountered error: {e}");
             }
         }
-        Some(Commands::CachePrune { max_entries, ttl_days }) => {
-            println!("🧹 Pruning L2 SQLite cache (max_entries: {max_entries}, ttl: {ttl_days} days)...");
+        Some(Commands::CachePrune {
+            max_entries,
+            ttl_days,
+        }) => {
+            println!(
+                "🧹 Pruning L2 SQLite cache (max_entries: {max_entries}, ttl: {ttl_days} days)..."
+            );
             println!("✅ Cache pruned successfully.");
         }
         Some(Commands::Update { force }) => {
@@ -471,7 +501,10 @@ fn handle_update(force: bool) {
                 println!("💡 Tip: Restart any open AI coding sessions or IDE windows to load updated middleware.");
             }
             Ok(s) => {
-                eprintln!("\n❌ Cargo update command failed with exit code: {:?}", s.code());
+                eprintln!(
+                    "\n❌ Cargo update command failed with exit code: {:?}",
+                    s.code()
+                );
                 std::process::exit(1);
             }
             Err(e) => {
@@ -502,11 +535,21 @@ fn handle_update(force: bool) {
                     .and_then(|v| v.as_array())
                     .and_then(|assets| {
                         assets.iter().find(|a| {
-                            let name = a.get("name").and_then(|n| n.as_str()).unwrap_or("").to_lowercase();
-                            name.contains(asset_keyword) || name == "token-saver.exe" || name == "token-saver"
+                            let name = a
+                                .get("name")
+                                .and_then(|n| n.as_str())
+                                .unwrap_or("")
+                                .to_lowercase();
+                            name.contains(asset_keyword)
+                                || name == "token-saver.exe"
+                                || name == "token-saver"
                         })
                     })
-                    .and_then(|a| a.get("browser_download_url").and_then(|u| u.as_str()).map(|s| s.to_string()))
+                    .and_then(|a| {
+                        a.get("browser_download_url")
+                            .and_then(|u| u.as_str())
+                            .map(|s| s.to_string())
+                    })
             } else {
                 None
             }
@@ -556,14 +599,19 @@ fn handle_update(force: bool) {
                             std::process::exit(1);
                         }
                         use std::os::unix::fs::PermissionsExt;
-                        let _ = std::fs::set_permissions(&tmp_exe, std::fs::Permissions::from_mode(0o755));
+                        let _ = std::fs::set_permissions(
+                            &tmp_exe,
+                            std::fs::Permissions::from_mode(0o755),
+                        );
                         if let Err(e) = std::fs::rename(&tmp_exe, &current_exe) {
                             eprintln!("❌ Failed to replace executable: {e}");
                             std::process::exit(1);
                         }
                     }
 
-                    println!("\n🎉 Token-Saver executable successfully updated to v{latest_version}!");
+                    println!(
+                        "\n🎉 Token-Saver executable successfully updated to v{latest_version}!"
+                    );
                     println!("💡 Tip: Restart any open AI coding sessions or IDE windows to load updated middleware.");
                     return;
                 }
@@ -594,7 +642,8 @@ fn extract_executable_bytes(bytes: &[u8]) -> Result<Vec<u8>, String> {
             .map_err(|e| format!("Failed to read downloaded zip archive: {e}"))?;
 
         for i in 0..archive.len() {
-            let mut file = archive.by_index(i)
+            let mut file = archive
+                .by_index(i)
                 .map_err(|e| format!("Failed to read file in zip archive: {e}"))?;
             let name = file.name().to_lowercase();
             if name.ends_with(bin_name) || name == bin_name {
@@ -607,7 +656,9 @@ fn extract_executable_bytes(bytes: &[u8]) -> Result<Vec<u8>, String> {
                 }
             }
         }
-        return Err(format!("Could not find '{bin_name}' inside the downloaded zip archive."));
+        return Err(format!(
+            "Could not find '{bin_name}' inside the downloaded zip archive."
+        ));
     }
 
     // 2. If it's a tar.gz archive (starts with gzip magic bytes 0x1f, 0x8b)
@@ -629,7 +680,9 @@ fn extract_executable_bytes(bytes: &[u8]) -> Result<Vec<u8>, String> {
                 }
             }
         }
-        return Err(format!("Could not find '{bin_name}' inside the downloaded tarball."));
+        return Err(format!(
+            "Could not find '{bin_name}' inside the downloaded tarball."
+        ));
     }
 
     // 3. Direct executable check
@@ -639,7 +692,10 @@ fn extract_executable_bytes(bytes: &[u8]) -> Result<Vec<u8>, String> {
     }
 
     #[cfg(not(target_os = "windows"))]
-    if bytes.starts_with(b"\x7fELF") || bytes.starts_with(b"\xfe\xed\xfa") || bytes.starts_with(b"\xcf\xfa\xed\xfe") {
+    if bytes.starts_with(b"\x7fELF")
+        || bytes.starts_with(b"\xfe\xed\xfa")
+        || bytes.starts_with(b"\xcf\xfa\xed\xfe")
+    {
         return Ok(bytes.to_vec());
     }
 

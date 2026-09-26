@@ -3,8 +3,8 @@
 //! Intercepts massive auto-generated files (package-lock.json, Cargo.lock, minified bundles)
 //! and provides surgical package queries and structural summaries to prevent context compaction.
 
-use std::path::Path;
 use serde_json::Value;
+use std::path::Path;
 
 /// Locate a specific package or dependency entry in lockfile content.
 pub fn find_package_in_lockfile(base_name: &str, content: &str, query: &str) -> Option<String> {
@@ -112,7 +112,10 @@ pub fn find_package_in_lockfile(base_name: &str, content: &str, query: &str) -> 
 
 /// Process a shielded lockfile or giant asset.
 pub fn process_lockfile(file_path: &Path, content: &str, query: Option<&str>) -> String {
-    let base_name = file_path.file_name().and_then(|n| n.to_str()).unwrap_or("lockfile");
+    let base_name = file_path
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("lockfile");
     let total_lines = content.lines().count();
     let total_bytes = content.len();
 

@@ -58,6 +58,7 @@ def extract_references_from_code(
 
     tree = parse_code(source_code, language)
     if tree:
+
         def walk(node):
             if node.type in (
                 "identifier",
@@ -66,7 +67,9 @@ def extract_references_from_code(
                 "name",
                 "field_identifier",
             ):
-                node_text = source_code.encode("utf-8")[node.start_byte : node.end_byte].decode("utf-8", errors="replace")
+                node_text = source_code.encode("utf-8")[node.start_byte : node.end_byte].decode(
+                    "utf-8", errors="replace"
+                )
                 if node_text == target_symbol:
                     line_no = node.start_point[0] + 1
                     # Skip if this is the definition site itself
@@ -350,7 +353,10 @@ def find_symbol_global(
     if not matches:
         return f"No symbols found matching '{query}' across the codebase."
 
-    lines = [f"[SYMBOLS] Found {len(matches)} symbol(s) matching '{query}':", "----------------------------------------"]
+    lines = [
+        f"[SYMBOLS] Found {len(matches)} symbol(s) matching '{query}':",
+        "----------------------------------------",
+    ]
     for i, m in enumerate(matches, 1):
         lines.append(f"{i}. [{m.kind.upper()}] {m.name} -> {m.file_path}:{m.line}")
         if m.signature:

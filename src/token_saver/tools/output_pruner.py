@@ -9,8 +9,8 @@ from token_saver.filters.test_runners import detect_and_filter_tests
 from token_saver.utils.token_counter import estimate_tokens
 
 MAX_STREAM_BYTES = 2 * 1024 * 1024  # 2MB runaway output buffer ceiling
-STREAM_HEAD_BYTES = 1024 * 1024       # Keep first 1MB
-STREAM_TAIL_BYTES = 512 * 1024        # Keep last 512KB
+STREAM_HEAD_BYTES = 1024 * 1024  # Keep first 1MB
+STREAM_TAIL_BYTES = 512 * 1024  # Keep last 512KB
 
 
 def filter_generic(output: str) -> str:
@@ -49,15 +49,19 @@ def filter_output_logic(raw_output: str, output_type: str = "auto", exit_code: i
         filtered = auto_filter(clean_output, exit_code)
     elif output_type == "pytest":
         from token_saver.filters.test_runners import filter_pytest
+
         filtered = filter_pytest(clean_output)
     elif output_type == "jest":
         from token_saver.filters.test_runners import filter_jest_vitest
+
         filtered = filter_jest_vitest(clean_output)
     elif output_type == "npm":
         from token_saver.filters.build_tools import filter_npm_yarn
+
         filtered = filter_npm_yarn(clean_output)
     elif output_type == "cargo":
         from token_saver.filters.build_tools import filter_cargo
+
         filtered = filter_cargo(clean_output)
     elif output_type == "git":
         filtered = filter_git_output(clean_output)
@@ -69,7 +73,17 @@ def filter_output_logic(raw_output: str, output_type: str = "auto", exit_code: i
     # Fallback Safety Guard:
     # If the command failed (exit_code != 0), guarantee critical error context is never lost.
     if exit_code != 0:
-        error_keywords = ("traceback", "error", "failed", "exception", "fatal", "panic", "cannot", "syntaxerror", "importerror")
+        error_keywords = (
+            "traceback",
+            "error",
+            "failed",
+            "exception",
+            "fatal",
+            "panic",
+            "cannot",
+            "syntaxerror",
+            "importerror",
+        )
         raw_has_error = any(kw in clean_output.lower() for kw in error_keywords)
         filtered_has_error = any(kw in filtered.lower() for kw in error_keywords)
 
@@ -94,6 +108,7 @@ def filter_output_logic(raw_output: str, output_type: str = "auto", exit_code: i
         except Exception:
             pass
     return filtered + footer
+
 
 def register_output_pruner_tools(mcp):
     @mcp.tool()
@@ -138,8 +153,16 @@ def register_output_pruner_tools(mcp):
             filtered = filter_output_logic(raw_output, output_type="auto", exit_code=exit_code)
             return f"Exit Code: {exit_code}\n" + filtered
         except subprocess.TimeoutExpired as e:
-            stdout_text = e.stdout if isinstance(e.stdout, str) else (e.stdout.decode("utf-8", errors="replace") if e.stdout else "")
-            stderr_text = e.stderr if isinstance(e.stderr, str) else (e.stderr.decode("utf-8", errors="replace") if e.stderr else "")
+            stdout_text = (
+                e.stdout
+                if isinstance(e.stdout, str)
+                else (e.stdout.decode("utf-8", errors="replace") if e.stdout else "")
+            )
+            stderr_text = (
+                e.stderr
+                if isinstance(e.stderr, str)
+                else (e.stderr.decode("utf-8", errors="replace") if e.stderr else "")
+            )
             raw_output = f"{stdout_text}\n{stderr_text}".strip()
             filtered = filter_output_logic(raw_output, output_type="auto", exit_code=-1)
             return f"Command timed out after {timeout}s\n" + filtered

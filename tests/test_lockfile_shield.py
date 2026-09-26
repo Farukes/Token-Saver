@@ -51,12 +51,15 @@ def sample_npm_lock() -> str:
             "resolved": f"https://registry.npmjs.org/sub-dep-{i}.tgz",
         }
 
-    return json.dumps({
-        "name": "my-project",
-        "version": "1.0.0",
-        "lockfileVersion": 3,
-        "packages": packages,
-    }, indent=2)
+    return json.dumps(
+        {
+            "name": "my-project",
+            "version": "1.0.0",
+            "lockfileVersion": 3,
+            "packages": packages,
+        },
+        indent=2,
+    )
 
 
 @pytest.fixture

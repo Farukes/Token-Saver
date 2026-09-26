@@ -35,6 +35,7 @@ def outer_func():
     return d
 """
 
+
 def test_build_skeleton_python():
     skeleton = _build_skeleton(PYTHON_SAMPLE, "python")
     assert "class MyClass:" in skeleton
@@ -47,6 +48,7 @@ def test_build_skeleton_python():
     assert "return d" not in skeleton
     assert "..." in skeleton
 
+
 def test_find_symbol_python():
     symbol = _find_symbol(PYTHON_SAMPLE, "python", "do_something")
     assert "def do_something(self, y: str) -> bool:" in symbol
@@ -56,9 +58,11 @@ def test_find_symbol_python():
     assert "class MyClass:" in symbol_class
     assert "def __init__" in symbol_class
 
+
 def test_unknown_language_fallback():
     skeleton = _build_skeleton(PYTHON_SAMPLE, "unknown")
     assert skeleton == PYTHON_SAMPLE
+
 
 @patch("token_saver.tools.skeleton.os.path.exists")
 def test_nonexistent_file(mock_exists):
@@ -68,6 +72,7 @@ def test_nonexistent_file(mock_exists):
 
     res2 = get_symbol("missing.py", "foo")
     assert "not found" in res2.lower()
+
 
 @patch("token_saver.tools.skeleton.os.path.exists")
 @patch("token_saver.tools.skeleton.read_file_text")

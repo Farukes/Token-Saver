@@ -2,13 +2,13 @@
 //!
 //! Synchronizes with disk on mtime change to prevent clobbering resets across processes.
 
+use crate::models::{CategoryStats, TelemetryData};
+use chrono::Utc;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
 use std::sync::Mutex;
 use std::time::SystemTime;
-use chrono::Utc;
-use crate::models::{CategoryStats, TelemetryData};
 
 pub struct TelemetryTracker {
     file_path: PathBuf,
@@ -85,7 +85,9 @@ impl TelemetryTracker {
     }
 
     fn save(&self, data: &TelemetryData) {
-        let tmp_path = self.file_path.with_extension(format!("tmp.{}", std::process::id()));
+        let tmp_path = self
+            .file_path
+            .with_extension(format!("tmp.{}", std::process::id()));
         if let Ok(json_str) = serde_json::to_string_pretty(data) {
             if let Ok(mut f) = File::create(&tmp_path) {
                 if f.write_all(json_str.as_bytes()).is_ok() {

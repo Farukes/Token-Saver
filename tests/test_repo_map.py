@@ -10,7 +10,7 @@ def test_repo_map(tmp_path: Path):
 
     # File 1: main.py
     main_file = src_dir / "main.py"
-    main_file.write_text('''
+    main_file.write_text("""
 import os
 import sys
 
@@ -23,18 +23,18 @@ class App:
 
     def run(self):
         pass
-''')
+""")
 
     # File 2: utils.py
     utils_file = src_dir / "utils.py"
-    utils_file.write_text('''
+    utils_file.write_text("""
 def helper():
     return True
-''')
+""")
 
     # File 3: empty.py
     empty_file = src_dir / "empty.py"
-    empty_file.write_text('')
+    empty_file.write_text("")
 
     # Test extract symbols indirectly through get_repo_map
     repo_map = get_repo_map(str(tmp_path), max_tokens=10000)
@@ -45,7 +45,7 @@ def helper():
     assert "def helper()" in repo_map
 
     # Test token budget
-    small_budget_map = get_repo_map(str(tmp_path), max_tokens=10) # very small budget
+    small_budget_map = get_repo_map(str(tmp_path), max_tokens=10)  # very small budget
     assert "truncating remaining" in small_budget_map or "budget too small" in small_budget_map
 
     # Test focus files
@@ -69,7 +69,7 @@ def helper():
     # Create a dummy skip dir to test it's skipped
     node_modules = tmp_path / "node_modules"
     node_modules.mkdir()
-    (node_modules / "skip.py").write_text('def skipped(): pass')
+    (node_modules / "skip.py").write_text("def skipped(): pass")
 
     tree_with_skip = get_directory_tree(str(tmp_path))
     assert "node_modules/" not in tree_with_skip

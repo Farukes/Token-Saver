@@ -111,7 +111,8 @@ mod tests {
     #[test]
     fn test_parse_python() {
         let code = "def hello(name: str):\n    return f'Hello, {name}'\n";
-        let tree = parse_code(code, SupportedLanguage::Python).expect("Python parse should succeed");
+        let tree =
+            parse_code(code, SupportedLanguage::Python).expect("Python parse should succeed");
         assert_eq!(tree.root_node().kind(), "module");
     }
 

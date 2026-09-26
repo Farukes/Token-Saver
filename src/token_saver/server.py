@@ -28,7 +28,6 @@ register_repo_map_tools(mcp)
 register_symbol_index_tools(mcp)
 
 
-
 # Register MCP Resources
 @mcp.resource("token-saver://stats")
 def resource_stats() -> str:
@@ -73,6 +72,7 @@ def prompt_optimize_task(task_description: str) -> str:
         "4. Focus edits strictly on the necessary symbols with surgical block replacements.\n"
         "5. ZERO TRUNCATION MANDATE: Never use placeholder comments like '// ... rest unchanged'. Generated code must remain 100% complete, fully implemented, and syntactically valid.\n"
     )
+
 
 # Ensure debug output goes to stderr, never stdout (MCP protocol requirement)
 if not sys.stderr.isatty():
