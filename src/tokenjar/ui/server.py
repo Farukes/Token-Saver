@@ -176,9 +176,6 @@ class DashboardHandler(BaseHTTPRequestHandler):
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(payload)))
-        self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
-        self.send_header("Pragma", "no-cache")
-        self.send_header("Expires", "0")
         origin = self.headers.get("Origin")
         if origin and self._is_origin_allowed():
             self.send_header("Access-Control-Allow-Origin", origin)
@@ -204,8 +201,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
             self.send_error(403, "Forbidden: Cross-origin access disallowed")
             return
 
-        path_clean = self.path.split("?")[0]
-        if path_clean in ("/", "/index.html"):
+        if self.path in ("/", "/index.html"):
             index_path = STATIC_DIR / "index.html"
             if index_path.exists():
                 html_bytes = index_path.read_bytes()
@@ -222,7 +218,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
             self.wfile.write(html_bytes)
             return
 
-        if path_clean == "/api/status":
+        if self.path == "/api/status":
             self._send_json(get_system_status())
             return
 
@@ -335,101 +331,34 @@ class DashboardHandler(BaseHTTPRequestHandler):
 
 
 def open_app_window(url: str) -> None:
-    """Open the dashboard URL reliably in the default system browser or window."""
-    opened = False
-
-    # 1. Native Windows ShellExecute (opens default browser immediately and brings to foreground)
+    """Open the dashboard URL in user's default browser."""
     if os.name == "nt" and hasattr(os, "startfile"):
         try:
             os.startfile(url)
-            opened = True
+            return
         except Exception:
             pass
 
-    # 2. Python standard library webbrowser
-    if not opened:
-        try:
-            opened = webbrowser.open(url, new=2, autoraise=True)
-        except Exception:
-            pass
-
-    # 3. Fallback to OS commands if needed
-    if not opened:
-        try:
-            if os.name == "nt":
-                subprocess.Popen(f'start "" "{url}"', shell=True)
-            elif sys.platform == "darwin":
-                subprocess.Popen(["open", url])
-            else:
-                subprocess.Popen(["xdg-open", url])
-        except Exception:
-            pass
-
-
-def run_fastapi_server(port: int = 4141, host: str = "127.0.0.1", open_browser: bool = True) -> None:
-    """Start high-performance FastAPI/Uvicorn server for TokenJar Dashboard."""
     try:
-        import uvicorn
-
-        from tokenjar.ui.fastapi_app import create_app
-        app = create_app()
-    except ImportError as e:
-        print(f"[TokenJar UI] FastAPI/Uvicorn not available: {e}. Falling back to standard server.", file=sys.stderr)
-        start_ui_server(port=port, host=host, open_browser=open_browser, use_fastapi=False)
-        return
-
-    url = f"http://{host}:{port}"
-    launch_url = f"{url}/?v={int(time.time())}"
-    print("┌────────────────────────────────────────────────────────────────────────┐")
-    print("│ ⚡ TOKENJAR FASTAPI REACT 18 DASHBOARD                               │")
-    print("├────────────────────────────────────────────────────────────────────────┤")
-    print(f"│  Dashboard URL : {url:<53} │")
-    print(f"│  OpenAPI Docs  : {url + '/docs':<53} │")
-    print("│  Engine        : FastAPI + Uvicorn + Server-Sent Events (SSE)          │")
-    print("└────────────────────────────────────────────────────────────────────────┘")
-    sys.stdout.flush()
-
-    if open_browser:
-        threading.Thread(target=lambda: (time.sleep(0.3), open_app_window(launch_url)), daemon=True).start()
-
-    uvicorn.run(app, host=host, port=port, log_level="warning")
-
-
-def start_ui_server(
-    port: int = 4141,
-    host: str = "127.0.0.1",
-    open_browser: bool = True,
-    use_fastapi: bool = False,
-) -> None:
-    """Start the lightweight On-Demand Dashboard server."""
-    if use_fastapi:
-        run_fastapi_server(port=port, host=host, open_browser=open_browser)
-        return
-
-    # Check if TokenJar UI is already running on the target port
-    try:
-        import urllib.request
-        with urllib.request.urlopen(f"http://{host}:{port}/api/status", timeout=0.8) as check_resp:
-            if check_resp.status == 200:
-                url = f"http://{host}:{port}"
-                launch_url = f"{url}/?v={int(time.time())}"
-                print("┌────────────────────────────────────────────────────────────────────────┐")
-                print("│ 🔋 TOKENJAR CONTROL DASHBOARD (ALREADY ACTIVE)                        │")
-                print("├────────────────────────────────────────────────────────────────────────┤")
-                print(f"│  Dashboard URL : {url:<53} │")
-                print("│  Status        : Server is already running. Opening browser...        │")
-                print("└────────────────────────────────────────────────────────────────────────┘")
-                sys.stdout.flush()
-                if open_browser:
-                    open_app_window(launch_url)
-                return
+        if webbrowser.open(url, new=2, autoraise=True):
+            return
     except Exception:
         pass
 
-    # Find free port if 4141 is busy (search up to 25 ports)
+    if os.name == "nt":
+        try:
+            subprocess.Popen(f'start "" "{url}"', shell=True)
+            return
+        except Exception:
+            pass
+
+
+def start_ui_server(port: int = 4141, host: str = "127.0.0.1", open_browser: bool = True) -> None:
+    """Start the lightweight On-Demand Dashboard server."""
+    # Find free port if 4141 is busy
     actual_port = port
     server = None
-    for attempt in range(25):
+    for attempt in range(5):
         try:
             server = HTTPServer((host, actual_port), DashboardHandler)
             break
@@ -441,7 +370,6 @@ def start_ui_server(
         sys.exit(1)
 
     url = f"http://{host}:{actual_port}"
-    launch_url = f"{url}/?v={int(time.time())}"
     print("┌────────────────────────────────────────────────────────────────────────┐")
     print("│ 🔋 TOKENJAR ON-DEMAND CONTROL DASHBOARD                             │")
     print("├────────────────────────────────────────────────────────────────────────┤")
@@ -449,10 +377,11 @@ def start_ui_server(
     print("│  Architecture  : Standalone On-Demand (Zero Background RAM)            │")
     print("│  Exit          : Click 'Quit Dashboard' in UI or press Ctrl+C          │")
     print("└────────────────────────────────────────────────────────────────────────┘")
+
     sys.stdout.flush()
 
     if open_browser:
-        threading.Thread(target=lambda: (time.sleep(0.2), open_app_window(launch_url)), daemon=True).start()
+        threading.Thread(target=lambda: (time.sleep(0.5), open_app_window(url)), daemon=True).start()
 
     try:
         server.serve_forever()

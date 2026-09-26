@@ -150,11 +150,7 @@ pub fn build_system_status(tracker: &TelemetryTracker) -> serde_json::Value {
 
 fn open_browser(url: &str) {
     #[cfg(target_os = "windows")]
-    {
-        if Command::new("cmd").args(["/C", "start", "", url]).spawn().is_err() {
-            let _ = Command::new("explorer").arg(url).spawn();
-        }
-    }
+    let _ = Command::new("cmd").args(["/C", "start", url]).spawn();
 
     #[cfg(target_os = "macos")]
     let _ = Command::new("open").arg(url).spawn();
@@ -180,11 +176,6 @@ pub async fn start_ui_server(port: u16) -> Result<(), Box<dyn std::error::Error>
     };
 
     let url = format!("http://127.0.0.1:{current_port}");
-    let timestamp = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_secs())
-        .unwrap_or(0);
-    let launch_url = format!("{url}/?v={timestamp}");
     println!("============================================================");
     println!("🔋 TOKENJAR CONTROL DASHBOARD (RUST NATIVE)");
     println!("============================================================");
@@ -192,7 +183,7 @@ pub async fn start_ui_server(port: u16) -> Result<(), Box<dyn std::error::Error>
     println!("Status        : 🟢 Running (Press Ctrl+C to terminate)");
     println!("============================================================");
 
-    open_browser(&launch_url);
+    open_browser(&url);
 
     let tracker = TelemetryTracker::new();
 
@@ -213,8 +204,7 @@ pub async fn start_ui_server(port: u16) -> Result<(), Box<dyn std::error::Error>
         }
 
         let method = parts[0];
-        let full_path = parts[1];
-        let path = full_path.split('?').next().unwrap_or("/");
+        let path = parts[1];
 
         // Security: Host and Origin header validation against DNS rebinding and CSRF
         let mut host_header = "";

@@ -40,10 +40,6 @@ dev = [
 counting = [
     "tiktoken>=0.7",
 ]
-ui = [
-    "fastapi>=0.100.0",
-    "uvicorn>=0.22.0",
-]
 
 [project.scripts]
 tokenjar = "tokenjar.__main__:main"
