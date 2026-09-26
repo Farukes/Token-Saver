@@ -12,7 +12,7 @@ use tokio::net::TcpListener;
 use token_saver_core::config::TokenSaverConfig;
 use token_saver_core::telemetry::TelemetryTracker;
 
-const HTML_CONTENT: &str = include_str!("../../../src/token_saver/ui/static/index.html");
+const HTML_CONTENT: &str = include_str!("../static/index.html");
 
 /// Builds system status JSON matching the dashboard frontend expectation.
 pub fn build_system_status(tracker: &TelemetryTracker) -> serde_json::Value {
