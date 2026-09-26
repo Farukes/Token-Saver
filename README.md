@@ -9,8 +9,8 @@
 <h1 align="center">🍯 TokenJar</h1>
 <p align="center"><b>Put tokens back in your jar. Save 70-95% tokens for AI coding assistants without losing functionality.</b></p>
 
-[![Release: v1.0.1](https://img.shields.io/badge/Release-v1.0.1%20GA-green.svg)](https://github.com/Farukes/Token-Saver/releases/latest)
-[![CI](https://github.com/Farukes/Token-Saver/actions/workflows/ci.yml/badge.svg)](https://github.com/Farukes/Token-Saver/actions/workflows/ci.yml)
+[![Release: v1.0.1](https://img.shields.io/badge/Release-v1.0.1%20GA-green.svg)](https://github.com/Farukes/TokenJar/releases/latest)
+[![CI](https://github.com/Farukes/TokenJar/actions/workflows/ci.yml/badge.svg)](https://github.com/Farukes/TokenJar/actions/workflows/ci.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](https://www.python.org/downloads/)
 [![Enterprise Native: Rust](https://img.shields.io/badge/Enterprise%20Native-Rust%20v1.0.1-orange.svg)](#-enterprise--high-performance-native-engine-rust-edition)
 [![Crates.io](https://img.shields.io/crates/v/tokenjar.svg?color=orange)](https://crates.io/crates/tokenjar)
@@ -62,11 +62,11 @@ Click your operating system below to download the latest v1.0.1 release:
 
 | Platform | Architecture | Click to Download | Format |
 |:---|:---|:---|:---|
-| 🪟 **Windows** | x86_64 (64-bit) | [**⬇️ Download tokenjar-windows-x64.zip**](https://github.com/Farukes/Token-Saver/releases/latest/download/tokenjar-windows-x64.zip) | Standalone `.exe` + Installer |
-| 🐧 **Linux** | x86_64 (64-bit) | [**⬇️ Download tokenjar-linux-x64.tar.gz**](https://github.com/Farukes/Token-Saver/releases/latest/download/tokenjar-linux-x64.tar.gz) | Standalone Binary |
-| 🍏 **macOS** | Apple Silicon (M1/M2/M3/M4) | [**⬇️ Download tokenjar-macos-arm64.tar.gz**](https://github.com/Farukes/Token-Saver/releases/latest/download/tokenjar-macos-arm64.tar.gz) | Standalone Binary |
-| 🍏 **macOS** | Intel x86_64 | [**⬇️ Download tokenjar-macos-x64.tar.gz**](https://github.com/Farukes/Token-Saver/releases/latest/download/tokenjar-macos-x64.tar.gz) | Standalone Binary |
-| 🐍 **Python** | Cross-platform | [**⬇️ Download tokenjar-python.zip**](https://github.com/Farukes/Token-Saver/releases/latest/download/tokenjar-python.zip) | Python Wheel (.whl) |
+| 🪟 **Windows** | x86_64 (64-bit) | [**⬇️ Download tokenjar-windows-x64.zip**](https://github.com/Farukes/TokenJar/releases/latest/download/tokenjar-windows-x64.zip) | Standalone `.exe` + Installer |
+| 🐧 **Linux** | x86_64 (64-bit) | [**⬇️ Download tokenjar-linux-x64.tar.gz**](https://github.com/Farukes/TokenJar/releases/latest/download/tokenjar-linux-x64.tar.gz) | Standalone Binary |
+| 🍏 **macOS** | Apple Silicon (M1/M2/M3/M4) | [**⬇️ Download tokenjar-macos-arm64.tar.gz**](https://github.com/Farukes/TokenJar/releases/latest/download/tokenjar-macos-arm64.tar.gz) | Standalone Binary |
+| 🍏 **macOS** | Intel x86_64 | [**⬇️ Download tokenjar-macos-x64.tar.gz**](https://github.com/Farukes/TokenJar/releases/latest/download/tokenjar-macos-x64.tar.gz) | Standalone Binary |
+| 🐍 **Python** | Cross-platform | [**⬇️ Download tokenjar-python.zip**](https://github.com/Farukes/TokenJar/releases/latest/download/tokenjar-python.zip) | Python Wheel (.whl) |
 
 ---
 
@@ -77,12 +77,12 @@ Copy and paste one line into your terminal to install and add `tokenjar` to your
 
 **Windows (PowerShell):**
 ```powershell
-iwr -useb https://raw.githubusercontent.com/Farukes/Token-Saver/main/install.ps1 | iex
+iwr -useb https://raw.githubusercontent.com/Farukes/TokenJar/main/install.ps1 | iex
 ```
 
 ```bash
 # Linux & macOS (Bash):
-curl -fsSL https://raw.githubusercontent.com/Farukes/Token-Saver/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Farukes/TokenJar/main/install.sh | bash
 ```
 
 **Or install via Cargo (crates.io):**
@@ -100,7 +100,7 @@ cargo install tokenjar
 pip install tokenjar
 
 # Or install directly from GitHub main:
-pip install git+https://github.com/Farukes/Token-Saver.git
+pip install git+https://github.com/Farukes/TokenJar.git
 ```
 
 ---
@@ -381,7 +381,7 @@ For enterprise environments, massive monorepos (50,000+ files), CI/CD pipelines,
 
 ### Enterprise Quick Start (Standalone Binary)
 
-Download the precompiled binary from [GitHub Releases](https://github.com/Farukes/Token-Saver/releases) or build directly with Cargo:
+Download the precompiled binary from [GitHub Releases](https://github.com/Farukes/TokenJar/releases) or build directly with Cargo:
 
 ```bash
 # Build optimized native release binary from source

@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # TokenJar Linux & macOS 1-Click Installer
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/Farukes/Token-Saver/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/Farukes/TokenJar/main/install.sh | bash
 
 set -e
 
-REPO="Farukes/Token-Saver"
+REPO="Farukes/TokenJar"
 INSTALL_DIR="$HOME/.local/bin"
 EXE_PATH="$INSTALL_DIR/tokenjar"
 

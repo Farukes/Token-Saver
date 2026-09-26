@@ -7,7 +7,7 @@ NestedInstallerFiles:
     PortableCommandAlias: tokenjar
 Installers:
   - Architecture: x64
-    InstallerUrl: https://github.com/Farukes/Token-Saver/releases/download/v1.0.1/tokenjar-windows-x64.zip
+    InstallerUrl: https://github.com/Farukes/TokenJar/releases/download/v1.0.1/tokenjar-windows-x64.zip
     InstallerSha256: 249DEC707E86F52F1AB561773F05BE61A9BAEB4329967482240E7AE6E22D8F5C
 ManifestType: installer
 ManifestVersion: 1.6.0

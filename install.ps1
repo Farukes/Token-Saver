@@ -1,6 +1,6 @@
 # TokenJar Windows 1-Click PowerShell Installer
 # Usage:
-#   iwr -useb https://raw.githubusercontent.com/Farukes/Token-Saver/main/install.ps1 | iex
+#   iwr -useb https://raw.githubusercontent.com/Farukes/TokenJar/main/install.ps1 | iex
 
 $ErrorActionPreference = 'Stop'
 
@@ -8,7 +8,7 @@ Write-Host "============================================================" -Foreg
 Write-Host "🍯 Installing TokenJar Native Engine for Windows..." -ForegroundColor Cyan
 Write-Host "============================================================" -ForegroundColor Cyan
 
-$Repo = "Farukes/Token-Saver"
+$Repo = "Farukes/TokenJar"
 $InstallDir = "$env:USERPROFILE\.tokenjar\bin"
 $ZipPath = "$env:TEMP\tokenjar-windows-x64.zip"
 $ExePath = "$InstallDir\tokenjar.exe"
