@@ -598,7 +598,14 @@ impl McpServer {
 
                 let res = get_repo_map(Path::new(root_path_str), max_tokens, &focus_files);
                 let opt_tok = (res.len() / 4) as u64;
-                let raw_tok = opt_tok.saturating_mul(4).clamp(1000, 5000);
+                let root = Path::new(root_path_str);
+                let mut manifest_tok: u64 = 0;
+                for fname in &["README.md", "Cargo.toml", "package.json", "pyproject.toml", "src/main.rs", "src/lib.rs"] {
+                    if let Ok(meta) = std::fs::metadata(root.join(fname)) {
+                        manifest_tok += meta.len() / 4;
+                    }
+                }
+                let raw_tok = manifest_tok.clamp(1500, 5000);
                 self.tracker.record_savings("repo_map", raw_tok, opt_tok);
                 Ok(res)
             }

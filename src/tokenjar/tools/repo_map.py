@@ -416,8 +416,20 @@ def get_repo_map(root_path: str = ".", max_tokens: int = 1000, focus_files: list
         from tokenjar.telemetry.stats import tracker
 
         map_tokens = len(output) // 4
-        # Realistic raw cost: without repo_map, an AI explores key manifest/entry files (~3000-6000 tokens max)
-        realistic_raw_tokens = min(total_raw_tokens, 6000)
+        # Dynamically measure realistic exploration cost: physical size of manifests, readme and entrypoints
+        candidate_files = [
+            "README.md", "README", "Cargo.toml", "pyproject.toml", "package.json", "go.mod", "Makefile",
+            "src/main.rs", "src/lib.rs", "src/tokenjar/server.py", "index.ts", "main.py", "app.py"
+        ]
+        manifest_tokens = 0
+        for cf in candidate_files:
+            p = root / cf
+            if p.is_file():
+                try:
+                    manifest_tokens += int(p.stat().st_size / 3.5)
+                except OSError:
+                    pass
+        realistic_raw_tokens = min(max(manifest_tokens, 1500), 6000)
         if realistic_raw_tokens > map_tokens:
             tracker.record_savings("repo_map", realistic_raw_tokens, map_tokens)
     except Exception:

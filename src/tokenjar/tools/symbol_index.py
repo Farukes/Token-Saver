@@ -7,6 +7,7 @@ analysis without requiring the agent to guess file paths or read dozens of files
 from __future__ import annotations
 
 import hashlib
+import os
 import re
 import time
 from dataclasses import dataclass
@@ -373,9 +374,19 @@ def find_symbol_global(
             lines.append(f"   Signature: {m.signature}")
 
     result_text = "\n".join(lines)
-    # Realistic raw cost: without symbol search, an AI would grep or inspect matching candidate files (~250 tokens per unique matched file, min 150, max 1500)
+    # File-grounded dynamic avoidance: measure real token sizes of unique files containing matches
     unique_files = {m.file_path for m in matches}
-    estimated_raw = min(max(len(unique_files) * 250, 150), 1500) if matches else 50
+    raw_tokens_sum = 0
+    for fp in unique_files:
+        p = Path(root_path) / fp if not os.path.isabs(fp) else Path(fp)
+        try:
+            if p.is_file():
+                raw_tokens_sum += min(int(p.stat().st_size / 3.5), 1200)
+            else:
+                raw_tokens_sum += 250
+        except OSError:
+            raw_tokens_sum += 250
+    estimated_raw = min(max(raw_tokens_sum, 150), 2500) if matches else 50
     estimated_opt = estimate_tokens(result_text)
     if estimated_raw > estimated_opt:
         try:
@@ -469,9 +480,19 @@ def find_symbol_references(
 
     result_text = "\n".join(lines)
 
-    # Realistic raw cost: without reference index, an AI inspects occurrences across files containing references (~300 tokens per file with references, max 2000)
+    # File-grounded dynamic avoidance: measure real token sizes of files containing references
     ref_files = {r.file_path for r in all_refs}
-    estimated_raw = min(max(len(ref_files) * 300, 200), 2000) if all_refs else 100
+    raw_tokens_sum = 0
+    for fp in ref_files:
+        p = Path(root_path) / fp if not os.path.isabs(fp) else Path(fp)
+        try:
+            if p.is_file():
+                raw_tokens_sum += min(int(p.stat().st_size / 3.5), 600)
+            else:
+                raw_tokens_sum += 300
+        except OSError:
+            raw_tokens_sum += 300
+    estimated_raw = min(max(raw_tokens_sum, 200), 3000) if all_refs else 100
     estimated_opt = estimate_tokens(result_text)
     if estimated_raw > estimated_opt:
         try:
