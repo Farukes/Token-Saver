@@ -465,6 +465,8 @@ def main() -> None:
         print(f"L2 Cache Pruned: {deleted} entries removed. ({before} -> {after} entries remaining)")
 
     elif args.subcommand == "ui":
+        from token_saver.hooks.manager import HookManager
+        HookManager.ensure_in_user_path()
         from token_saver.ui.server import start_ui_server
         start_ui_server(port=args.port, open_browser=not args.no_open)
 

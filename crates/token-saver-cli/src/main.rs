@@ -364,6 +364,10 @@ async fn main() {
             println!("{output}");
         }
         Some(Commands::Ui { port }) => {
+            let (path_ok, path_msg) = token_saver_core::installer::ensure_in_user_path();
+            if path_ok && path_msg.contains("Added") {
+                println!("  🟢 System PATH: {path_msg}");
+            }
             if let Err(e) = ui::start_ui_server(*port).await {
                 eprintln!("Error starting Token-Saver UI: {e}");
             }
@@ -384,6 +388,10 @@ async fn main() {
             // If piped by AI assistant (Cursor / Claude Desktop / Windsurf) -> run Stdio MCP Server!
             if std::io::stdin().is_terminal() {
                 println!("🚀 Launching Token-Saver Web Dashboard in your browser...");
+                let (path_ok, path_msg) = token_saver_core::installer::ensure_in_user_path();
+                if path_ok && path_msg.contains("Added") {
+                    println!("  🟢 System PATH: {path_msg}");
+                }
                 if let Err(e) = ui::start_ui_server(4141).await {
                     eprintln!("Error starting Token-Saver UI: {e}");
                 }
