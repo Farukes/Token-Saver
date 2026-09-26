@@ -186,10 +186,26 @@ impl TelemetryTracker {
         *self.last_save_time.lock().unwrap() = Some(std::time::Instant::now());
     }
 
+    pub fn get_l2_cache_disk_bytes(&self) -> u64 {
+        let dir = self.file_path.parent().map(|p| p.to_path_buf()).unwrap_or_else(|| {
+            dirs::home_dir().unwrap_or_else(|| PathBuf::from(".")).join(".token-saver")
+        });
+        ["cache.db", "cache.db-wal", "cache.db-shm"]
+            .iter()
+            .filter_map(|name| std::fs::metadata(dir.join(name)).ok())
+            .filter(|m| m.is_file())
+            .map(|m| m.len())
+            .sum()
+    }
+
     pub fn render_dashboard(&self) -> String {
         let d = self.get_data();
         let dollars = format!("${:.2}", d.estimated_dollars_saved());
         let pct = format!("%{:.1}", d.savings_pct());
+
+        let cache_bytes = self.get_l2_cache_disk_bytes();
+        let cache_mb = (cache_bytes as f64) / (1024.0 * 1024.0);
+        let cache_str = format!("{:.2} MB", cache_mb);
 
         let fmt_cat = |name: &str, stat: &CategoryStats, unit: &str| -> String {
             format!(
@@ -216,6 +232,7 @@ impl TelemetryTracker {
              │  TOTAL TOKENS SAVED:       {:<16} ({pct} optimized reduction)│\n\
              │  ESTIMATED MONEY SAVED:    {:<16} (at $3.00/1M blended rate) │\n\
              │  RAW CONTEXT PROCESSED:    {:<16} tokens total                  │\n\
+             │  L2 CACHE DISK USAGE:      {:<16} (SQLite WAL storage)       │\n\
              └────────────────────────────────────────────────────────────────────────┘",
             fmt_cat("AST Skeletonizer:", &d.skeleton, "files"),
             fmt_cat("Smart File Cache:", &d.cache, "reads"),
@@ -226,6 +243,7 @@ impl TelemetryTracker {
             d.total_tokens_saved,
             dollars,
             d.total_original_tokens,
+            cache_str,
         )
     }
 }
@@ -260,5 +278,17 @@ mod tests {
         tracker_a.record_savings("skeleton", 500, 100);
         assert_eq!(tracker_a.get_data().total_tokens_saved, 400);
         assert_eq!(tracker_b.get_data().total_tokens_saved, 400);
+    }
+
+    #[test]
+    fn test_render_dashboard_includes_l2_cache() {
+        let temp = tempfile::NamedTempFile::new().unwrap();
+        let tracker = TelemetryTracker::with_path(temp.path().to_path_buf());
+        tracker.record_savings("command", 1000, 200);
+
+        let dashboard = tracker.render_dashboard();
+        assert!(dashboard.contains("TOKEN-SAVER"));
+        assert!(dashboard.contains("L2 CACHE DISK USAGE:"));
+        assert!(dashboard.contains("SQLite WAL storage"));
     }
 }

@@ -237,6 +237,19 @@ class TelemetryTracker:
             self._save()
             self._last_save_time = time.time()
 
+    def get_l2_cache_disk_bytes(self) -> int:
+        """Calculate total physical disk usage of L2 SQLite cache files (db, wal, shm)."""
+        cache_dir = self.file_path.parent
+        total = 0
+        for name in ("cache.db", "cache.db-wal", "cache.db-shm"):
+            f = cache_dir / name
+            try:
+                if f.is_file():
+                    total += f.stat().st_size
+            except OSError:
+                pass
+        return total
+
     def render_dashboard(self) -> str:
         """Format a detailed categorical terminal dashboard of metrics."""
         d = self.data
@@ -245,6 +258,10 @@ class TelemetryTracker:
 
         orig_str = f"{d.total_original_tokens:,}"
         saved_str = f"{d.total_tokens_saved:,}"
+
+        cache_bytes = self.get_l2_cache_disk_bytes()
+        cache_mb = cache_bytes / (1024.0 * 1024.0)
+        cache_str = f"{cache_mb:.2f} MB"
 
         def fmt_cat(name: str, stat: CategoryStats, unit: str) -> str:
             sav_str = f"{stat.saved:,} tokens saved"
@@ -266,6 +283,7 @@ class TelemetryTracker:
             f"│  TOTAL TOKENS SAVED:       {saved_str:<16} ({pct} optimized reduction)│",
             f"│  ESTIMATED MONEY SAVED:    {dollars:<16} (at $3.00/1M blended rate) │",
             f"│  RAW CONTEXT PROCESSED:    {orig_str:<16} tokens total                  │",
+            f"│  L2 CACHE DISK USAGE:      {cache_str:<16} (SQLite WAL storage)       │",
             "└────────────────────────────────────────────────────────────────────────┘",
         ]
         return "\n".join(lines)

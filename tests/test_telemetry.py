@@ -30,6 +30,7 @@ def test_telemetry_tracker_record_and_reset(tmp_path: Path):
         assert "1,200" in dashboard
         assert "AST Skeletonizer" in dashboard
         assert "Terminal Pruner" in dashboard
+        assert "L2 CACHE DISK USAGE" in dashboard
 
         tracker.reset()
         assert tracker.data.total_tokens_saved == 0
