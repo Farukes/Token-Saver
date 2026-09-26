@@ -9,8 +9,8 @@
 <h1 align="center">🍯 TokenJar</h1>
 <p align="center"><b>Token'ları kumbarana geri koy. Yapay zekâ kodlama asistanları için sıfır maliyetli token kumbarası ve akıllı optimizasyon motoru.</b></p>
 
-[![Release: v1.0.1](https://img.shields.io/badge/S%C3%BCr%C3%BCm-v1.0.1%20GA-green.svg)](https://github.com/Farukes/TokenJar/releases/latest)
-[![CI](https://github.com/Farukes/TokenJar/actions/workflows/ci.yml/badge.svg)](https://github.com/Farukes/TokenJar/actions/workflows/ci.yml)
+[![Release: v1.0.1](https://img.shields.io/badge/S%C3%BCr%C3%BCm-v1.0.1%20GA-green.svg)](https://github.com/Farukes/Token-Saver/releases/latest)
+[![CI](https://github.com/Farukes/Token-Saver/actions/workflows/ci.yml/badge.svg)](https://github.com/Farukes/Token-Saver/actions/workflows/ci.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](https://www.python.org/downloads/)
 [![Kurumsal Yerel Motor: Rust](https://img.shields.io/badge/Kurumsal%20Yerel%20Motor-Rust%20v1.0.1-orange.svg)](#-kurumsal-ve-y%C3%BCksek-performansl%C4%B1-yerel-motor-rust-s%C3%BCr%C3%BCm%C3%BC)
 [![Crates.io](https://img.shields.io/crates/v/tokenjar.svg?color=orange)](https://crates.io/crates/tokenjar)
@@ -62,11 +62,11 @@ TokenJar iki resmi sürüm halinde dağıtılmaktadır:
 
 | Platform | Mimari | Tıkla ve İndir | Format |
 |:---|:---|:---|:---|
-| 🪟 **Windows** | x86_64 (64-bit) | [**⬇️ tokenjar-windows-x64.zip İndir**](https://github.com/Farukes/TokenJar/releases/latest/download/tokenjar-windows-x64.zip) | Bağımsız `.exe` + Yükleyici |
-| 🐧 **Linux** | x86_64 (64-bit) | [**⬇️ tokenjar-linux-x64.tar.gz İndir**](https://github.com/Farukes/TokenJar/releases/latest/download/tokenjar-linux-x64.tar.gz) | Bağımsız İkili Dosya |
-| 🍏 **macOS** | Apple Silicon (M1/M2/M3/M4) | [**⬇️ tokenjar-macos-arm64.tar.gz İndir**](https://github.com/Farukes/TokenJar/releases/latest/download/tokenjar-macos-arm64.tar.gz) | Bağımsız İkili Dosya |
-| 🍏 **macOS** | Intel x86_64 | [**⬇️ tokenjar-macos-x64.tar.gz İndir**](https://github.com/Farukes/TokenJar/releases/latest/download/tokenjar-macos-x64.tar.gz) | Bağımsız İkili Dosya |
-| 🐍 **Python** | Çapraz Platform | [**⬇️ tokenjar-python.zip İndir**](https://github.com/Farukes/TokenJar/releases/latest/download/tokenjar-python.zip) | Python Wheel (.whl) |
+| 🪟 **Windows** | x86_64 (64-bit) | [**⬇️ tokenjar-windows-x64.zip İndir**](https://github.com/Farukes/Token-Saver/releases/latest/download/tokenjar-windows-x64.zip) | Bağımsız `.exe` + Yükleyici |
+| 🐧 **Linux** | x86_64 (64-bit) | [**⬇️ tokenjar-linux-x64.tar.gz İndir**](https://github.com/Farukes/Token-Saver/releases/latest/download/tokenjar-linux-x64.tar.gz) | Bağımsız İkili Dosya |
+| 🍏 **macOS** | Apple Silicon (M1/M2/M3/M4) | [**⬇️ tokenjar-macos-arm64.tar.gz İndir**](https://github.com/Farukes/Token-Saver/releases/latest/download/tokenjar-macos-arm64.tar.gz) | Bağımsız İkili Dosya |
+| 🍏 **macOS** | Intel x86_64 | [**⬇️ tokenjar-macos-x64.tar.gz İndir**](https://github.com/Farukes/Token-Saver/releases/latest/download/tokenjar-macos-x64.tar.gz) | Bağımsız İkili Dosya |
+| 🐍 **Python** | Çapraz Platform | [**⬇️ tokenjar-python.zip İndir**](https://github.com/Farukes/Token-Saver/releases/latest/download/tokenjar-python.zip) | Python Wheel (.whl) |
 
 ---
 
@@ -77,12 +77,12 @@ Terminalinize tek satır yapıştırarak `tokenjar`'ı otomatik yükleyin ve sis
 
 **Windows (PowerShell):**
 ```powershell
-iwr -useb https://raw.githubusercontent.com/Farukes/TokenJar/main/install.ps1 | iex
+iwr -useb https://raw.githubusercontent.com/Farukes/Token-Saver/main/install.ps1 | iex
 ```
 
 ```bash
 # Linux ve macOS (Bash):
-curl -fsSL https://raw.githubusercontent.com/Farukes/TokenJar/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Farukes/Token-Saver/main/install.sh | bash
 ```
 
 **Veya Cargo (crates.io) ile kurulum:**
@@ -100,7 +100,7 @@ cargo install tokenjar
 pip install tokenjar
 
 # Veya doğrudan GitHub main dalından kurulum:
-pip install git+https://github.com/Farukes/TokenJar.git
+pip install git+https://github.com/Farukes/Token-Saver.git
 ```
 
 ---
@@ -381,7 +381,7 @@ Kurumsal çalışma ortamları, devasa monorepolar (50.000+ dosya), CI/CD süre�
 
 ### Kurumsal Hızlı Başlangıç (Bağımsız Binary)
 
-Önceden derlenmiş ikili dosyayı [GitHub Releases](https://github.com/Farukes/TokenJar/releases) sayfasından indirin veya doğrudan Cargo ile derleyin:
+Önceden derlenmiş ikili dosyayı [GitHub Releases](https://github.com/Farukes/Token-Saver/releases) sayfasından indirin veya doğrudan Cargo ile derleyin:
 
 ```bash
 # Kaynak koddan optimize yerel ikili dosyayı derleyin

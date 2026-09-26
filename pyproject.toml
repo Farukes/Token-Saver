@@ -45,9 +45,9 @@ counting = [
 tokenjar = "tokenjar.__main__:main"
 
 [project.urls]
-Homepage = "https://github.com/Farukes/TokenJar"
-Repository = "https://github.com/Farukes/TokenJar"
-Issues = "https://github.com/Farukes/TokenJar/issues"
+Homepage = "https://github.com/Farukes/Token-Saver"
+Repository = "https://github.com/Farukes/Token-Saver"
+Issues = "https://github.com/Farukes/Token-Saver/issues"
 
 [tool.hatch.build.targets.sdist]
 include = [

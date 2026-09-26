@@ -10,7 +10,7 @@ version = "1.0.1"
 edition = "2021"
 authors = ["Ömer Faruk Eskitürk"]
 license = "BUSL-1.1"
-repository = "https://github.com/Farukes/TokenJar"
+repository = "https://github.com/Farukes/Token-Saver"
 
 [profile.release]
 opt-level = 3

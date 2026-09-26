@@ -503,7 +503,7 @@ fn handle_update(force: bool) {
     println!("Current Binary Version : v{current_version}");
     println!("Checking for latest release on GitHub / Crates.io...");
 
-    let github_url = "https://api.github.com/repos/Farukes/TokenJar/releases/latest";
+    let github_url = "https://api.github.com/repos/Farukes/Token-Saver/releases/latest";
     let latest_tag = match ureq::get(github_url)
         .set("User-Agent", &format!("tokenjar/{current_version}"))
         .timeout(std::time::Duration::from_secs(5))
