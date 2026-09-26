@@ -406,6 +406,26 @@ def start_ui_server(
         run_fastapi_server(port=port, host=host, open_browser=open_browser)
         return
 
+    # Check if TokenJar UI is already running on the target port
+    try:
+        import urllib.request
+        with urllib.request.urlopen(f"http://{host}:{port}/api/status", timeout=0.8) as check_resp:
+            if check_resp.status == 200:
+                url = f"http://{host}:{port}"
+                launch_url = f"{url}/?v={int(time.time())}"
+                print("┌────────────────────────────────────────────────────────────────────────┐")
+                print("│ 🔋 TOKENJAR CONTROL DASHBOARD (ALREADY ACTIVE)                        │")
+                print("├────────────────────────────────────────────────────────────────────────┤")
+                print(f"│  Dashboard URL : {url:<53} │")
+                print("│  Status        : Server is already running. Opening browser...        │")
+                print("└────────────────────────────────────────────────────────────────────────┘")
+                sys.stdout.flush()
+                if open_browser:
+                    open_app_window(launch_url)
+                return
+    except Exception:
+        pass
+
     # Find free port if 4141 is busy (search up to 25 ports)
     actual_port = port
     server = None
