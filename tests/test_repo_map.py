@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from token_saver.tools.repo_map import get_directory_tree, get_repo_map
+from tokenjar.tools.repo_map import get_directory_tree, get_repo_map
 
 
 def test_repo_map(tmp_path: Path):

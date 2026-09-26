@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from unittest.mock import patch
 
-from token_saver.hooks.manager import (
+from tokenjar.hooks.manager import (
     HOOK_MARKER_START,
     HookManager,
     is_bypass_active,
@@ -12,14 +12,14 @@ from token_saver.hooks.manager import (
 
 def test_is_bypass_active(monkeypatch):
     monkeypatch.delenv("RAW", raising=False)
-    monkeypatch.delenv("TOKEN_SAVER_BYPASS", raising=False)
+    monkeypatch.delenv("TOKENJAR_BYPASS", raising=False)
     assert not is_bypass_active()
 
     monkeypatch.setenv("RAW", "1")
     assert is_bypass_active()
 
     monkeypatch.delenv("RAW", raising=False)
-    monkeypatch.setenv("TOKEN_SAVER_BYPASS", "1")
+    monkeypatch.setenv("TOKENJAR_BYPASS", "1")
     assert is_bypass_active()
 
 
@@ -88,9 +88,9 @@ def test_mcp_config_uses_sys_executable(tmp_path: Path):
     ok, msg = HookManager._apply_mcp_config_with_backup(config_path)
     assert ok
     data = json.loads(config_path.read_text(encoding="utf-8"))
-    assert "token-saver" in data["mcpServers"]
+    assert "tokenjar" in data["mcpServers"]
     expected_python = sys.executable if sys.executable else "python"
-    assert data["mcpServers"]["token-saver"]["command"] == expected_python
+    assert data["mcpServers"]["tokenjar"]["command"] == expected_python
 
 
 def test_mcp_revert_restores_exact_original_state(tmp_path: Path):
@@ -110,11 +110,11 @@ def test_mcp_revert_restores_exact_original_state(tmp_path: Path):
     orig_text = json.dumps(orig_config, indent=2)
     config_file.write_text(orig_text, encoding="utf-8")
 
-    # Step 1: Install / Enable Token-Saver
+    # Step 1: Install / Enable TokenJar
     ok, msg = HookManager._apply_mcp_config_with_backup(config_file)
     assert ok
     installed_data = json.loads(config_file.read_text(encoding="utf-8"))
-    assert "token-saver" in installed_data["mcpServers"]
+    assert "tokenjar" in installed_data["mcpServers"]
     assert "postgres" in installed_data["mcpServers"]
 
     # Step 2: Uninstall / Revert
@@ -142,18 +142,18 @@ def test_mcp_revert_restores_exact_original_state(tmp_path: Path):
 
 
 def test_mcp_revert_preserves_newly_added_user_servers(tmp_path: Path):
-    """Test that if the user adds a new MCP server while Token-Saver was installed,
-    reverting Token-Saver removes ONLY token-saver and preserves the user's new server!
+    """Test that if the user adds a new MCP server while TokenJar was installed,
+    reverting TokenJar removes ONLY tokenjar and preserves the user's new server!
     """
     import json
 
     config_file = tmp_path / "claude_desktop_config.json"
 
-    # Step 1: Token-Saver is installed on a fresh system
+    # Step 1: TokenJar is installed on a fresh system
     ok, msg = HookManager._apply_mcp_config_with_backup(config_file)
     assert ok
 
-    # Step 2: While Token-Saver was running, the user manually adds GitHub MCP server
+    # Step 2: While TokenJar was running, the user manually adds GitHub MCP server
     data = json.loads(config_file.read_text(encoding="utf-8"))
     data["mcpServers"]["github"] = {
         "command": "npx",
@@ -161,14 +161,14 @@ def test_mcp_revert_preserves_newly_added_user_servers(tmp_path: Path):
     }
     config_file.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
-    # Step 3: User uninstalls / unticks Token-Saver
+    # Step 3: User uninstalls / unticks TokenJar
     revert_ok, revert_msg = HookManager._revert_mcp_config_with_backup(config_file)
     assert revert_ok
     assert "preserved" in revert_msg.lower()
 
-    # Step 4: Verify that token-saver was removed, but github is 100% PRESERVED!
+    # Step 4: Verify that tokenjar was removed, but github is 100% PRESERVED!
     assert config_file.exists()  # Must not be deleted!
     after_data = json.loads(config_file.read_text(encoding="utf-8"))
-    assert "token-saver" not in after_data["mcpServers"]
+    assert "tokenjar" not in after_data["mcpServers"]
     assert "github" in after_data["mcpServers"]
     assert after_data["mcpServers"]["github"]["command"] == "npx"

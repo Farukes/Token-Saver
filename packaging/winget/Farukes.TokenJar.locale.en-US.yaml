@@ -1,0 +1,25 @@
+PackageIdentifier: Farukes.TokenJar
+PackageVersion: 1.0.1
+PackageLocale: en-US
+Publisher: Ömer Faruk Eskitürk
+PublisherUrl: https://github.com/Farukes
+PublisherSupportUrl: https://github.com/Farukes/TokenJar/issues
+Author: Ömer Faruk Eskitürk
+PackageName: TokenJar
+PackageUrl: https://github.com/Farukes/TokenJar
+License: BSL-1.1
+LicenseUrl: https://github.com/Farukes/TokenJar/blob/main/LICENSE
+Copyright: Copyright (c) 2026 Ömer Faruk Eskitürk
+ShortDescription: Zero-cost, zero-latency token optimization engine and intelligent MCP middleware for AI coding assistants
+Description: TokenJar is a native high-performance AST and token optimization engine that saves 70-95% tokens for AI coding assistants (Cursor, Windsurf, Claude Code, Cline) without losing context or functionality.
+Moniker: tokenjar
+Tags:
+  - ai
+  - mcp
+  - token-optimization
+  - cursor
+  - windsurf
+  - rust
+ReleaseNotesUrl: https://github.com/Farukes/TokenJar/releases/tag/v1.0.1
+ManifestType: defaultLocale
+ManifestVersion: 1.6.0

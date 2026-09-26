@@ -1,4 +1,4 @@
-"""50-Step Real-Life Developer Scenario Simulation for Token-Saver.
+"""50-Step Real-Life Developer Scenario Simulation for TokenJar.
 
 Simulates an entire day in the life of a senior developer and AI assistant
 working on a production repository across 5 realistic phases using actual MCP tools:
@@ -21,16 +21,16 @@ if hasattr(sys.stderr, "reconfigure"):
 # Add project root to sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from token_saver.cache.persistent_cache import PersistentCache
-from token_saver.filters.lockfile import process_lockfile
-from token_saver.rules.manager import RulesManager
-from token_saver.telemetry.stats import tracker
-from token_saver.tools.output_pruner import filter_output_logic
-from token_saver.tools.repo_map import get_directory_tree, get_repo_map
-from token_saver.tools.skeleton import _build_skeleton, get_code_skeleton, get_symbol
-from token_saver.tools.smart_reader import read_file_smart
-from token_saver.tools.symbol_index import find_symbol_global, find_symbol_references
-from token_saver.utils.token_counter import estimate_tokens
+from tokenjar.cache.persistent_cache import PersistentCache
+from tokenjar.filters.lockfile import process_lockfile
+from tokenjar.rules.manager import RulesManager
+from tokenjar.telemetry.stats import tracker
+from tokenjar.tools.output_pruner import filter_output_logic
+from tokenjar.tools.repo_map import get_directory_tree, get_repo_map
+from tokenjar.tools.skeleton import _build_skeleton, get_code_skeleton, get_symbol
+from tokenjar.tools.smart_reader import read_file_smart
+from tokenjar.tools.symbol_index import find_symbol_global, find_symbol_references
+from tokenjar.utils.token_counter import estimate_tokens
 
 
 def run_50_step_real_life_test():
@@ -99,7 +99,7 @@ def run_50_step_real_life_test():
     print(f"  [Step 6] find_symbol_references('read_file_smart') -> blast radius analyzed in {dt:.2f}ms")
 
     # Step 7: AST Skeleton on manager.py
-    mgr_path = str(repo_root / "src" / "token_saver" / "hooks" / "manager.py")
+    mgr_path = str(repo_root / "src" / "tokenjar" / "hooks" / "manager.py")
     t0 = time.perf_counter()
     skel_mgr = get_code_skeleton(mgr_path)
     dt = (time.perf_counter() - t0) * 1000
@@ -113,7 +113,7 @@ def run_50_step_real_life_test():
     )
 
     # Step 8: AST Skeleton on rules/manager.py
-    rules_path = str(repo_root / "src" / "token_saver" / "rules" / "manager.py")
+    rules_path = str(repo_root / "src" / "tokenjar" / "rules" / "manager.py")
     t0 = time.perf_counter()
     skel_rules = get_code_skeleton(rules_path)
     dt = (time.perf_counter() - t0) * 1000
@@ -199,7 +199,7 @@ def run_50_step_real_life_test():
 
     # Steps 18-20: Caching across other key repo files
     key_files = [
-        str(repo_root / "src" / "token_saver" / "server.py"),
+        str(repo_root / "src" / "tokenjar" / "server.py"),
         str(repo_root / "pyproject.toml"),
         str(repo_root / "Cargo.toml"),
     ]
@@ -349,15 +349,15 @@ def run_50_step_real_life_test():
 
     # Step 43: Slash commands verification in AGY
     t0 = time.perf_counter()
-    agy_skill = Path.home() / ".gemini" / "config" / "skills" / "token-saver" / "SKILL.md"
+    agy_skill = Path.home() / ".gemini" / "config" / "skills" / "tokenjar" / "SKILL.md"
     skill_installed = agy_skill.exists()
     dt = (time.perf_counter() - t0) * 1000
-    print(f"  [Step 43] Antigravity (AGY) /token-saver skill verified (installed: {skill_installed}) in {dt:.2f}ms")
+    print(f"  [Step 43] Antigravity (AGY) /tokenjar skill verified (installed: {skill_installed}) in {dt:.2f}ms")
 
     # Step 44: Project rule files verification
     t0 = time.perf_counter()
     agents_md = repo_root / "AGENTS.md"
-    rules_active = agents_md.exists() and "token-saver-rules" in agents_md.read_text(encoding="utf-8")
+    rules_active = agents_md.exists() and "tokenjar-rules" in agents_md.read_text(encoding="utf-8")
     dt = (time.perf_counter() - t0) * 1000
     assert rules_active, "AGENTS.md does not contain active rules!"
     print(f"  [Step 44] AGENTS.md rule integrity verified (active: {rules_active}) in {dt:.2f}ms")
@@ -378,7 +378,7 @@ def run_50_step_real_life_test():
 
     # Step 47: Config reload from disk
     t0 = time.perf_counter()
-    from token_saver.config import load_config
+    from tokenjar.config import load_config
 
     cfg_loaded = load_config(repo_root)
     assert cfg_loaded is not None

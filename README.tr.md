@@ -2,21 +2,26 @@
   <a href="README.md"><b>English</b></a> | <a href="README.tr.md"><b>Türkçe</b></a>
 </p>
 
-# 🔋 Token-Saver
+<p align="center">
+  <img src="docs/images/tokenjar_logo.jpg" alt="TokenJar Logo" width="220" style="border-radius: 16px;" />
+</p>
 
-[![Release: v1.0.1](https://img.shields.io/badge/S%C3%BCr%C3%BCm-v1.0.1%20GA-green.svg)](https://github.com/Farukes/Token-Saver/releases/latest)
-[![CI](https://github.com/Farukes/Token-Saver/actions/workflows/ci.yml/badge.svg)](https://github.com/Farukes/Token-Saver/actions/workflows/ci.yml)
+<h1 align="center">🍯 TokenJar</h1>
+<p align="center"><b>Token'ları kumbarana geri koy. Yapay zekâ kodlama asistanları için sıfır maliyetli token kumbarası ve akıllı optimizasyon motoru.</b></p>
+
+[![Release: v1.0.1](https://img.shields.io/badge/S%C3%BCr%C3%BCm-v1.0.1%20GA-green.svg)](https://github.com/Farukes/TokenJar/releases/latest)
+[![CI](https://github.com/Farukes/TokenJar/actions/workflows/ci.yml/badge.svg)](https://github.com/Farukes/TokenJar/actions/workflows/ci.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](https://www.python.org/downloads/)
 [![Kurumsal Yerel Motor: Rust](https://img.shields.io/badge/Kurumsal%20Yerel%20Motor-Rust%20v1.0.1-orange.svg)](#-kurumsal-ve-y%C3%BCksek-performansl%C4%B1-yerel-motor-rust-s%C3%BCr%C3%BCm%C3%BC)
-[![Crates.io](https://img.shields.io/crates/v/token-saver.svg?color=orange)](https://crates.io/crates/token-saver)
-[![PyPI](https://img.shields.io/pypi/v/token-saver-engine.svg?color=blue)](https://pypi.org/project/token-saver-engine/)
+[![Crates.io](https://img.shields.io/crates/v/tokenjar.svg?color=orange)](https://crates.io/crates/tokenjar)
+[![PyPI](https://img.shields.io/pypi/v/tokenjar.svg?color=blue)](https://pypi.org/project/tokenjar/)
 [![Token Tasarrufu](https://img.shields.io/badge/Token%20Tasarrufu-%2589%20ile%20%2596-brightgreen.svg)](#-kan%C4%B1tlanm%C4%B1%C5%9F-performans-ve-stres-testi-sonu%C3%A7lar%C4%B1)
 [![Lisans: BSL 1.1](https://img.shields.io/badge/Lisans-BSL%201.1-blue.svg)](LICENSE)
 [![Zero Telemetry](https://img.shields.io/badge/telemetri-0%25%20(100%25%20yerel)-success.svg)](#-kurumsal-gizlilik-ve-g%C3%BCvenlik-garantisi)
 
 **Yapay zeka kodlama asistanları için işlevsellikten ödün vermeden %70-95 token tasarrufu sağlayan MCP sunucusu.**
 
-Token-Saver, yapay zeka kodlama asistanınız ile kod tabanınız arasında yer alarak kod okumalarını, terminal çıktılarını ve dosya işlemlerini akıllıca sıkıştırır; token tüketimini, bağlam sıkıştırmasını (context compaction) ve gecikmeyi önemli ölçüde azaltır.
+TokenJar, yapay zeka kodlama asistanınız ile kod tabanınız arasında yer alarak kod okumalarını, terminal çıktılarını ve dosya işlemlerini akıllıca sıkıştırır; token tüketimini, bağlam sıkıştırmasını (context compaction) ve gecikmeyi önemli ölçüde azaltır.
 
 **Claude Code**, **Cursor**, **Antigravity (AGY)**, **Windsurf**, **Continue.dev** ve tüm MCP uyumlu yapay zeka asistanlarıyla sorunsuz çalışır.
 
@@ -32,13 +37,13 @@ Token-Saver, yapay zeka kodlama asistanınız ile kod tabanınız arasında yer 
 | 🎯 **Etki Alanı ve Sembol Analizi** | Anlık global sembol arama ve dosyalar arası referans/çağıran takibi (`find_symbol_references`) | **%85-95** |
 | 🖥️ **Terminal Budayıcı (Terminal Pruner)** | Test/derleme/git terminal akışlarını sıkıştırır, hataları ve özet bilgileri korur | **%60-90** |
 | 🗺️ **Repo Haritası (Repo Map)** | PageRank ve Graf Merkeziliği algoritmalarıyla özel token bütçelerine sığdırılan kod haritası | **Bütçeye uyarlanmış** |
-| 🎨 **İsteğe Bağlı Kontrol Paneli (UI)** | **Sıfır Arka Plan RAM** tüketen hafif bağımsız kontrol paneli (`token-saver ui`) | **Anlık** |
+| 🎨 **İsteğe Bağlı Kontrol Paneli (UI)** | **Sıfır Arka Plan RAM** tüketen hafif bağımsız kontrol paneli (`tokenjar ui`) | **Anlık** |
 | ⚡ **Tek Tıkla IDE Yapılandırması** | Cursor, Windsurf, Claude, VS Code için otomatik yapılandırma ve zararsız geri alma | **Zahmetsiz** |
 
 ### 🛡️ Yerleşik Güvenlik Önlemleri ve Güvenilirlik
 - **Lockfile ve Devasa Varlık Kalkanı:** 50.000 satırlık kilit dosyalarının bağlam penceresini yok etmesini engeller; 5 satırlık cerrahi sürüm sorgularını destekler.
-- **L1 RAM + L2 SQLite Kalıcı Önbellek:** MCP sunucusu ve IDE yeniden başlatmalarından etkilenmez (`~/.token-saver/cache.db` WAL moduyla çalışır).
-- **Güvenli Hata Geri Dönüşü (Fallback Safety Guard):** Test veya komut başarısız olduğunda (`exit_code != 0`), Token-Saver traceback'lerin ve hata bağlamının eksiksiz korunmasını garanti eder.
+- **L1 RAM + L2 SQLite Kalıcı Önbellek:** MCP sunucusu ve IDE yeniden başlatmalarından etkilenmez (`~/.tokenjar/cache.db` WAL moduyla çalışır).
+- **Güvenli Hata Geri Dönüşü (Fallback Safety Guard):** Test veya komut başarısız olduğunda (`exit_code != 0`), TokenJar traceback'lerin ve hata bağlamının eksiksiz korunmasını garanti eder.
 - **Küçük Dosya Anomali Koruması:** Diff başlığı dosyanın kendisinden daha fazla token tüketecekse, token şişmesini önlemek için dosyanın tam içeriği döndürülür.
 - **Kontrolsüz Akış Koruması (Runaway Stream Protection):** Sonsuz döngülerde ham terminal arabelleklerini 2 MB ile sınırlandırarak bellek taşmasını önler.
 - **SQLite Veritabanı Şişme Koruması:** 5 MB'tan büyük dosyalar disk alanını şişirmemek için karma referansıyla (hash) önbelleğe alınır.
@@ -47,7 +52,7 @@ Token-Saver, yapay zeka kodlama asistanınız ile kod tabanınız arasında yer 
 
 ## 🚀 Hızlı Başlangıç ve Kurulum (v1.0.1 GA)
 
-Token-Saver iki resmi sürüm halinde dağıtılmaktadır:
+TokenJar iki resmi sürüm halinde dağıtılmaktadır:
 1. **🦀 Rust Yerel Motoru (Önerilen):** Mikrosaniyelik AST ayrıştırma, 14 MB RAM ve sıfır Python bağımlılığı içeren yüksek performanslı tekil ikili dosya.
 2. **🐍 Python Sürümü:** pip ve sanal ortamlar (venv) için saf Python FastMCP paketi.
 
@@ -57,32 +62,32 @@ Token-Saver iki resmi sürüm halinde dağıtılmaktadır:
 
 | Platform | Mimari | Tıkla ve İndir | Format |
 |:---|:---|:---|:---|
-| 🪟 **Windows** | x86_64 (64-bit) | [**⬇️ token-saver-windows-x64.zip İndir**](https://github.com/Farukes/Token-Saver/releases/latest/download/token-saver-windows-x64.zip) | Bağımsız `.exe` + Yükleyici |
-| 🐧 **Linux** | x86_64 (64-bit) | [**⬇️ token-saver-linux-x64.tar.gz İndir**](https://github.com/Farukes/Token-Saver/releases/latest/download/token-saver-linux-x64.tar.gz) | Bağımsız İkili Dosya |
-| 🍏 **macOS** | Apple Silicon (M1/M2/M3/M4) | [**⬇️ token-saver-macos-arm64.tar.gz İndir**](https://github.com/Farukes/Token-Saver/releases/latest/download/token-saver-macos-arm64.tar.gz) | Bağımsız İkili Dosya |
-| 🍏 **macOS** | Intel x86_64 | [**⬇️ token-saver-macos-x64.tar.gz İndir**](https://github.com/Farukes/Token-Saver/releases/latest/download/token-saver-macos-x64.tar.gz) | Bağımsız İkili Dosya |
-| 🐍 **Python** | Çapraz Platform | [**⬇️ token-saver-python.zip İndir**](https://github.com/Farukes/Token-Saver/releases/latest/download/token-saver-python.zip) | Python Wheel (.whl) |
+| 🪟 **Windows** | x86_64 (64-bit) | [**⬇️ tokenjar-windows-x64.zip İndir**](https://github.com/Farukes/TokenJar/releases/latest/download/tokenjar-windows-x64.zip) | Bağımsız `.exe` + Yükleyici |
+| 🐧 **Linux** | x86_64 (64-bit) | [**⬇️ tokenjar-linux-x64.tar.gz İndir**](https://github.com/Farukes/TokenJar/releases/latest/download/tokenjar-linux-x64.tar.gz) | Bağımsız İkili Dosya |
+| 🍏 **macOS** | Apple Silicon (M1/M2/M3/M4) | [**⬇️ tokenjar-macos-arm64.tar.gz İndir**](https://github.com/Farukes/TokenJar/releases/latest/download/tokenjar-macos-arm64.tar.gz) | Bağımsız İkili Dosya |
+| 🍏 **macOS** | Intel x86_64 | [**⬇️ tokenjar-macos-x64.tar.gz İndir**](https://github.com/Farukes/TokenJar/releases/latest/download/tokenjar-macos-x64.tar.gz) | Bağımsız İkili Dosya |
+| 🐍 **Python** | Çapraz Platform | [**⬇️ tokenjar-python.zip İndir**](https://github.com/Farukes/TokenJar/releases/latest/download/tokenjar-python.zip) | Python Wheel (.whl) |
 
 ---
 
 ### ⚡ 1. Seçenek: Rust Yerel Motoru (Tek Satır Terminal Kurulumu)
 > **En İyisi:** En yüksek hız, 14 MB RAM, mikrosaniyelik Tree-sitter AST ve sıfır Python bağımlılığı.
 
-Terminalinize tek satır yapıştırarak `token-saver`'ı otomatik yükleyin ve sistem PATH'inize ekleyin:
+Terminalinize tek satır yapıştırarak `tokenjar`'ı otomatik yükleyin ve sistem PATH'inize ekleyin:
 
 **Windows (PowerShell):**
 ```powershell
-iwr -useb https://raw.githubusercontent.com/Farukes/Token-Saver/main/install.ps1 | iex
+iwr -useb https://raw.githubusercontent.com/Farukes/TokenJar/main/install.ps1 | iex
 ```
 
 ```bash
 # Linux ve macOS (Bash):
-curl -fsSL https://raw.githubusercontent.com/Farukes/Token-Saver/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Farukes/TokenJar/main/install.sh | bash
 ```
 
 **Veya Cargo (crates.io) ile kurulum:**
 ```bash
-cargo install token-saver
+cargo install tokenjar
 ```
 
 ---
@@ -92,10 +97,10 @@ cargo install token-saver
 
 ```bash
 # PyPI üzerinden kurulum
-pip install token-saver-engine
+pip install tokenjar
 
 # Veya doğrudan GitHub main dalından kurulum:
-pip install git+https://github.com/Farukes/Token-Saver.git
+pip install git+https://github.com/Farukes/TokenJar.git
 ```
 
 ---
@@ -104,7 +109,7 @@ pip install git+https://github.com/Farukes/Token-Saver.git
 
 100 adımlık gerçek geliştirici stres testi ve 50 döngülük eşit şartlardaki MCP testinden elde edilen net ölçüm sonuçları:
 
-| Metrik | 1. Düz AI (Token-Saver Yok) | 2. Token-Saver Python | 3. Token-Saver Rust (v1.0.1) | Rust Avantajı |
+| Metrik | 1. Düz AI (TokenJar Yok) | 2. TokenJar Python | 3. TokenJar Rust (v1.0.1) | Rust Avantajı |
 |:---|:---|:---|:---|:---|
 | **Tüketilen Token (100 Adım)** | 622.892 tokens | 95.492 tokens | **68.641 tokens** | **%89.0 net tasarruf (554k token kurtarıldı)** |
 | **Uçtan Uca Kodlama Tasarrufu** | 166.513 tokens | 12.400 tokens | **6.585 tokens** | **🚀 %96.0 net tasarruf (Cerrahi bloklar)** |
@@ -119,11 +124,11 @@ pip install git+https://github.com/Farukes/Token-Saver.git
 
 ### Yönlendirme Kurallarını Otomatik Yapılandırma
 
-Token-Saver optimizasyon yönergelerini depo kurallarınıza otomatik olarak ekleyin:
+TokenJar optimizasyon yönergelerini depo kurallarınıza otomatik olarak ekleyin:
 
 ```bash
 # Kuralları AGENTS.md, .cursorrules, .windsurfrules ve CLAUDE.md dosyalarına enjekte eder
-token-saver init-rules
+tokenjar init-rules
 ```
 
 ### 🎛️ Çıktı Optimizasyonu Kontrolleri (CLI ve Terminaller)
@@ -132,16 +137,16 @@ Kompakt cerrahi diff çıktısı ile varsayılan sınırsız çıktı arasında 
 
 ```bash
 # 🟢 Kompakt cerrahi diff'leri ve sıfır kesinti kalite kuralını etkinleştirir
-token-saver output on
+tokenjar output on
 
 # ⚪ Yapay zeka asistanını varsayılan kısıtlamasız çıktı ayarlarına döndürür
-token-saver output off
+tokenjar output off
 
 # 📊 Mevcut çıktı yapılandırma durumunu görüntüler
-token-saver output
+tokenjar output
 ```
 
-Yapay zeka asistanınızın sohbet ekranında slash komutları da desteklenir (`/token-saver output on`, `/token-saver output off`).
+Yapay zeka asistanınızın sohbet ekranında slash komutları da desteklenir (`/tokenjar output on`, `/tokenjar output off`).
 
 ---
 
@@ -149,14 +154,14 @@ Yapay zeka asistanınızın sohbet ekranında slash komutları da desteklenir (`
 
 ### ⚡ Tek Tıkla Otomatik Kurulum (Önerilen)
 
-Claude Desktop, Cursor, Windsurf, Claude Code ve VS Code ortamlarını otomatik olarak algılar ve otomatik yedeklemeyle Token-Saver MCP sunucusunu yapılandırır:
+Claude Desktop, Cursor, Windsurf, Claude Code ve VS Code ortamlarını otomatik olarak algılar ve otomatik yedeklemeyle TokenJar MCP sunucusunu yapılandırır:
 
 ```bash
 # 🟢 Algılanan tüm IDE'leri tek bir komutla yapılandırın
-token-saver install-mcp
+tokenjar install-mcp
 
 # ⚪ İstediğiniz zaman güvenle geri alın (eklediğiniz diğer sunucuları aynen korur!)
-token-saver uninstall-mcp
+tokenjar uninstall-mcp
 ```
 
 ### Manuel Yapılandırma
@@ -167,7 +172,7 @@ Manuel olarak yapılandırmayı veya diğer istemcileri kullanmayı tercih eders
 <summary><b>Claude Code</b></summary>
 
 ```bash
-claude mcp add token-saver -- python -m token_saver
+claude mcp add tokenjar -- python -m tokenjar
 ```
 </details>
 
@@ -178,9 +183,9 @@ claude mcp add token-saver -- python -m token_saver
 ```json
 {
   "mcpServers": {
-    "token-saver": {
+    "tokenjar": {
       "command": "python",
-      "args": ["-m", "token_saver"],
+      "args": ["-m", "tokenjar"],
       "env": { "PYTHONUNBUFFERED": "1" }
     }
   }
@@ -195,9 +200,9 @@ claude mcp add token-saver -- python -m token_saver
 ```json
 {
   "mcpServers": {
-    "token-saver": {
+    "tokenjar": {
       "command": "python",
-      "args": ["-m", "token_saver"],
+      "args": ["-m", "tokenjar"],
       "env": { "PYTHONUNBUFFERED": "1" }
     }
   }
@@ -212,9 +217,9 @@ claude mcp add token-saver -- python -m token_saver
 ```json
 {
   "mcpServers": {
-    "token-saver": {
+    "tokenjar": {
       "command": "python",
-      "args": ["-m", "token_saver"]
+      "args": ["-m", "tokenjar"]
     }
   }
 }
@@ -227,9 +232,9 @@ claude mcp add token-saver -- python -m token_saver
 `.continue/config.yaml` dosyasına ekleyin:
 ```yaml
 mcpServers:
-  - name: token-saver
+  - name: tokenjar
     command: python
-    args: ["-m", "token_saver"]
+    args: ["-m", "tokenjar"]
 ```
 </details>
 
@@ -251,17 +256,17 @@ mcpServers:
 ### 📦 MCP Kaynakları ve Komut İstekleri (Prompts)
 
 - **Kaynaklar (Resources):**
-  - `token-saver://stats`: Canlı kümülatif token ve maliyet tasarrufu paneli.
-  - `token-saver://guide`: Yapay zeka asistanı en iyi uygulama optimizasyon yönergeleri.
-  - `token-saver://config`: Etkin proje yapılandırması ve yoksayma ayarları.
+  - `tokenjar://stats`: Canlı kümülatif token ve maliyet tasarrufu paneli.
+  - `tokenjar://guide`: Yapay zeka asistanı en iyi uygulama optimizasyon yönergeleri.
+  - `tokenjar://config`: Etkin proje yapılandırması ve yoksayma ayarları.
 - **Komut İstekleri (Prompts):**
   - `optimize_coding_task(task_description)`: Asistanları token verimli iş akışlarına yönlendiren sistem istemi şablonu.
 
 ---
 
-## ⚙️ Proje Yapılandırması (`token-saver.toml`)
+## ⚙️ Proje Yapılandırması (`tokenjar.toml`)
 
-Hariç tutulacak dosyaları ve bütçeleri özelleştirmek için deponuzun kök dizininde isteğe bağlı bir `token-saver.toml` oluşturun:
+Hariç tutulacak dosyaları ve bütçeleri özelleştirmek için deponuzun kök dizininde isteğe bağlı bir `tokenjar.toml` oluşturun:
 
 ```toml
 [general]
@@ -280,92 +285,92 @@ default_budget = 1000
 
 ## 💻 CLI Komutları ve Kabuk Kancaları
 
-Token-Saver, geliştiriciler ve yerel kabuk otomasyonu için etkileşimli bir komut satırı aracı olarak da işlev görür:
+TokenJar, geliştiriciler ve yerel kabuk otomasyonu için etkileşimli bir komut satırı aracı olarak da işlev görür:
 
 ```bash
 # 🎨 İsteğe Bağlı Kontrol Panelini Başlatın (Sıfır Arka Plan RAM Tüketimli UI)
-token-saver ui
+tokenjar ui
 
-# 📊 Token-Saver'ın IDE'ler genelindeki kapsamlı canlı çalışma durumunu kontrol edin
-token-saver status
+# 📊 TokenJar'ın IDE'ler genelindeki kapsamlı canlı çalışma durumunu kontrol edin
+tokenjar status
 
 # ⚡ Claude Desktop, Cursor, Windsurf, VS Code genelinde MCP'yi tek tıkla otomatik kurun
-token-saver install-mcp
+tokenjar install-mcp
 
-# ⚪ Token-Saver MCP yapılandırmasını güvenle kaldırın ve orijinal durumuna geri getirin
-token-saver uninstall-mcp
+# ⚪ TokenJar MCP yapılandırmasını güvenle kaldırın ve orijinal durumuna geri getirin
+tokenjar uninstall-mcp
 
 # Kümülatif tasarruf panelini görüntüleyin (tasarruf edilen token, para ve işlem sayısı)
-token-saver stats
+tokenjar stats
 
 # Herhangi bir kabuk komutunu akıllı filtreleme ile çalıştırın
-token-saver run "pytest tests/ -v"
-token-saver run "npm test"
+tokenjar run "pytest tests/ -v"
+tokenjar run "npm test"
 
 # Geçici devre dışı bırakma: tam günlüklere ihtiyaç duyduğunuzda ham çıktının %100'ünü görün
-RAW=1 token-saver run "pytest"
-token-saver run "pytest --raw"
+RAW=1 tokenjar run "pytest"
+tokenjar run "pytest --raw"
 
 # L2 SQLite önbelleğindeki süresi dolmuş veya fazla kayıtları temizleyin
-token-saver cache-prune --ttl-days 30 --max-entries 5000
+tokenjar cache-prune --ttl-days 30 --max-entries 5000
 
 # Şeffaf kabuk kancalarını yükleyin (pytest/npm çıktıları otomatik filtrelenir)
-token-saver hook
+tokenjar hook
 
 # Tüm kabuk kancalarını güvenli ve temiz bir şekilde kaldırın
-token-saver unhook
+tokenjar unhook
 
-# 🟢 Token-Saver'ı BU proje için etkinleştirin (varsayılan)
-token-saver on
+# 🟢 TokenJar'ı BU proje için etkinleştirin (varsayılan)
+tokenjar on
 
-# ⚪ Token-Saver'ı BU proje için devre dışı bırakın (diğer projeleri etkilemez)
-token-saver off
+# ⚪ TokenJar'ı BU proje için devre dışı bırakın (diğer projeleri etkilemez)
+tokenjar off
 
-# 🌐 Token-Saver MCP sunucusunu tüm IDE'lerde genel olarak etkinleştirin
-token-saver on --global
+# 🌐 TokenJar MCP sunucusunu tüm IDE'lerde genel olarak etkinleştirin
+tokenjar on --global
 
-# 🔴 Token-Saver MCP'yi tüm IDE'lerden genel olarak kaldırın ve ayarları geri alın
-token-saver off --global
+# 🔴 TokenJar MCP'yi tüm IDE'lerden genel olarak kaldırın ve ayarları geri alın
+tokenjar off --global
 
 # 📝 Alternatif Takma Ad: Mevcut projeye kural ekleme / temizleme
-token-saver init
-token-saver init --clean
+tokenjar init
+tokenjar init --clean
 
 # 🎨 Etkileşimli Web Kontrol Panelini Başlatın (Sıfır Arka Plan RAM)
-token-saver ui
+tokenjar ui
 
 # 🧹 L2 SQLite Önbelleğini Tamamen Sıfırlayın
-token-saver cache-clear
+tokenjar cache-clear
 
-# ⚠️ Token-Saver'ı Bilgisayardan Tamamen Kaldırın (IDE'ler, kurallar, hook'lar, önbellek ve PATH)
-token-saver uninstall
+# ⚠️ TokenJar'ı Bilgisayardan Tamamen Kaldırın (IDE'ler, kurallar, hook'lar, önbellek ve PATH)
+tokenjar uninstall
 # veya onay istemini atlayarak:
-token-saver uninstall --yes
+tokenjar uninstall --yes
 
-# AGY CLI ve Claude Code için /token-saver slash komutlarını kurun
-token-saver setup-commands
+# AGY CLI ve Claude Code için /tokenjar slash komutlarını kurun
+tokenjar setup-commands
 
 # Metrik sayaçlarını sıfırlayın
-token-saver reset-stats
+tokenjar reset-stats
 ```
 
 ---
 
 ## 🔒 Kurumsal Gizlilik ve Güvenlik Garantisi
 
-Token-Saver kesinlikle **Sıfır-Telemetri, %100 Localhost** tasarım felsefesiyle geliştirilmiştir:
+TokenJar kesinlikle **Sıfır-Telemetri, %100 Localhost** tasarım felsefesiyle geliştirilmiştir:
 
 - **%100 Yerel Yürütme:** Tüm ayrıştırma (Tree-sitter), önbellekleme (SQLite) ve çıktı filtreleme işlemleri yerel olarak işlemcinizde (CPU) gerçekleşir.
 - **Sıfır Dış Ağ Çağrısı:** Telemetri sunucusu, analitik izleyici, giden ping veya herhangi bir bulut bağımlılığı kesinlikle yoktur.
 - **Air-Gapped / Çevrimdışı Ortamlarla Uyumlu:** Gizli, çevrimdışı veya izole kurumsal şirket ağlarında güvenle çalışır.
-- **Yerel Veri İzolasyonu:** Kalıcı önbellek (`~/.token-saver/cache.db`) ve istatistikler (`~/.token-saver/telemetry.json`) yalnızca kullanıcı dizininizde bulunur ve `token-saver reset-stats` ile veya dizin silinerek istenildiği zaman tamamen temizlenebilir.
+- **Yerel Veri İzolasyonu:** Kalıcı önbellek (`~/.tokenjar/cache.db`) ve istatistikler (`~/.tokenjar/telemetry.json`) yalnızca kullanıcı dizininizde bulunur ve `tokenjar reset-stats` ile veya dizin silinerek istenildiği zaman tamamen temizlenebilir.
 - **Müdahalesiz Mimari:** Yapay zeka asistanının açık talimatı olmadan proje kodunuzu asla değiştirmez.
 
 ---
 
 ## 🦀 Kurumsal ve Yüksek Performanslı Yerel Motor (Rust Sürümü)
 
-Kurumsal çalışma ortamları, devasa monorepolar (50.000+ dosya), CI/CD süreçleri veya sisteminde Python kurulu olmayan geliştiriciler için Token-Saver, sıfır bağımlılıklı ve ultra hızlı yerel bir Rust ikili dosyası (`token-saver.exe` / bağımsız binary) sunar.
+Kurumsal çalışma ortamları, devasa monorepolar (50.000+ dosya), CI/CD süreçleri veya sisteminde Python kurulu olmayan geliştiriciler için TokenJar, sıfır bağımlılıklı ve ultra hızlı yerel bir Rust ikili dosyası (`tokenjar.exe` / bağımsız binary) sunar.
 
 ### Neden Kurumsal Yerel Motor?
 - **Sıfır Çalışma Zamanı Bağımlılığı:** Python, pip, Node.js veya sanal ortam (venv) gerektirmez. Tek bir çalıştırılabilir dosya.
@@ -376,14 +381,14 @@ Kurumsal çalışma ortamları, devasa monorepolar (50.000+ dosya), CI/CD süre�
 
 ### Kurumsal Hızlı Başlangıç (Bağımsız Binary)
 
-Önceden derlenmiş ikili dosyayı [GitHub Releases](https://github.com/Farukes/Token-Saver/releases) sayfasından indirin veya doğrudan Cargo ile derleyin:
+Önceden derlenmiş ikili dosyayı [GitHub Releases](https://github.com/Farukes/TokenJar/releases) sayfasından indirin veya doğrudan Cargo ile derleyin:
 
 ```bash
 # Kaynak koddan optimize yerel ikili dosyayı derleyin
 cargo build --release --workspace
 
 # Bağımsız dosya kullanıma hazır:
-./target/release/token-saver.exe status
+./target/release/tokenjar.exe status
 ```
 
 ### Kurumsal MCP Yapılandırması (`claude_desktop_config.json` / Cursor)
@@ -392,8 +397,8 @@ Herhangi bir Python sarmalayıcısına gerek kalmadan doğrudan binary dosyasın
 ```json
 {
   "mcpServers": {
-    "token-saver": {
-      "command": "C:\\dosya\\yolu\\token-saver.exe"
+    "tokenjar": {
+      "command": "C:\\dosya\\yolu\\tokenjar.exe"
     }
   }
 }
@@ -403,7 +408,7 @@ Herhangi bir Python sarmalayıcısına gerek kalmadan doğrudan binary dosyasın
 
 ## 🌍 Desteklenen Diller
 
-Token-Saver, AST ayrıştırma için Tree-sitter kullanır ve kullanıma hazır olarak **130'dan fazla programlama dilini** destekler:
+TokenJar, AST ayrıştırma için Tree-sitter kullanır ve kullanıma hazır olarak **130'dan fazla programlama dilini** destekler:
 
 Python · TypeScript · JavaScript · Go · Rust · Java · C# · C / C++ · Ruby · PHP · Swift · Kotlin · Scala · Dart · Lua · Elixir · Haskell · ve daha fazlası.
 
@@ -411,7 +416,7 @@ Python · TypeScript · JavaScript · Go · Rust · Java · C# · C / C++ · Rub
 
 ## 🧪 Geliştirme ve Kalite Güvencesi
 
-Token-Saver, her iki uygulamada da %100 işlevsel eşliği garanti eden çift test paketi barındırır:
+TokenJar, her iki uygulamada da %100 işlevsel eşliği garanti eden çift test paketi barındırır:
 
 ```bash
 # Python (Topluluk Sürümü & MCP SDK)

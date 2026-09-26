@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from token_saver.tools.smart_reader import _cache, register_smart_reader_tools
+from tokenjar.tools.smart_reader import _cache, register_smart_reader_tools
 
 
 class MockMCP:
@@ -82,7 +82,7 @@ def test_smart_reader(tmp_path):
 
 
 def test_persistent_cache(tmp_path):
-    from token_saver.cache.session_cache import SessionCache
+    from tokenjar.cache.session_cache import SessionCache
 
     db_file = tmp_path / "test_cache.db"
 
@@ -100,8 +100,8 @@ def test_persistent_cache(tmp_path):
 
 
 def test_large_file_cache_protection(tmp_path):
-    from token_saver.cache.persistent_cache import PersistentCache
-    from token_saver.cache.session_cache import SessionCache
+    from tokenjar.cache.persistent_cache import PersistentCache
+    from tokenjar.cache.session_cache import SessionCache
 
     db_file = tmp_path / "large_cache.db"
 
@@ -121,7 +121,7 @@ def test_large_file_cache_protection(tmp_path):
     persisted = p_cache.get_entry(norm_path)
     assert persisted is not None
     p_hash, p_content, _ = persisted
-    assert p_content.startswith("__TOKEN_SAVER_LARGE_FILE__:")
+    assert p_content.startswith("__TOKENJAR_LARGE_FILE__:")
     assert len(p_content) < 100  # Saved database from 6MB bloat!
 
     # Second read in fresh session: still accurately detects unchanged!

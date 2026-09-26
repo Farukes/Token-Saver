@@ -2,21 +2,26 @@
   <a href="README.md"><b>English</b></a> | <a href="README.tr.md"><b>Türkçe</b></a>
 </p>
 
-# 🔋 Token-Saver
+<p align="center">
+  <img src="docs/images/tokenjar_logo.jpg" alt="TokenJar Logo" width="220" style="border-radius: 16px;" />
+</p>
 
-[![Release: v1.0.1](https://img.shields.io/badge/Release-v1.0.1%20GA-green.svg)](https://github.com/Farukes/Token-Saver/releases/latest)
-[![CI](https://github.com/Farukes/Token-Saver/actions/workflows/ci.yml/badge.svg)](https://github.com/Farukes/Token-Saver/actions/workflows/ci.yml)
+<h1 align="center">🍯 TokenJar</h1>
+<p align="center"><b>Put tokens back in your jar. Save 70-95% tokens for AI coding assistants without losing functionality.</b></p>
+
+[![Release: v1.0.1](https://img.shields.io/badge/Release-v1.0.1%20GA-green.svg)](https://github.com/Farukes/TokenJar/releases/latest)
+[![CI](https://github.com/Farukes/TokenJar/actions/workflows/ci.yml/badge.svg)](https://github.com/Farukes/TokenJar/actions/workflows/ci.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](https://www.python.org/downloads/)
 [![Enterprise Native: Rust](https://img.shields.io/badge/Enterprise%20Native-Rust%20v1.0.1-orange.svg)](#-enterprise--high-performance-native-engine-rust-edition)
-[![Crates.io](https://img.shields.io/crates/v/token-saver.svg?color=orange)](https://crates.io/crates/token-saver)
-[![PyPI](https://img.shields.io/pypi/v/token-saver-engine.svg?color=blue)](https://pypi.org/project/token-saver-engine/)
+[![Crates.io](https://img.shields.io/crates/v/tokenjar.svg?color=orange)](https://crates.io/crates/tokenjar)
+[![PyPI](https://img.shields.io/pypi/v/tokenjar.svg?color=blue)](https://pypi.org/project/tokenjar/)
 [![Token Reduction](https://img.shields.io/badge/Token%20Savings-89%25%20to%2096%25-brightgreen.svg)](#-proven-performance--stress-test-benchmark)
 [![License: BSL 1.1](https://img.shields.io/badge/License-BSL%201.1-blue.svg)](LICENSE)
 [![Zero Telemetry](https://img.shields.io/badge/telemetry-0%25%20(100%25%20local)-success.svg)](#-enterprise-privacy--security-guarantee)
 
 **MCP server that saves 70-95% tokens for AI coding assistants — without losing functionality.**
 
-Token-Saver sits between your AI coding assistant and your codebase, intelligently compressing code reads, terminal outputs, and file operations to dramatically reduce token consumption, context compaction, and latency.
+TokenJar sits between your AI coding assistant and your codebase, intelligently compressing code reads, terminal outputs, and file operations to dramatically reduce token consumption, context compaction, and latency.
 
 Works with **Claude Code**, **Cursor**, **Antigravity (AGY)**, **Windsurf**, **Continue.dev**, and any MCP-compatible AI assistant.
 
@@ -32,13 +37,13 @@ Works with **Claude Code**, **Cursor**, **Antigravity (AGY)**, **Windsurf**, **C
 | 🎯 **Blast Radius & Symbols** | Instant global symbol lookup & cross-file reference caller tracking (`find_symbol_references`) | **85-95%** |
 | 🖥️ **Terminal Pruner** | Compresses test/build/git terminal streams, keeps errors and summary info | **60-90%** |
 | 🗺️ **Repo Map** | PageRank & Graph Centrality codebase overview fitted into custom token budgets | **Budget-fitted** |
-| 🎨 **On-Demand UI Dashboard** | Lightweight standalone control panel (`token-saver ui`) with **Zero Background RAM** | **Instant** |
+| 🎨 **On-Demand UI Dashboard** | Lightweight standalone control panel (`tokenjar ui`) with **Zero Background RAM** | **Instant** |
 | ⚡ **1-Click IDE Configuration** | Automatic configuration & non-destructive rollback for Cursor, Windsurf, Claude, VS Code | **Zero-effort** |
 
 ### 🛡️ Built-in Guardrails & Reliability
 - **Lockfile & Giant Asset Shield:** Prevents context window destruction from 50,000-line lockfiles; supports 5-line surgical version queries.
-- **L1 RAM + L2 SQLite Persistent Cache:** Survives MCP server restarts and IDE reboots (`~/.token-saver/cache.db` with WAL mode).
-- **Fallback Safety Guard:** If a test or command fails (`exit_code != 0`), Token-Saver guarantees tracebacks and error contexts are preserved intact.
+- **L1 RAM + L2 SQLite Persistent Cache:** Survives MCP server restarts and IDE reboots (`~/.tokenjar/cache.db` with WAL mode).
+- **Fallback Safety Guard:** If a test or command fails (`exit_code != 0`), TokenJar guarantees tracebacks and error contexts are preserved intact.
 - **Tiny File Anomaly Guard:** If a diff header would consume more tokens than the file itself, the full content is returned to prevent token inflation.
 - **Runaway Stream Protection:** Protects host memory from infinite loops by capping raw terminal buffers at 2MB with graceful truncation.
 - **SQLite Database Bloat Guard:** Files larger than 5MB are cached by hash reference without bloating disk space.
@@ -47,7 +52,7 @@ Works with **Claude Code**, **Cursor**, **Antigravity (AGY)**, **Windsurf**, **C
 
 ## 🚀 Quick Start & Installation (v1.0.1 GA)
 
-Token-Saver is distributed in two official editions:
+TokenJar is distributed in two official editions:
 1. **🦀 Rust Native Engine (Recommended):** High-performance, self-contained single binary with microsecond AST, 14 MB RAM, and zero Python dependencies.
 2. **🐍 Python Edition:** Pure Python FastMCP package for pip and virtual environments.
 
@@ -57,32 +62,32 @@ Click your operating system below to download the latest v1.0.1 release:
 
 | Platform | Architecture | Click to Download | Format |
 |:---|:---|:---|:---|
-| 🪟 **Windows** | x86_64 (64-bit) | [**⬇️ Download token-saver-windows-x64.zip**](https://github.com/Farukes/Token-Saver/releases/latest/download/token-saver-windows-x64.zip) | Standalone `.exe` + Installer |
-| 🐧 **Linux** | x86_64 (64-bit) | [**⬇️ Download token-saver-linux-x64.tar.gz**](https://github.com/Farukes/Token-Saver/releases/latest/download/token-saver-linux-x64.tar.gz) | Standalone Binary |
-| 🍏 **macOS** | Apple Silicon (M1/M2/M3/M4) | [**⬇️ Download token-saver-macos-arm64.tar.gz**](https://github.com/Farukes/Token-Saver/releases/latest/download/token-saver-macos-arm64.tar.gz) | Standalone Binary |
-| 🍏 **macOS** | Intel x86_64 | [**⬇️ Download token-saver-macos-x64.tar.gz**](https://github.com/Farukes/Token-Saver/releases/latest/download/token-saver-macos-x64.tar.gz) | Standalone Binary |
-| 🐍 **Python** | Cross-platform | [**⬇️ Download token-saver-python.zip**](https://github.com/Farukes/Token-Saver/releases/latest/download/token-saver-python.zip) | Python Wheel (.whl) |
+| 🪟 **Windows** | x86_64 (64-bit) | [**⬇️ Download tokenjar-windows-x64.zip**](https://github.com/Farukes/TokenJar/releases/latest/download/tokenjar-windows-x64.zip) | Standalone `.exe` + Installer |
+| 🐧 **Linux** | x86_64 (64-bit) | [**⬇️ Download tokenjar-linux-x64.tar.gz**](https://github.com/Farukes/TokenJar/releases/latest/download/tokenjar-linux-x64.tar.gz) | Standalone Binary |
+| 🍏 **macOS** | Apple Silicon (M1/M2/M3/M4) | [**⬇️ Download tokenjar-macos-arm64.tar.gz**](https://github.com/Farukes/TokenJar/releases/latest/download/tokenjar-macos-arm64.tar.gz) | Standalone Binary |
+| 🍏 **macOS** | Intel x86_64 | [**⬇️ Download tokenjar-macos-x64.tar.gz**](https://github.com/Farukes/TokenJar/releases/latest/download/tokenjar-macos-x64.tar.gz) | Standalone Binary |
+| 🐍 **Python** | Cross-platform | [**⬇️ Download tokenjar-python.zip**](https://github.com/Farukes/TokenJar/releases/latest/download/tokenjar-python.zip) | Python Wheel (.whl) |
 
 ---
 
 ### ⚡ Option 1: Rust Native Engine (1-Click Terminal Install)
 > **Best for:** Highest speed, 14 MB RAM, microsecond tree-sitter AST, and zero Python dependency.
 
-Copy and paste one line into your terminal to install and add `token-saver` to your PATH automatically:
+Copy and paste one line into your terminal to install and add `tokenjar` to your PATH automatically:
 
 **Windows (PowerShell):**
 ```powershell
-iwr -useb https://raw.githubusercontent.com/Farukes/Token-Saver/main/install.ps1 | iex
+iwr -useb https://raw.githubusercontent.com/Farukes/TokenJar/main/install.ps1 | iex
 ```
 
 ```bash
 # Linux & macOS (Bash):
-curl -fsSL https://raw.githubusercontent.com/Farukes/Token-Saver/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Farukes/TokenJar/main/install.sh | bash
 ```
 
 **Or install via Cargo (crates.io):**
 ```bash
-cargo install token-saver
+cargo install tokenjar
 ```
 
 ---
@@ -92,19 +97,19 @@ cargo install token-saver
 
 ```bash
 # Install from PyPI
-pip install token-saver-engine
+pip install tokenjar
 
 # Or install directly from GitHub main:
-pip install git+https://github.com/Farukes/Token-Saver.git
+pip install git+https://github.com/Farukes/TokenJar.git
 ```
 
 ---
 
 ## 📊 Proven Performance & Stress Test Benchmark
 
-Empirical results from our rigorous **100-Step Real-Life Developer Stress Test** and **50-Cycle MCP Head-to-Head Benchmark** comparing Standard Raw AI vs Token-Saver Python vs Token-Saver Rust Native Engine:
+Empirical results from our rigorous **100-Step Real-Life Developer Stress Test** and **50-Cycle MCP Head-to-Head Benchmark** comparing Standard Raw AI vs TokenJar Python vs TokenJar Rust Native Engine:
 
-| Metric | 1. Raw AI (No Token-Saver) | 2. Token-Saver Python | 3. Token-Saver Rust (v1.0.1) | Rust Advantage |
+| Metric | 1. Raw AI (No TokenJar) | 2. TokenJar Python | 3. TokenJar Rust (v1.0.1) | Rust Advantage |
 |:---|:---|:---|:---|:---|
 | **Consumed Tokens (100 Steps)** | 622,892 tokens | 95,492 tokens | **68,641 tokens** | **89.0% net savings (554k tokens saved)** |
 | **End-to-End Coding Savings** | 166,513 tokens | 12,400 tokens | **6,585 tokens** | **🚀 96.0% net savings (Surgical edits)** |
@@ -119,11 +124,11 @@ Empirical results from our rigorous **100-Step Real-Life Developer Stress Test**
 
 ### Auto-Configure Agent Steering Rules
 
-Automatically inject Token-Saver optimization instructions into your repository rules:
+Automatically inject TokenJar optimization instructions into your repository rules:
 
 ```bash
 # Injects rules into AGENTS.md, .cursorrules, .windsurfrules, and CLAUDE.md
-token-saver init-rules
+tokenjar init-rules
 ```
 
 ### 🎛️ Output Optimization Controls (CLI & Terminals)
@@ -132,16 +137,16 @@ Switch between compact surgical output and default unrestricted output with crys
 
 ```bash
 # 🟢 Enable compact surgical diffs & zero-truncation quality mandate
-token-saver output on
+tokenjar output on
 
 # ⚪ Revert AI assistant to default unrestricted output settings
-token-saver output off
+tokenjar output off
 
 # 📊 Check current output configuration status
-token-saver output
+tokenjar output
 ```
 
-Slash commands are also supported in your AI assistant chat (`/token-saver output on`, `/token-saver output off`).
+Slash commands are also supported in your AI assistant chat (`/tokenjar output on`, `/tokenjar output off`).
 
 ---
 
@@ -149,14 +154,14 @@ Slash commands are also supported in your AI assistant chat (`/token-saver outpu
 
 ### ⚡ 1-Click Automatic Setup (Recommended)
 
-Automatically detects and configures Token-Saver MCP server in Claude Desktop, Cursor, Windsurf, Claude Code, and VS Code with automated backups:
+Automatically detects and configures TokenJar MCP server in Claude Desktop, Cursor, Windsurf, Claude Code, and VS Code with automated backups:
 
 ```bash
 # 🟢 Configure all detected IDEs in one command
-token-saver install-mcp
+tokenjar install-mcp
 
 # ⚪ Cleanly revert at any time (preserves all other servers you added!)
-token-saver uninstall-mcp
+tokenjar uninstall-mcp
 ```
 
 ### Manual Configuration
@@ -167,7 +172,7 @@ If you prefer to configure manually or use other clients:
 <summary><b>Claude Code</b></summary>
 
 ```bash
-claude mcp add token-saver -- python -m token_saver
+claude mcp add tokenjar -- python -m tokenjar
 ```
 </details>
 
@@ -178,9 +183,9 @@ Create or update `.cursor/mcp.json`:
 ```json
 {
   "mcpServers": {
-    "token-saver": {
+    "tokenjar": {
       "command": "python",
-      "args": ["-m", "token_saver"],
+      "args": ["-m", "tokenjar"],
       "env": { "PYTHONUNBUFFERED": "1" }
     }
   }
@@ -195,9 +200,9 @@ Add to `~/.gemini/config/mcp_config.json`:
 ```json
 {
   "mcpServers": {
-    "token-saver": {
+    "tokenjar": {
       "command": "python",
-      "args": ["-m", "token_saver"],
+      "args": ["-m", "tokenjar"],
       "env": { "PYTHONUNBUFFERED": "1" }
     }
   }
@@ -212,9 +217,9 @@ Add to `~/.codeium/windsurf/mcp_config.json`:
 ```json
 {
   "mcpServers": {
-    "token-saver": {
+    "tokenjar": {
       "command": "python",
-      "args": ["-m", "token_saver"]
+      "args": ["-m", "tokenjar"]
     }
   }
 }
@@ -227,9 +232,9 @@ Add to `~/.codeium/windsurf/mcp_config.json`:
 Add to `.continue/config.yaml`:
 ```yaml
 mcpServers:
-  - name: token-saver
+  - name: tokenjar
     command: python
-    args: ["-m", "token_saver"]
+    args: ["-m", "tokenjar"]
 ```
 </details>
 
@@ -251,17 +256,17 @@ mcpServers:
 ### 📦 MCP Resources & Prompts
 
 - **Resources:**
-  - `token-saver://stats`: Live cumulative token and financial savings dashboard.
-  - `token-saver://guide`: AI assistant best-practice optimization guidelines.
-  - `token-saver://config`: Active project configuration and ignore settings.
+  - `tokenjar://stats`: Live cumulative token and financial savings dashboard.
+  - `tokenjar://guide`: AI assistant best-practice optimization guidelines.
+  - `tokenjar://config`: Active project configuration and ignore settings.
 - **Prompts:**
   - `optimize_coding_task(task_description)`: System prompt template steering assistants toward token-efficient workflows.
 
 ---
 
-## ⚙️ Project Configuration (`token-saver.toml`)
+## ⚙️ Project Configuration (`tokenjar.toml`)
 
-Create an optional `token-saver.toml` in your repository root to customize exclusions and budgets:
+Create an optional `tokenjar.toml` in your repository root to customize exclusions and budgets:
 
 ```toml
 [general]
@@ -280,92 +285,92 @@ default_budget = 1000
 
 ## 💻 CLI Commands & Shell Hooks
 
-Token-Saver also functions as an interactive command-line utility for human developers and local shell automation:
+TokenJar also functions as an interactive command-line utility for human developers and local shell automation:
 
 ```bash
 # 🎨 Launch On-Demand Control Dashboard (Zero Background RAM UI)
-token-saver ui
+tokenjar ui
 
-# 📊 Check comprehensive live operational status of Token-Saver across IDEs
-token-saver status
+# 📊 Check comprehensive live operational status of TokenJar across IDEs
+tokenjar status
 
 # ⚡ 1-Click auto-configure MCP across Claude Desktop, Cursor, Windsurf, VS Code
-token-saver install-mcp
+tokenjar install-mcp
 
-# ⚪ Safely remove Token-Saver MCP configuration and restore exact original state
-token-saver uninstall-mcp
+# ⚪ Safely remove TokenJar MCP configuration and restore exact original state
+tokenjar uninstall-mcp
 
 # View cumulative savings dashboard (tokens saved, money saved, operations)
-token-saver stats
+tokenjar stats
 
 # Run any shell command through intelligent filtering
-token-saver run "pytest tests/ -v"
-token-saver run "npm test"
+tokenjar run "pytest tests/ -v"
+tokenjar run "npm test"
 
 # Temporary bypass: see 100% of raw output when you need full logs
-RAW=1 token-saver run "pytest"
-token-saver run "pytest --raw"
+RAW=1 tokenjar run "pytest"
+tokenjar run "pytest --raw"
 
 # Prune expired or excess entries from L2 SQLite cache
-token-saver cache-prune --ttl-days 30 --max-entries 5000
+tokenjar cache-prune --ttl-days 30 --max-entries 5000
 
 # Install transparent shell hooks (so pytest/npm are automatically filtered)
-token-saver hook
+tokenjar hook
 
 # Cleanly and safely uninstall all shell hooks
-token-saver unhook
+tokenjar unhook
 
-# 🟢 Enable Token-Saver for THIS project (default)
-token-saver on
+# 🟢 Enable TokenJar for THIS project (default)
+tokenjar on
 
-# ⚪ Disable Token-Saver for THIS project (keeps other projects active)
-token-saver off
+# ⚪ Disable TokenJar for THIS project (keeps other projects active)
+tokenjar off
 
-# 🌐 Enable Token-Saver MCP globally across all detected IDEs
-token-saver on --global
+# 🌐 Enable TokenJar MCP globally across all detected IDEs
+tokenjar on --global
 
-# 🔴 Disable Token-Saver MCP globally and cleanly revert IDE settings
-token-saver off --global
+# 🔴 Disable TokenJar MCP globally and cleanly revert IDE settings
+tokenjar off --global
 
 # 📝 Alias: Inject steering rules into the current project
-token-saver init
-token-saver init --clean
+tokenjar init
+tokenjar init --clean
 
 # 🎨 Open interactive Web Dashboard (Zero Background RAM)
-token-saver ui
+tokenjar ui
 
 # 🧹 Completely clear L2 SQLite cache
-token-saver cache-clear
+tokenjar cache-clear
 
-# ⚠️ Completely uninstall Token-Saver from host (IDEs, project rules, hooks, cache, and PATH)
-token-saver uninstall
+# ⚠️ Completely uninstall TokenJar from host (IDEs, project rules, hooks, cache, and PATH)
+tokenjar uninstall
 # or skip confirmation prompt:
-token-saver uninstall --yes
+tokenjar uninstall --yes
 
-# Install /token-saver slash commands for AGY CLI and Claude Code
-token-saver setup-commands
+# Install /tokenjar slash commands for AGY CLI and Claude Code
+tokenjar setup-commands
 
 # Reset metrics counter
-token-saver reset-stats
+tokenjar reset-stats
 ```
 
 ---
 
 ## 🔒 Enterprise Privacy & Security Guarantee
 
-Token-Saver is built strictly under a **Zero-Telemetry, 100% Localhost** design philosophy:
+TokenJar is built strictly under a **Zero-Telemetry, 100% Localhost** design philosophy:
 
 - **100% Local Execution:** All parsing (Tree-sitter), caching (SQLite), and output filtering happen locally in-process on your CPU.
 - **Zero External Network Calls:** No telemetry servers, no analytical trackers, no outbound pings, and no cloud dependencies whatsoever.
 - **Air-Gapped Compatible:** Safely operates in classified, offline, or air-gapped corporate enterprise environments.
-- **Local Data Isolation:** Persistent cache (`~/.token-saver/cache.db`) and statistics (`~/.token-saver/telemetry.json`) reside exclusively in your user directory and can be purged at any time with `token-saver reset-stats` or by deleting the directory.
+- **Local Data Isolation:** Persistent cache (`~/.tokenjar/cache.db`) and statistics (`~/.tokenjar/telemetry.json`) reside exclusively in your user directory and can be purged at any time with `tokenjar reset-stats` or by deleting the directory.
 - **Non-Invasive Architecture:** Never modifies your project code without explicit assistant direction.
 
 ---
 
 ## 🦀 Enterprise & High-Performance Native Engine (Rust Edition)
 
-For enterprise environments, massive monorepos (50,000+ files), CI/CD pipelines, or developer systems without a Python runtime, Token-Saver provides an ultra-fast, zero-dependency native Rust binary (`token-saver.exe` / standalone executable).
+For enterprise environments, massive monorepos (50,000+ files), CI/CD pipelines, or developer systems without a Python runtime, TokenJar provides an ultra-fast, zero-dependency native Rust binary (`tokenjar.exe` / standalone executable).
 
 ### Why the Enterprise Native Engine?
 - **Zero Runtime Dependencies:** No Python, pip, Node.js, or virtual environments required. Single standalone binary.
@@ -376,14 +381,14 @@ For enterprise environments, massive monorepos (50,000+ files), CI/CD pipelines,
 
 ### Enterprise Quick Start (Standalone Binary)
 
-Download the precompiled binary from [GitHub Releases](https://github.com/Farukes/Token-Saver/releases) or build directly with Cargo:
+Download the precompiled binary from [GitHub Releases](https://github.com/Farukes/TokenJar/releases) or build directly with Cargo:
 
 ```bash
 # Build optimized native release binary from source
 cargo build --release --workspace
 
 # The standalone binary is ready:
-./target/release/token-saver.exe status
+./target/release/tokenjar.exe status
 ```
 
 ### Enterprise MCP Configuration (`claude_desktop_config.json` / Cursor)
@@ -392,8 +397,8 @@ Point directly to the native binary without any Python wrapper:
 ```json
 {
   "mcpServers": {
-    "token-saver": {
-      "command": "C:\\path\\to\\token-saver.exe"
+    "tokenjar": {
+      "command": "C:\\path\\to\\tokenjar.exe"
     }
   }
 }
@@ -403,7 +408,7 @@ Point directly to the native binary without any Python wrapper:
 
 ## 🌍 Supported Languages
 
-Token-Saver uses Tree-sitter for AST parsing and supports **130+ programming languages** out of the box, including:
+TokenJar uses Tree-sitter for AST parsing and supports **130+ programming languages** out of the box, including:
 
 Python · TypeScript · JavaScript · Go · Rust · Java · C# · C / C++ · Ruby · PHP · Swift · Kotlin · Scala · Dart · Lua · Elixir · Haskell · and more.
 
@@ -411,7 +416,7 @@ Python · TypeScript · JavaScript · Go · Rust · Java · C# · C / C++ · Rub
 
 ## 🧪 Development & Quality Assurance
 
-Token-Saver maintains dual test suites ensuring 100% parity across both implementations:
+TokenJar maintains dual test suites ensuring 100% parity across both implementations:
 
 ```bash
 # Python (Community Edition & MCP SDK)

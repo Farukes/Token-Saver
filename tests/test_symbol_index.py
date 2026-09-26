@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from token_saver.tools.symbol_index import SymbolIndexer, find_symbol_global
+from tokenjar.tools.symbol_index import SymbolIndexer, find_symbol_global
 
 
 def test_symbol_extraction():
@@ -110,7 +110,7 @@ def calculate_tax(amount):
 
 
 def test_find_symbol_references(tmp_path):
-    from token_saver.tools.symbol_index import find_symbol_references
+    from tokenjar.tools.symbol_index import find_symbol_references
 
     services_dir = tmp_path / "services"
     services_dir.mkdir()
@@ -159,7 +159,7 @@ def run_app():
 
 
 def test_persistent_symbol_cache_project_isolation(tmp_path):
-    from token_saver.cache.persistent_cache import PersistentCache
+    from tokenjar.cache.persistent_cache import PersistentCache
 
     db_file = tmp_path / "test_cache.db"
     cache = PersistentCache(db_path=db_file)

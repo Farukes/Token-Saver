@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from token_saver.utils.token_counter import estimate_tokens, format_savings
+from tokenjar.utils.token_counter import estimate_tokens, format_savings
 
 
 def test_estimate_tokens_empty():

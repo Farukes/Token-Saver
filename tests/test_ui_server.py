@@ -1,4 +1,4 @@
-"""Unit tests for Token-Saver On-Demand Dashboard UI Server."""
+"""Unit tests for TokenJar On-Demand Dashboard UI Server."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from http.server import HTTPServer
 
 import pytest
 
-from token_saver.ui.server import DashboardHandler, get_system_status
+from tokenjar.ui.server import DashboardHandler, get_system_status
 
 
 @pytest.fixture(scope="module")
@@ -62,7 +62,7 @@ def test_ui_http_index(ui_test_server: str):
     with urllib.request.urlopen(req) as response:
         assert response.status == 200
         html = response.read().decode("utf-8")
-        assert "TOKEN-SAVER" in html
+        assert "TOKENJAR" in html
         assert "Total Tokens Saved" in html
 
 

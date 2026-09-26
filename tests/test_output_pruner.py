@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-import token_saver.utils.token_counter
-from token_saver.filters.ansi import strip_ansi
-from token_saver.filters.build_tools import filter_npm_yarn
-from token_saver.filters.git import filter_git_output
-from token_saver.filters.test_runners import filter_pytest
-from token_saver.tools.output_pruner import filter_output_logic
+import tokenjar.utils.token_counter
+from tokenjar.filters.ansi import strip_ansi
+from tokenjar.filters.build_tools import filter_npm_yarn
+from tokenjar.filters.git import filter_git_output
+from tokenjar.filters.test_runners import filter_pytest
+from tokenjar.tools.output_pruner import filter_output_logic
 
 
 def test_strip_ansi():
@@ -53,10 +53,10 @@ added 1 package, and audited 2 packages in 1s
 
 
 def test_filter_cargo():
-    from token_saver.filters.test_runners import filter_cargo
+    from tokenjar.filters.test_runners import filter_cargo
 
     cargo_out = """
-   Compiling token-saver-core v0.2.0
+   Compiling tokenjar-core v0.2.0
     Finished test [unoptimized + debuginfo] target(s) in 0.15s
      Running unittests src/lib.rs
 test filters::test_runners::tests::test_filter_cargo ... ok
@@ -87,7 +87,7 @@ nothing added to commit but untracked files present (use "git add" to track)
 
 
 def test_token_savings(monkeypatch):
-    monkeypatch.setattr(token_saver.utils.token_counter, "estimate_tokens", lambda x: len(x) // 4)
+    monkeypatch.setattr(tokenjar.utils.token_counter, "estimate_tokens", lambda x: len(x) // 4)
 
     # Build a realistic verbose pytest output that the filter can detect and compress
     passed_lines = "\n".join([f"tests/test_{i}.py PASSED [{i}%]" for i in range(1, 100)])
@@ -109,7 +109,7 @@ FAILED tests/test_100.py::test_100 - assert False
 === 1 failed, 99 passed in 0.12s ===
 """
     filtered = filter_output_logic(verbose_out, output_type="pytest")
-    assert "Token-Saver" in filtered
+    assert "TokenJar" in filtered
 
     import re
 
@@ -141,14 +141,14 @@ def test_stream_ceiling_guard():
     assert len(huge_output) > 2 * 1024 * 1024
 
     filtered = filter_output_logic(huge_output, output_type="generic")
-    assert "Token-Saver Stream Guard" in filtered
+    assert "TokenJar Stream Guard" in filtered
     assert "Truncated" in filtered
     # Length of filtered output should now be under 2MB
     assert len(filtered) < 2 * 1024 * 1024
 
 
 def test_background_command_launch():
-    from token_saver.tools.output_pruner import register_output_pruner_tools
+    from tokenjar.tools.output_pruner import register_output_pruner_tools
 
     class DummyMCP:
         def __init__(self):
@@ -173,7 +173,7 @@ def test_background_command_launch():
 def test_command_timeout():
     import sys
 
-    from token_saver.tools.output_pruner import register_output_pruner_tools
+    from tokenjar.tools.output_pruner import register_output_pruner_tools
 
     class DummyMCP:
         def __init__(self):

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from token_saver.rules.manager import RULES_MARKER_START, RulesManager
+from tokenjar.rules.manager import RULES_MARKER_START, RulesManager
 
 
 def test_rules_install_and_remove(tmp_path: Path):
@@ -74,8 +74,8 @@ def test_rules_respects_toml_config(tmp_path: Path):
     test_project = tmp_path / "project_toml"
     test_project.mkdir()
 
-    # Place token-saver.toml with compact_mode = false
-    toml_file = test_project / "token-saver.toml"
+    # Place tokenjar.toml with compact_mode = false
+    toml_file = test_project / "tokenjar.toml"
     toml_file.write_text("[output]\ncompact_mode = false\n", encoding="utf-8")
 
     # Install without explicit parameter -> should read toml
@@ -92,13 +92,13 @@ def test_rules_set_output_mode_toggle(tmp_path: Path):
     # 1. Turn output mode OFF (default output)
     ok, msg, files = RulesManager.set_output_mode(test_project, enabled=False)
     assert ok
-    assert "token-saver.toml" in files
+    assert "tokenjar.toml" in files
     assert "AGENTS.md" in files
     assert RulesManager.get_output_mode(test_project) is False
 
     agents_file = test_project / "AGENTS.md"
     assert "Output Optimization" not in agents_file.read_text(encoding="utf-8")
-    toml_file = test_project / "token-saver.toml"
+    toml_file = test_project / "tokenjar.toml"
     assert "compact_mode = false" in toml_file.read_text(encoding="utf-8")
 
     # 2. Turn output mode ON (compact mode)

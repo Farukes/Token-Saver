@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from token_saver.config import TokenSaverConfig, load_config
-from token_saver.tools.smart_reader import read_file_smart
+from tokenjar.config import TokenJarConfig, load_config
+from tokenjar.tools.smart_reader import read_file_smart
 
 
 def test_default_config():
-    config = TokenSaverConfig()
+    config = TokenJarConfig()
     assert config.max_cacheable_bytes == 5 * 1024 * 1024
     assert config.cache_ttl_days == 30
     assert config.is_ignored(".env")
@@ -16,7 +16,7 @@ def test_default_config():
 
 
 def test_load_toml_config(tmp_path):
-    config_file = tmp_path / "token-saver.toml"
+    config_file = tmp_path / "tokenjar.toml"
     config_file.write_text(
         """
 [general]
@@ -44,7 +44,7 @@ default_budget = 500
 
 
 def test_output_config(tmp_path):
-    config_file = tmp_path / "token-saver.toml"
+    config_file = tmp_path / "tokenjar.toml"
     config_file.write_text(
         """
 [output]
@@ -64,7 +64,7 @@ def test_smart_reader_security_guard(tmp_path):
 
     # Reading sensitive file should return security warning by default
     result = read_file_smart(str(secret_file))
-    assert "[TOKEN-SAVER SECURITY]" in result
+    assert "[TOKENJAR SECURITY]" in result
     assert "matches security ignore patterns" in result
 
     # When force_full=True is passed, reading is permitted
@@ -73,7 +73,7 @@ def test_smart_reader_security_guard(tmp_path):
 
 
 def test_max_source_files_config(tmp_path):
-    config_file = tmp_path / "token-saver.toml"
+    config_file = tmp_path / "tokenjar.toml"
     config_file.write_text(
         """
 [general]
@@ -86,7 +86,7 @@ max_source_files = 15000
 
 
 def test_walk_source_files_respects_custom_limit(tmp_path):
-    from token_saver.utils.file_utils import walk_source_files
+    from tokenjar.utils.file_utils import walk_source_files
 
     for i in range(10):
         (tmp_path / f"test_{i}.py").write_text("x = 1\n", encoding="utf-8")
@@ -95,8 +95,8 @@ def test_walk_source_files_respects_custom_limit(tmp_path):
     files = walk_source_files(str(tmp_path), max_files=3)
     assert len(files) == 3
 
-    # Limit via token-saver.toml
-    (tmp_path / "token-saver.toml").write_text(
+    # Limit via tokenjar.toml
+    (tmp_path / "tokenjar.toml").write_text(
         """
 [general]
 max_source_files = 4

@@ -1,0 +1,4 @@
+# TokenJar Project Configuration
+[output]
+compact_mode = true
+prevent_truncation = true

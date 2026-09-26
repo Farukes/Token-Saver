@@ -1,4 +1,4 @@
-"""Test configuration for Token-Saver."""
+"""Test configuration for TokenJar."""
 
 import warnings
 

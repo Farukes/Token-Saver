@@ -1253,7 +1253,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "token-saver"
+name = "tokenjar"
 version = "1.0.1"
 dependencies = [
  "clap",
@@ -1262,14 +1262,14 @@ dependencies = [
  "serde",
  "serde_json",
  "tar",
- "token-saver-core",
+ "tokenjar-core",
  "tokio",
  "ureq",
  "zip",
 ]
 
 [[package]]
-name = "token-saver-core"
+name = "tokenjar-core"
 version = "1.0.1"
 dependencies = [
  "chrono",

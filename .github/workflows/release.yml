@@ -18,24 +18,24 @@ jobs:
         include:
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            bin_name: token-saver.exe
-            archive_name: token-saver-windows-x64.zip
+            bin_name: tokenjar.exe
+            archive_name: tokenjar-windows-x64.zip
             alias_name: ""
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            bin_name: token-saver
-            archive_name: token-saver-linux-x64.tar.gz
+            bin_name: tokenjar
+            archive_name: tokenjar-linux-x64.tar.gz
             alias_name: ""
           - os: macos-latest
             target: aarch64-apple-darwin
-            bin_name: token-saver
-            archive_name: token-saver-macos-arm64.tar.gz
-            alias_name: token-saver-darwin-arm64.tar.gz
+            bin_name: tokenjar
+            archive_name: tokenjar-macos-arm64.tar.gz
+            alias_name: tokenjar-darwin-arm64.tar.gz
           - os: macos-latest
             target: x86_64-apple-darwin
-            bin_name: token-saver
-            archive_name: token-saver-macos-x64.tar.gz
-            alias_name: token-saver-darwin-x64.tar.gz
+            bin_name: tokenjar
+            archive_name: tokenjar-macos-x64.tar.gz
+            alias_name: tokenjar-darwin-x64.tar.gz
 
     steps:
     - uses: actions/checkout@v4
@@ -94,7 +94,7 @@ jobs:
 
     - name: Package Python zip
       run: |
-        cd dist && zip -r ../token-saver-python.zip . && cd ..
+        cd dist && zip -r ../tokenjar-python.zip . && cd ..
 
     - name: Upload Python dists
       uses: actions/upload-artifact@v4
@@ -102,7 +102,7 @@ jobs:
         name: python-dist
         path: |
           dist/*
-          token-saver-python.zip
+          tokenjar-python.zip
         retention-days: 1
 
   publish-github-release:

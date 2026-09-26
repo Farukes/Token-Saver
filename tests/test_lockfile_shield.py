@@ -1,4 +1,4 @@
-"""Unit tests for Token-Saver Lockfile & Giant Asset Shield."""
+"""Unit tests for TokenJar Lockfile & Giant Asset Shield."""
 
 from __future__ import annotations
 
@@ -7,9 +7,9 @@ from pathlib import Path
 
 import pytest
 
-from token_saver.config import TokenSaverConfig
-from token_saver.telemetry.stats import tracker
-from token_saver.tools.smart_reader import read_file_smart
+from tokenjar.config import TokenJarConfig
+from tokenjar.telemetry.stats import tracker
+from tokenjar.tools.smart_reader import read_file_smart
 
 
 @pytest.fixture
@@ -129,7 +129,7 @@ def test_npm_lockfile_shield_no_query(tmp_path: Path, sample_npm_lock: str):
     lock_file.write_text(sample_npm_lock, encoding="utf-8")
 
     result = read_file_smart(str(lock_file))
-    assert "[TOKEN-SAVER SHIELD: package-lock.json]" in result
+    assert "[TOKENJAR SHIELD: package-lock.json]" in result
     assert "Lockfile Version: v3" in result
     assert "axios@" in result or "axios" in result
     assert "force_full=True" in result
@@ -143,7 +143,7 @@ def test_npm_lockfile_surgical_query(tmp_path: Path, sample_npm_lock: str):
     lock_file.write_text(sample_npm_lock, encoding="utf-8")
 
     result = read_file_smart(str(lock_file), query="axios")
-    assert "[TOKEN-SAVER SHIELD: package-lock.json] Package match for 'axios'" in result
+    assert "[TOKENJAR SHIELD: package-lock.json] Package match for 'axios'" in result
     assert "1.6.8" in result
     assert "follow-redirects" in result
     # Other packages shouldn't be included in the surgical match
@@ -168,13 +168,13 @@ def test_cargo_lockfile_shield(tmp_path: Path, sample_cargo_lock: str):
 
     # 1. Summary
     res_sum = read_file_smart(str(lock_file))
-    assert "[TOKEN-SAVER SHIELD: Cargo.lock]" in res_sum
+    assert "[TOKENJAR SHIELD: Cargo.lock]" in res_sum
     assert "Cargo locked packages:" in res_sum
     assert "tokio" in res_sum
 
     # 2. Query
     res_query = read_file_smart(str(lock_file), query="tokio")
-    assert "[TOKEN-SAVER SHIELD: Cargo.lock] Package match for 'tokio'" in res_query
+    assert "[TOKENJAR SHIELD: Cargo.lock] Package match for 'tokio'" in res_query
     assert 'name = "tokio"' in res_query
     assert 'version = "1.36.0"' in res_query
     assert "pin-project-lite" in res_query
@@ -187,7 +187,7 @@ def test_poetry_lockfile_shield(tmp_path: Path, sample_poetry_lock: str):
     lock_file.write_text(sample_poetry_lock, encoding="utf-8")
 
     res_query = read_file_smart(str(lock_file), query="requests")
-    assert "[TOKEN-SAVER SHIELD: poetry.lock] Package match for 'requests'" in res_query
+    assert "[TOKENJAR SHIELD: poetry.lock] Package match for 'requests'" in res_query
     assert 'name = "requests"' in res_query
     assert 'version = "2.31.0"' in res_query
     assert "certifi" in res_query
@@ -200,7 +200,7 @@ def test_minified_asset_shield(tmp_path: Path):
     js_file.write_text(js_content, encoding="utf-8")
 
     result = read_file_smart(str(js_file))
-    assert "[TOKEN-SAVER SHIELD: bundle.min.js]" in result
+    assert "[TOKENJAR SHIELD: bundle.min.js]" in result
     assert "Production Minified Asset" in result
     assert len(result) < 1000  # Masked!
 
@@ -211,14 +211,14 @@ def test_force_full_bypass(tmp_path: Path, sample_npm_lock: str):
     lock_file.write_text(sample_npm_lock, encoding="utf-8")
 
     result = read_file_smart(str(lock_file), force_full=True)
-    assert "[TOKEN-SAVER SHIELD" not in result
+    assert "[TOKENJAR SHIELD" not in result
     assert result == sample_npm_lock
     assert "sub-dependency-99" in result
 
 
 def test_config_lockfile_shield_disabled(tmp_path: Path, sample_npm_lock: str):
     """Test that disabling lockfile_shield in config returns full content."""
-    from token_saver.tools import smart_reader
+    from tokenjar.tools import smart_reader
 
     lock_file = tmp_path / "package-lock.json"
     lock_file.write_text(sample_npm_lock, encoding="utf-8")
@@ -226,9 +226,9 @@ def test_config_lockfile_shield_disabled(tmp_path: Path, sample_npm_lock: str):
     orig_cfg = smart_reader._config
     try:
         # Temporarily disable lockfile shield
-        smart_reader._config = TokenSaverConfig(lockfile_shield=False)
+        smart_reader._config = TokenJarConfig(lockfile_shield=False)
         result = read_file_smart(str(lock_file))
-        assert "[TOKEN-SAVER SHIELD" not in result
+        assert "[TOKENJAR SHIELD" not in result
         assert result == sample_npm_lock
     finally:
         smart_reader._config = orig_cfg

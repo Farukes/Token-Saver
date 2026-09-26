@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
-from token_saver.tools.skeleton import _build_skeleton, _find_symbol, get_code_skeleton, get_symbol
+from tokenjar.tools.skeleton import _build_skeleton, _find_symbol, get_code_skeleton, get_symbol
 
 PYTHON_SAMPLE = """
 import os
@@ -64,7 +64,7 @@ def test_unknown_language_fallback():
     assert skeleton == PYTHON_SAMPLE
 
 
-@patch("token_saver.tools.skeleton.os.path.exists")
+@patch("tokenjar.tools.skeleton.os.path.exists")
 def test_nonexistent_file(mock_exists):
     mock_exists.return_value = False
     res = get_code_skeleton("missing.py")
@@ -74,9 +74,9 @@ def test_nonexistent_file(mock_exists):
     assert "not found" in res2.lower()
 
 
-@patch("token_saver.tools.skeleton.os.path.exists")
-@patch("token_saver.tools.skeleton.read_file_text")
-@patch("token_saver.tools.skeleton.detect_language")
+@patch("tokenjar.tools.skeleton.os.path.exists")
+@patch("tokenjar.tools.skeleton.read_file_text")
+@patch("tokenjar.tools.skeleton.detect_language")
 def test_token_savings(mock_detect, mock_read, mock_exists):
     mock_exists.return_value = True
     mock_read.return_value = PYTHON_SAMPLE
@@ -85,7 +85,7 @@ def test_token_savings(mock_detect, mock_read, mock_exists):
     res = get_code_skeleton("test.py")
 
     # We just want to check the token savings line is in output and it's > 0 (ideally >= 50 but our sample is small)
-    assert "# Token-Saver:" in res
+    assert "# TokenJar:" in res
     assert "saved" in res
 
     # Check savings > 50%

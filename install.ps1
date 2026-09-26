@@ -1,17 +1,17 @@
-# Token-Saver Windows 1-Click PowerShell Installer
+# TokenJar Windows 1-Click PowerShell Installer
 # Usage:
-#   iwr -useb https://raw.githubusercontent.com/Farukes/Token-Saver/main/install.ps1 | iex
+#   iwr -useb https://raw.githubusercontent.com/Farukes/TokenJar/main/install.ps1 | iex
 
 $ErrorActionPreference = 'Stop'
 
 Write-Host "============================================================" -ForegroundColor Cyan
-Write-Host "🔋 Installing Token-Saver Native Engine for Windows..." -ForegroundColor Cyan
+Write-Host "🍯 Installing TokenJar Native Engine for Windows..." -ForegroundColor Cyan
 Write-Host "============================================================" -ForegroundColor Cyan
 
-$Repo = "Farukes/Token-Saver"
-$InstallDir = "$env:USERPROFILE\.token-saver\bin"
-$ZipPath = "$env:TEMP\token-saver-windows-x64.zip"
-$ExePath = "$InstallDir\token-saver.exe"
+$Repo = "Farukes/TokenJar"
+$InstallDir = "$env:USERPROFILE\.tokenjar\bin"
+$ZipPath = "$env:TEMP\tokenjar-windows-x64.zip"
+$ExePath = "$InstallDir\tokenjar.exe"
 
 # 1. Create target installation directory
 if (!(Test-Path -Path $InstallDir)) {
@@ -21,18 +21,18 @@ if (!(Test-Path -Path $InstallDir)) {
 # 2. Get latest release download URL
 try {
     $ReleaseApi = "https://api.github.com/repos/$Repo/releases/latest"
-    $Release = Invoke-RestMethod -Uri $ReleaseApi -Headers @{ "User-Agent" = "Token-Saver-Installer" }
+    $Release = Invoke-RestMethod -Uri $ReleaseApi -Headers @{ "User-Agent" = "TokenJar-Installer" }
     $Asset = $Release.assets | Where-Object { $_.name -like "*windows-x64.zip" } | Select-Object -First 1
     if ($Asset) {
         $DownloadUrl = $Asset.browser_download_url
     } else {
-        $DownloadUrl = "https://github.com/$Repo/releases/latest/download/token-saver-windows-x64.zip"
+        $DownloadUrl = "https://github.com/$Repo/releases/latest/download/tokenjar-windows-x64.zip"
     }
 } catch {
-    $DownloadUrl = "https://github.com/$Repo/releases/latest/download/token-saver-windows-x64.zip"
+    $DownloadUrl = "https://github.com/$Repo/releases/latest/download/tokenjar-windows-x64.zip"
 }
 
-Write-Host "📥 Downloading Token-Saver binary from $DownloadUrl..." -ForegroundColor Green
+Write-Host "📥 Downloading TokenJar binary from $DownloadUrl..." -ForegroundColor Green
 Invoke-WebRequest -Uri $DownloadUrl -OutFile $ZipPath -UseBasicParsing
 
 # 3. Extract executable
@@ -48,7 +48,7 @@ if ($UserPath -notlike "*$InstallDir*") {
     $env:PATH = "$InstallDir;$env:PATH"
 }
 
-Write-Host "`n✨ Token-Saver has been successfully installed!" -ForegroundColor Cyan
+Write-Host "`n✨ TokenJar has been successfully installed!" -ForegroundColor Cyan
 Write-Host "============================================================" -ForegroundColor Cyan
 
 if (Test-Path -Path $ExePath) {
@@ -56,5 +56,5 @@ if (Test-Path -Path $ExePath) {
     & $ExePath on --global
     & $ExePath status
 } else {
-    Write-Host "Please restart your terminal to start using 'token-saver'." -ForegroundColor Yellow
+    Write-Host "Please restart your terminal to start using 'tokenjar'." -ForegroundColor Yellow
 }

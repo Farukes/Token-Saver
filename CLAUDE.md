@@ -1,12 +1,12 @@
-# Token-Saver Project Guidelines for Claude Code
+# TokenJar Project Guidelines for Claude Code
 
-This project is **Token-Saver**, a zero-cost MCP server that cuts 70-95% of tokens for AI coding assistants.
+This project is **TokenJar**, a zero-cost MCP server that cuts 70-95% of tokens for AI coding assistants.
 
 ## Commands
 
 - Run all tests: `python -m pytest tests/ -v`
 - Run specific test: `python -m pytest tests/test_skeleton.py -v`
-- Start MCP server: `python -m token_saver`
+- Start MCP server: `python -m tokenjar`
 - Lint code: `ruff check src/ tests/`
 
 ## Coding Conventions
@@ -16,9 +16,9 @@ This project is **Token-Saver**, a zero-cost MCP server that cuts 70-95% of toke
 - Always output debug logs to `sys.stderr`, NEVER `sys.stdout` (as `stdout` is reserved for JSON-RPC MCP messages).
 - All file reads, parsers, and filters must be deterministic and preserve critical information (types, signatures, error tracebacks, exit codes).
 
-# >>> token-saver-rules >>>
-## 🔋 Token-Saver AI Optimization Guidelines (STRICT ENFORCEMENT)
-CRITICAL MANDATE: Do NOT use native file viewers (view_file, cat) or raw terminal commands when Token-Saver MCP tools are available. Bypassing Token-Saver wastes hundreds of thousands of tokens and triggers conversation context window compaction.
+# >>> tokenjar-rules >>>
+## 🔋 TokenJar AI Optimization Guidelines (STRICT ENFORCEMENT)
+CRITICAL MANDATE: Do NOT use native file viewers (view_file, cat) or raw terminal commands when TokenJar MCP tools are available. Bypassing TokenJar wastes hundreds of thousands of tokens and triggers conversation context window compaction.
 
 1. **File Reading & Inspections (MANDATORY):**
    - ALWAYS use `read_file_smart` instead of native file viewers. It caches file contents, returns compact diffs on edits, and supports `start_line` and `end_line` parameters for targeted line range slicing.
@@ -34,4 +34,4 @@ CRITICAL MANDATE: Do NOT use native file viewers (view_file, cat) or raw termina
    - Surgical File Edits: When modifying code, use surgical replacement blocks targeting precise line ranges instead of rewriting entire unchanged files.
    - ZERO TRUNCATION MANDATE (Anti-Lazy Coder): NEVER use placeholder comments (e.g. '// ... rest of code unchanged ...' or 'TODO: keep existing logic') or omit required logic. Every generated or replaced code block must be complete, functional, and syntactically valid.
    - High-Density Rationale: Omit conversational pleasantries, introductory filler, and restating line-by-line code changes. Prioritize direct, rigorous technical justification, architectural context, and concrete solutions.
-# <<< token-saver-rules <<<
+# <<< tokenjar-rules <<<

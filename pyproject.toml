@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "token-saver-engine"
+name = "tokenjar"
 version = "1.0.1"
 description = "MCP server that saves 70-95% tokens for AI coding assistants without losing functionality"
 readme = "README.md"
@@ -42,12 +42,12 @@ counting = [
 ]
 
 [project.scripts]
-token-saver = "token_saver.__main__:main"
+tokenjar = "tokenjar.__main__:main"
 
 [project.urls]
-Homepage = "https://github.com/Farukes/Token-Saver"
-Repository = "https://github.com/Farukes/Token-Saver"
-Issues = "https://github.com/Farukes/Token-Saver/issues"
+Homepage = "https://github.com/Farukes/TokenJar"
+Repository = "https://github.com/Farukes/TokenJar"
+Issues = "https://github.com/Farukes/TokenJar/issues"
 
 [tool.hatch.build.targets.sdist]
 include = [
@@ -59,7 +59,7 @@ include = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/token_saver"]
+packages = ["src/tokenjar"]
 
 [tool.ruff]
 target-version = "py310"

@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# Token-Saver Linux & macOS 1-Click Installer
+# TokenJar Linux & macOS 1-Click Installer
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/Farukes/Token-Saver/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/Farukes/TokenJar/main/install.sh | bash
 
 set -e
 
-REPO="Farukes/Token-Saver"
+REPO="Farukes/TokenJar"
 INSTALL_DIR="$HOME/.local/bin"
-EXE_PATH="$INSTALL_DIR/token-saver"
+EXE_PATH="$INSTALL_DIR/tokenjar"
 
 echo "============================================================"
-echo "🔋 Installing Token-Saver Native Engine for Linux / macOS..."
+echo "🍯 Installing TokenJar Native Engine for Linux / macOS..."
 echo "============================================================"
 
 # 1. Detect OS and Architecture
@@ -20,14 +20,14 @@ ARCH="$(uname -m)"
 case "$OS" in
   Linux)
     case "$ARCH" in
-      x86_64) ASSET_NAME="token-saver-linux-x64.tar.gz" ;;
+      x86_64) ASSET_NAME="tokenjar-linux-x64.tar.gz" ;;
       *) echo "❌ Unsupported architecture: $ARCH on Linux"; exit 1 ;;
     esac
     ;;
   Darwin)
     case "$ARCH" in
-      arm64) ASSET_NAME="token-saver-darwin-arm64.tar.gz" ;;
-      x86_64) ASSET_NAME="token-saver-darwin-x64.tar.gz" ;;
+      arm64) ASSET_NAME="tokenjar-darwin-arm64.tar.gz" ;;
+      x86_64) ASSET_NAME="tokenjar-darwin-x64.tar.gz" ;;
       *) echo "❌ Unsupported architecture: $ARCH on macOS"; exit 1 ;;
     esac
     ;;
@@ -58,13 +58,17 @@ case ":$PATH:" in
     echo "⚠️ Note: $INSTALL_DIR is not in your PATH."
     echo "   Add the following line to your ~/.bashrc or ~/.zshrc:"
     echo "     export PATH=\"$INSTALL_DIR:\$PATH\""
-    export PATH="$INSTALL_DIR:$PATH"
     ;;
 esac
 
 echo ""
-echo "✨ Token-Saver has been successfully installed!"
+echo "✨ TokenJar has been successfully installed!"
 echo "============================================================"
-echo "🔌 Auto-configuring MCP server across detected AI assistants..."
-"$EXE_PATH" on --global || true
-"$EXE_PATH" status || true
+
+if [ -f "$EXE_PATH" ]; then
+    echo "🔌 Auto-configuring MCP server across detected AI assistants..."
+    "$EXE_PATH" on --global || true
+    "$EXE_PATH" status || true
+else
+    echo "Please restart your terminal to start using 'tokenjar'."
+fi

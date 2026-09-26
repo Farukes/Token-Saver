@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from token_saver.cache.session_cache import SessionCache
+from tokenjar.cache.session_cache import SessionCache
 
 
 def test_semantic_diff_focus():

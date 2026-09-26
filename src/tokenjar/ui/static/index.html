@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TokenJar | Control Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              400: '#34d399',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+            },
+            surface: {
+              900: '#0a0d14',
+              850: '#10141f',
+              800: '#171c2b',
+              700: '#23293d',
+              600: '#323a54',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #0a0d14;
+      color: #f1f5f9;
+      user-select: none;
+    }
+    .glass-card {
+      background: rgba(16, 20, 31, 0.75);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glass-card:hover {
+      border-color: rgba(16, 185, 129, 0.25);
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #0a0d14;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #23293d;
+      border-radius: 3px;
+    }
+    .toggle-dot {
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    input:checked ~ .toggle-bg {
+      background-color: #10b981;
+    }
+    input:checked ~ .toggle-dot {
+      transform: translateX(100%);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col font-sans antialiased custom-scrollbar">
+
+  <!-- TOP APP BAR -->
+  <header class="border-b border-surface-700 bg-surface-900/90 backdrop-blur sticky top-0 z-40 px-6 py-3.5 flex items-center justify-between">
+    <div class="flex items-center space-x-3.5">
+      <div class="h-9 w-9 rounded-xl bg-gradient-to-tr from-brand-600 to-emerald-400 flex items-center justify-center shadow-lg shadow-brand-500/20">
+        <span class="text-white text-lg font-bold">⚡</span>
+      </div>
+      <div>
+        <div class="flex items-center space-x-2">
+          <h1 class="text-base font-bold tracking-tight text-white">TOKENJAR</h1>
+          <span id="appVersion" class="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-surface-700 text-brand-400 font-semibold border border-brand-500/20">v1.0.1 Stable</span>
+        </div>
+        <p id="appSubtitle" class="text-xs text-slate-400" data-i18n="subtitle">Zero-Cost Token Optimization Engine</p>
+      </div>
+    </div>
+
+    <!-- Live Status & Global Actions -->
+    <div class="flex items-center space-x-3">
+      <!-- Language Toggle Button -->
+      <button onclick="toggleLanguage()" id="langToggleBtn" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-surface-800 text-slate-300 hover:text-white hover:bg-surface-700 border border-surface-700 transition-all flex items-center space-x-1.5 shadow-sm" title="Dili Değiştir / Change Language">
+        <span id="langFlag">🇹🇷</span>
+        <span id="langLabel" class="font-mono text-[11px] font-bold">TR</span>
+      </button>
+
+      <div id="statusBadge" class="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-surface-800 border border-surface-700 text-xs font-medium">
+        <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span class="text-slate-300 font-mono" id="statusText">CONNECTING...</span>
+      </div>
+
+      <button onclick="toggleAll(true)" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-500/10 text-brand-400 hover:bg-brand-500 hover:text-white border border-brand-500/20 transition-all flex items-center space-x-1.5">
+        <span data-i18n="btnConnectAll">Connect All IDEs</span>
+      </button>
+
+      <button onclick="toggleAll(false)" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-surface-800 text-slate-300 hover:bg-rose-500/20 hover:text-rose-300 border border-surface-700 transition-all">
+        <span data-i18n="btnDisconnectAll">Disconnect All</span>
+      </button>
+
+      <button onclick="shutdownServer()" title="Exit and close dashboard" class="text-xs font-medium px-3 py-1.5 rounded-lg bg-surface-800 text-slate-400 hover:text-white hover:bg-surface-700 border border-surface-700 transition-all flex items-center space-x-1">
+        <span data-i18n="btnExit">✕ Exit</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN DASHBOARD CONTENT -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-6 space-y-6">
+
+    <!-- HERO METRICS RIBBON -->
+    <section class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <!-- Card 1: Total Tokens Saved -->
+      <div class="glass-card rounded-2xl p-5 relative overflow-hidden">
+        <div class="absolute -right-3 -top-3 w-20 h-20 bg-brand-500/10 rounded-full blur-xl pointer-events-none"></div>
+        <p class="text-xs font-medium text-slate-400 tracking-wide uppercase" data-i18n="cardTotalSavedTitle">Total Tokens Saved</p>
+        <h2 id="totalSaved" class="text-3xl font-extrabold text-white font-mono mt-1">0</h2>
+        <div class="flex items-center space-x-1.5 mt-2 text-xs text-brand-400 font-medium">
+          <span>🛡️</span>
+          <span id="savingsPct">%0.0 net reduction</span>
+        </div>
+      </div>
+
+      <!-- Card 2: Estimated Dollars Saved -->
+      <div class="glass-card rounded-2xl p-5 relative overflow-hidden">
+        <div class="absolute -right-3 -top-3 w-20 h-20 bg-emerald-500/10 rounded-full blur-xl pointer-events-none"></div>
+        <p class="text-xs font-medium text-slate-400 tracking-wide uppercase" data-i18n="cardFinancialTitle">Financial Savings</p>
+        <h2 id="dollarsSaved" class="text-3xl font-extrabold text-emerald-400 font-mono mt-1">$0.00</h2>
+        <p class="text-xs text-slate-400 mt-2" data-i18n="cardFinancialSubtitle">Blended rate ($3.00/1M tokens)</p>
+      </div>
+
+      <!-- Card 3: Raw Context Processed -->
+      <div class="glass-card rounded-2xl p-5 relative overflow-hidden">
+        <p class="text-xs font-medium text-slate-400 tracking-wide uppercase" data-i18n="cardRawContextTitle">Raw Context Ingested</p>
+        <h2 id="totalProcessed" class="text-3xl font-extrabold text-slate-200 font-mono mt-1">0</h2>
+        <p class="text-xs text-slate-400 mt-2" data-i18n="cardRawContextSubtitle">Prevented from blowing up context</p>
+      </div>
+
+      <!-- Card 4: Architecture Mode -->
+      <div class="glass-card rounded-2xl p-5 relative overflow-hidden flex flex-col justify-between">
+        <div>
+          <p class="text-xs font-medium text-slate-400 tracking-wide uppercase" data-i18n="cardArchTitle">Engine Architecture</p>
+          <div class="flex items-center space-x-2 mt-1.5">
+            <span class="text-lg">⚡</span>
+            <span class="text-base font-bold text-white" data-i18n="cardArchValue">On-Demand UI</span>
+          </div>
+        </div>
+        <div class="mt-2 text-xs text-slate-400 flex items-center space-x-1.5">
+          <span class="h-1.5 w-1.5 rounded-full bg-brand-400"></span>
+          <span data-i18n="cardArchSubtitle">Zero Background RAM Footprint</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: IDE INTEGRATIONS & SWITCHES -->
+    <section class="glass-card rounded-2xl p-6">
+      <div class="flex flex-col md:flex-row md:items-center justify-between pb-5 border-b border-surface-700/80 gap-3">
+        <div>
+          <h2 class="text-lg font-bold text-white flex items-center space-x-2">
+            <span data-i18n="sectionIdeTitle">🔌 AI Coding Assistants & IDEs</span>
+          </h2>
+          <p class="text-xs text-slate-400 mt-0.5" data-i18n="sectionIdeSubtitle">
+            Toggle TokenJar MCP server per editor. When disabled, your custom settings are 100% restored.
+          </p>
+        </div>
+        <div class="text-xs text-slate-400 font-mono bg-surface-900/60 px-3 py-1.5 rounded-lg border border-surface-700">
+          <span data-i18n="labelRollbackGuarantee">Clean Rollback Guarantee:</span> <span class="text-brand-400" data-i18n="labelProtected">Protected</span>
+        </div>
+      </div>
+
+      <!-- IDE Grid -->
+      <div id="ideGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-5">
+        <div class="animate-pulse p-4 rounded-xl bg-surface-800/40 border border-surface-700" data-i18n="loadingIde">Loading IDE status...</div>
+      </div>
+    </section>
+
+    <!-- SECTION: DETAILED CATEGORY SAVINGS -->
+    <section class="glass-card rounded-2xl p-6">
+      <div class="flex items-center justify-between pb-5 border-b border-surface-700/80">
+        <div>
+          <h2 class="text-lg font-bold text-white flex items-center space-x-2">
+            <span data-i18n="sectionCategoryTitle">📊 Savings Breakdown by Feature</span>
+          </h2>
+          <p class="text-xs text-slate-400 mt-0.5" data-i18n="sectionCategorySubtitle">Real-time telemetry recorded across all MCP operations</p>
+        </div>
+        <button onclick="resetStats()" class="text-xs text-slate-400 hover:text-rose-400 font-medium px-3 py-1.5 rounded-lg bg-surface-800 hover:bg-rose-500/10 border border-surface-700 transition-all" data-i18n="btnResetTelemetry">
+          Reset Telemetry
+        </button>
+      </div>
+
+      <div id="categoryGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-5">
+        <!-- Dynamic Category Cards -->
+      </div>
+    </section>
+
+    <!-- SECTION: SAFEGUARDS & SETTINGS -->
+    <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <!-- 1. Lockfile Shield Control -->
+      <div class="glass-card rounded-2xl p-5 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-bold text-white flex items-center space-x-1.5">
+              <span data-i18n="cardLockfileTitle">🛡️ Lockfile Shield</span>
+            </span>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-brand-500/10 text-brand-400 font-semibold border border-brand-500/20" data-i18n="badgeActive">Active</span>
+          </div>
+          <p class="text-xs text-slate-400 mt-2" data-i18n="cardLockfileDesc">
+            Masks massive lockfiles (package-lock.json, Cargo.lock) to prevent 100k token context compaction.
+          </p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-surface-700/60 flex items-center justify-between text-xs">
+          <span class="text-slate-400" data-i18n="labelSurgicalQueries">Surgical queries:</span>
+          <span class="text-brand-400 font-mono font-medium" data-i18n="valSurgicalQueries">query="pkg" enabled</span>
+        </div>
+      </div>
+
+      <!-- 2. Output Optimization Mode -->
+      <div class="glass-card rounded-2xl p-5 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-bold text-white flex items-center space-x-1.5">
+              <span data-i18n="cardOutputTitle">✂️ Output Optimization</span>
+            </span>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" id="outputToggle" onchange="toggleOutput(this.checked)" class="sr-only">
+              <div class="w-9 h-5 bg-surface-700 rounded-full toggle-bg"></div>
+              <div class="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full toggle-dot shadow"></div>
+            </label>
+          </div>
+          <p class="text-xs text-slate-400 mt-2" data-i18n="cardOutputDesc">
+            Enforces compact surgical code edits and Anti-Lazy Coder zero-truncation mandates in prompt rules.
+          </p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-surface-700/60 flex items-center justify-between text-xs">
+          <span class="text-slate-400" data-i18n="labelProjectSteering">Project Steering:</span>
+          <span id="outputStateText" class="text-brand-400 font-mono font-medium">Compact Diffs</span>
+        </div>
+      </div>
+
+      <!-- 3. Cache & Database Maintenance -->
+      <div class="glass-card rounded-2xl p-5 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-bold text-white flex items-center space-x-1.5">
+              <span data-i18n="cardCacheTitle">💾 L2 SQLite Cache</span>
+            </span>
+            <div class="flex items-center space-x-1.5">
+              <span id="l2QuotaWarning" class="hidden text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20" title="Consider pruning">⚠️ &gt;50MB</span>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-surface-700 text-slate-300">WAL Mode</span>
+            </div>
+          </div>
+          <p class="text-xs text-slate-400 mt-2" data-i18n="cardCacheDesc">
+            Persistent disk cache storing AST digests and semantic diff baselines across sessions.
+          </p>
+          <div class="mt-3 space-y-1.5 text-xs bg-surface-900/40 p-2.5 rounded-xl border border-surface-700/50">
+            <div class="flex items-center justify-between">
+              <span class="text-slate-400" data-i18n="cardCacheDiskLabel">Disk Footprint:</span>
+              <span id="l2DiskMb" class="text-brand-400 font-mono font-semibold">0.00 MB</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-slate-400" data-i18n="cardCacheEntriesLabel">Indexed Entries:</span>
+              <span id="l2Entries" class="text-slate-300 font-mono">0 items</span>
+            </div>
+          </div>
+        </div>
+        <div class="mt-4 pt-3 border-t border-surface-700/60 grid grid-cols-2 gap-2">
+          <button onclick="pruneCache()" class="text-xs font-semibold px-2 py-1.5 rounded-lg bg-surface-800 text-slate-300 hover:text-white hover:bg-surface-700 border border-surface-700 transition-all text-center" data-i18n="btnPruneCache">
+            🧹 Prune Expired
+          </button>
+          <button onclick="clearCache()" class="text-xs font-semibold px-2 py-1.5 rounded-lg bg-surface-800 text-rose-400 hover:text-white hover:bg-rose-600/80 border border-surface-700 hover:border-rose-500 transition-all text-center" data-i18n="btnClearCache">
+            🗑️ Clear All
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+  <!-- JAVASCRIPT CONTROLLER & I18N SYSTEM -->
+  <script>
+    // 🌐 Multi-Language (i18n) Translations Dictionary
+    const i18n = {
+      en: {
+        subtitle: "Zero-Cost Token Optimization Engine",
+        btnConnectAll: "Connect All IDEs",
+        btnDisconnectAll: "Disconnect All",
+        btnExit: "✕ Exit",
+        cardTotalSavedTitle: "Total Tokens Saved",
+        netReduction: "net reduction",
+        cardFinancialTitle: "Financial Savings",
+        cardFinancialSubtitle: "Blended rate ($3.00/1M tokens)",
+        cardRawContextTitle: "Raw Context Ingested",
+        cardRawContextSubtitle: "Prevented from blowing up context",
+        cardArchTitle: "Engine Architecture",
+        cardArchValue: "On-Demand UI",
+        cardArchSubtitle: "Zero Background RAM Footprint",
+        sectionIdeTitle: "🔌 AI Coding Assistants & IDEs",
+        sectionIdeSubtitle: "Toggle TokenJar MCP server per editor. When disabled, your custom settings are 100% restored.",
+        labelRollbackGuarantee: "Clean Rollback Guarantee:",
+        labelProtected: "Protected",
+        loadingIde: "Loading IDE status...",
+        sectionCategoryTitle: "📊 Savings Breakdown by Feature",
+        sectionCategorySubtitle: "Real-time telemetry recorded across all MCP operations",
+        btnResetTelemetry: "Reset Telemetry",
+        cardLockfileTitle: "🛡️ Lockfile Shield",
+        badgeActive: "Active",
+        cardLockfileDesc: "Masks massive lockfiles (package-lock.json, Cargo.lock) to prevent 100k token context compaction.",
+        labelSurgicalQueries: "Surgical queries:",
+        valSurgicalQueries: 'query="pkg" enabled',
+        cardOutputTitle: "✂️ Output Optimization",
+        cardOutputDesc: "Enforces compact surgical code edits and Anti-Lazy Coder zero-truncation mandates in prompt rules.",
+        labelProjectSteering: "Project Steering:",
+        outputCompact: "Compact Diffs",
+        outputVerbose: "Standard Verbose",
+        cardCacheTitle: "💾 L2 SQLite Cache",
+        cardCacheDesc: "Persistent disk cache storing AST digests and semantic diff baselines across sessions.",
+        cardCacheDiskLabel: "Disk Footprint:",
+        cardCacheEntriesLabel: "Indexed Entries:",
+        btnPruneCache: "🧹 Prune Expired",
+        btnClearCache: "🗑️ Clear All",
+        confirmClearCache: "Are you sure you want to completely clear the L2 SQLite cache? All cached files and AST symbols will be purged.",
+        toastClearSuccess: "L2 Cache completely cleared",
+        toastClearFail: "Cache clear failed",
+        statusOnline: "ONLINE",
+        statusStandby: "STANDBY",
+        statusOffline: "OFFLINE",
+        statusConnecting: "CONNECTING...",
+        badgeDetected: "Detected",
+        badgeNotDetected: "Not Detected",
+        labelStatus: "Status:",
+        statusConnected: "● Connected",
+        statusDisconnected: "○ Disconnected",
+        tokensUnit: "tokens",
+        labelExecuted: "Executed:",
+        confirmReset: "Are you sure you want to reset cumulative telemetry savings to zero?",
+        toastResetSuccess: "Cumulative telemetry statistics reset to zero",
+        toastResetFail: "Reset failed",
+        toastCachePruned: "L2 Cache pruned",
+        toastCacheFail: "Cache prune failed",
+        splashClosedTitle: "Dashboard Closed",
+        splashClosedDesc: "The local UI server has been completely shut down. Zero background processes or memory footprint remaining.",
+        splashClosedNote: "You can close this window.",
+        catNames: {
+          lockfile: "Lockfile Shield",
+          symbol_search: "Global Symbol Search",
+          repo_map: "Repo Map Engine",
+          skeleton: "AST Skeletonizer",
+          cache: "Smart File Cache",
+          command: "Terminal Pruner"
+        },
+        catUnits: {
+          shields: "shields",
+          searches: "searches",
+          maps: "maps",
+          files: "files",
+          reads: "reads",
+          runs: "runs"
+        }
+      },
+      tr: {
+        subtitle: "Sıfır Maliyetli Token Optimizasyon Motoru",
+        btnConnectAll: "Tüm IDE'leri Bağla",
+        btnDisconnectAll: "Tümünün Bağlantısını Kes",
+        btnExit: "✕ Çıkış",
+        cardTotalSavedTitle: "Toplam Tasarruf Edilen Token",
+        netReduction: "net tasarruf",
+        cardFinancialTitle: "Mali Tasarruf",
+        cardFinancialSubtitle: "Karma tarife ($3.00/1M token)",
+        cardRawContextTitle: "İşlenen Ham Bağlam",
+        cardRawContextSubtitle: "Bağlam penceresinin şişmesi önlendi",
+        cardArchTitle: "Motor Mimarisi",
+        cardArchValue: "İsteğe Bağlı UI",
+        cardArchSubtitle: "Sıfır Arkaplan RAM Tüketimi",
+        sectionIdeTitle: "🔌 Yapay Zeka Kodlama Asistanları & IDE'ler",
+        sectionIdeSubtitle: "Her editör için TokenJar MCP sunucusunu açıp kapatın. Devre dışı bırakıldığında özel ayarlarınız %100 korunur.",
+        labelRollbackGuarantee: "Temiz Geri Alma Güvencesi:",
+        labelProtected: "Korumalı",
+        loadingIde: "IDE durumu yükleniyor...",
+        sectionCategoryTitle: "📊 Özellik Bazında Tasarruf Dağılımı",
+        sectionCategorySubtitle: "Tüm MCP işlemleri boyunca kaydedilen gerçek zamanlı telemetri",
+        btnResetTelemetry: "Telemetriyi Sıfırla",
+        cardLockfileTitle: "🛡️ Kilit Dosyası Kalkanı",
+        badgeActive: "Aktif",
+        cardLockfileDesc: "100k token bağlam sıkışmasını önlemek için devasa kilit dosyalarını (package-lock.json, Cargo.lock) maskeler.",
+        labelSurgicalQueries: "Cerrahi sorgular:",
+        valSurgicalQueries: 'query="paket" aktif',
+        cardOutputTitle: "✂️ Çıktı Optimizasyonu",
+        cardOutputDesc: "İstem kurallarında cerrahi kompakt kod düzenlemelerini ve Tembel Kodlayıcı Önleme ilkelerini zorunlu kılar.",
+        labelProjectSteering: "Proje Yönlendirmesi:",
+        outputCompact: "Kompakt Farklar",
+        outputVerbose: "Standart Ayrıntılı",
+        cardCacheTitle: "💾 L2 SQLite Önbelleği",
+        cardCacheDesc: "Oturumlar arasında AST özetlerini ve anlamsal fark temellerini saklayan kalıcı disk önbelleği.",
+        cardCacheDiskLabel: "Disk Boyutu:",
+        cardCacheEntriesLabel: "Kayıtlı Girdi:",
+        btnPruneCache: "🧹 Eskileri Temizle",
+        btnClearCache: "🗑️ Tümünü Sıfırla",
+        confirmClearCache: "L2 SQLite önbelleğini tamamen sıfırlamak istediğinize emin misiniz? Önbellekteki tüm dosya ve AST sembolleri silinecektir.",
+        toastClearSuccess: "L2 Önbelleği tamamen sıfırlandı",
+        toastClearFail: "Önbellek sıfırlama başarısız",
+        statusOnline: "ÇEVRİMİÇİ",
+        statusStandby: "BEKLEMEDE",
+        statusOffline: "ÇEVRİMDIŞI",
+        statusConnecting: "BAĞLANIYOR...",
+        badgeDetected: "Algılandı",
+        badgeNotDetected: "Algılanmadı",
+        labelStatus: "Durum:",
+        statusConnected: "● Bağlı",
+        statusDisconnected: "○ Bağlı Değil",
+        tokensUnit: "token",
+        labelExecuted: "İşlem:",
+        confirmReset: "Kümülatif telemetri tasarruflarını sıfırlamak istediğinizden emin misiniz?",
+        toastResetSuccess: "Kümülatif telemetri istatistikleri sıfırlandı",
+        toastResetFail: "Sıfırlama başarısız oldu",
+        toastCachePruned: "L2 Önbelleği temizlendi",
+        toastCacheFail: "Önbellek temizleme başarısız",
+        splashClosedTitle: "Kontrol Paneli Kapatıldı",
+        splashClosedDesc: "Yerel UI sunucusu tamamen kapatıldı. Sıfır arkaplan işlemi ve sıfır bellek tüketimi.",
+        splashClosedNote: "Bu pencereyi kapatabilirsiniz.",
+        catNames: {
+          lockfile: "Kilit Dosyası Kalkanı",
+          symbol_search: "Genel Sembol Arama",
+          repo_map: "Repo Haritası Motoru",
+          skeleton: "AST İskelet Çıkarıcı",
+          cache: "Akıllı Dosya Önbelleği",
+          command: "Terminal Çıktı Budayıcı"
+        },
+        catUnits: {
+          shields: "kalkan",
+          searches: "arama",
+          maps: "harita",
+          files: "dosya",
+          reads: "okuma",
+          runs: "çalıştırma"
+        }
+      }
+    };
+
+    // Primary/default language is English. Explicit user choice is saved in localStorage.
+    let currentLang = localStorage.getItem('tokenjar_user_lang') || 'en';
+    let currentStatus = null;
+
+    function applyLanguage(lang, persist = false) {
+      currentLang = lang;
+      if (persist) {
+        localStorage.setItem('tokenjar_user_lang', lang);
+      }
+      document.documentElement.lang = lang;
+
+      // Update toggle button visuals
+      const flagEl = document.getElementById('langFlag');
+      const labelEl = document.getElementById('langLabel');
+      if (lang === 'tr') {
+        flagEl.innerText = '🇺🇸';
+        labelEl.innerText = 'EN';
+      } else {
+        flagEl.innerText = '🇹🇷';
+        labelEl.innerText = 'TR';
+      }
+
+      // Update static data-i18n elements
+      const t = i18n[lang];
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (t[key]) el.innerText = t[key];
+      });
+
+      // Re-render dashboard dynamic content with the new language
+      if (currentStatus) {
+        renderDashboard(currentStatus);
+      }
+    }
+
+    function toggleLanguage() {
+      const nextLang = currentLang === 'tr' ? 'en' : 'tr';
+      applyLanguage(nextLang, true);
+      const msg = nextLang === 'tr' ? 'Dil Türkçe olarak ayarlandı' : 'Language switched to English';
+      showToast(msg);
+    }
+
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      const isSuccess = type === 'success';
+      toast.className = `pointer-events-auto px-4 py-2.5 rounded-xl shadow-2xl border text-xs font-medium flex items-center space-x-2 transition-all transform translate-y-2 opacity-0 duration-200 ${
+        isSuccess ? 'bg-surface-850 border-brand-500/30 text-white' : 'bg-surface-850 border-rose-500/30 text-rose-300'
+      }`;
+      toast.innerHTML = `<span>${isSuccess ? '✅' : '⚠️'}</span><span>${message}</span>`;
+      container.appendChild(toast);
+
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      });
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 250);
+      }, 3500);
+    }
+
+    async function fetchStatus() {
+      try {
+        const res = await fetch('/api/status');
+        if (!res.ok) throw new Error('API error');
+        const data = await res.json();
+        currentStatus = data;
+        renderDashboard(data);
+      } catch (e) {
+        const t = i18n[currentLang];
+        document.getElementById('statusText').innerText = t.statusOffline;
+        document.getElementById('statusBadge').className = 'flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-xs font-medium text-rose-400';
+      }
+    }
+
+    function renderDashboard(data) {
+      const t = i18n[currentLang];
+
+      // 0. Dynamic Version
+      if (data.version) {
+        const verEl = document.getElementById('appVersion');
+        if (verEl) verEl.innerText = `v${data.version} Stable`;
+      }
+
+      // 1. Overall Status
+      const statusBadge = document.getElementById('statusBadge');
+      const statusText = document.getElementById('statusText');
+      if (data.active) {
+        statusText.innerText = t.statusOnline;
+        statusBadge.className = 'flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-brand-500/10 border border-brand-500/20 text-xs font-medium text-brand-400';
+      } else {
+        statusText.innerText = t.statusStandby;
+        statusBadge.className = 'flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-surface-800 border border-surface-700 text-xs font-medium text-slate-400';
+      }
+
+      // 2. Metrics Ribbon
+      document.getElementById('totalSaved').innerText = data.telemetry.total_saved.toLocaleString();
+      document.getElementById('dollarsSaved').innerText = `$${data.telemetry.dollars_saved.toFixed(2)}`;
+      document.getElementById('savingsPct').innerText = currentLang === 'tr'
+        ? `%${data.telemetry.savings_pct.toFixed(1)} ${t.netReduction}`
+        : `${data.telemetry.savings_pct.toFixed(1)}% ${t.netReduction}`;
+
+      // 3. Output mode toggle
+      document.getElementById('outputToggle').checked = data.config.compact_output;
+      document.getElementById('outputStateText').innerText = data.config.compact_output ? t.outputCompact : t.outputVerbose;
+
+      // 3b. L2 Cache Metrics
+      if (data.telemetry && data.telemetry.l2_cache) {
+        const l2 = data.telemetry.l2_cache;
+        const diskEl = document.getElementById('l2DiskMb');
+        if (diskEl) diskEl.innerText = `${l2.disk_mb.toFixed(2)} MB`;
+        const entEl = document.getElementById('l2Entries');
+        if (entEl) entEl.innerText = `${l2.entries.toLocaleString()} ${currentLang === 'tr' ? 'öğe' : 'items'}`;
+        const warnEl = document.getElementById('l2QuotaWarning');
+        if (warnEl) {
+          if (l2.warning) {
+            warnEl.classList.remove('hidden');
+          } else {
+            warnEl.classList.add('hidden');
+          }
+        }
+      }
+
+      // 4. Render IDE Grid
+      const ideGrid = document.getElementById('ideGrid');
+      ideGrid.innerHTML = '';
+      data.ides.forEach(ide => {
+        const card = document.createElement('div');
+        card.className = `p-4 rounded-xl border transition-all ${
+          ide.active 
+            ? 'bg-brand-500/[0.04] border-brand-500/30 shadow-lg shadow-brand-500/5' 
+            : 'bg-surface-850 border-surface-700/80 hover:border-surface-600'
+        }`;
+
+        const isInstalled = ide.installed;
+        const badgeColor = isInstalled ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-surface-700 text-slate-400 border-transparent';
+        const badgeText = isInstalled ? t.badgeDetected : t.badgeNotDetected;
+
+        card.innerHTML = `
+          <div class="flex items-start justify-between">
+            <div>
+              <div class="flex items-center space-x-2">
+                <span class="text-sm font-bold text-white">${ide.name}</span>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded-full border ${badgeColor}">${badgeText}</span>
+              </div>
+              <p class="text-[11px] text-slate-400 mt-1 truncate max-w-[200px]" title="${ide.path}">
+                ${ide.path.split(/[\\\\/]/).pop()}
+              </p>
+            </div>
+
+            <!-- Toggle Switch -->
+            <label class="relative inline-flex items-center cursor-pointer ml-3">
+              <input type="checkbox" ${ide.active ? 'checked' : ''} onchange="toggleIDE('${ide.name}', this.checked)" class="sr-only">
+              <div class="w-9 h-5 bg-surface-700 rounded-full toggle-bg"></div>
+              <div class="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full toggle-dot shadow"></div>
+            </label>
+          </div>
+
+          <div class="mt-3 pt-2.5 border-t border-surface-700/50 flex items-center justify-between text-xs">
+            <span class="text-slate-400">${t.labelStatus}</span>
+            <span class="font-mono font-medium ${ide.active ? 'text-brand-400' : 'text-slate-500'}">
+              ${ide.active ? t.statusConnected : t.statusDisconnected}
+            </span>
+          </div>
+        `;
+        ideGrid.appendChild(card);
+      });
+
+      // 5. Render Category Savings Breakdown
+      const catGrid = document.getElementById('categoryGrid');
+      catGrid.innerHTML = '';
+      Object.entries(data.telemetry.categories).forEach(([key, cat]) => {
+        const card = document.createElement('div');
+        card.className = 'p-4 rounded-xl bg-surface-850 border border-surface-700/80 flex flex-col justify-between';
+        
+        // Translated category name and unit if available
+        const displayName = (t.catNames && t.catNames[key]) ? t.catNames[key] : cat.name;
+        const displayUnit = (t.catUnits && t.catUnits[cat.unit]) ? t.catUnits[cat.unit] : cat.unit;
+        const sharePct = data.telemetry.total_saved > 0 ? Math.min(100, Math.round((cat.saved / data.telemetry.total_saved) * 100)) : 0;
+
+        card.innerHTML = `
+          <div>
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-slate-300 flex items-center space-x-1.5">
+                <span>${cat.icon}</span>
+                <span>${displayName}</span>
+              </span>
+              <span class="text-[11px] font-mono font-bold text-brand-400">%${cat.pct}</span>
+            </div>
+            <p class="text-xl font-bold font-mono text-white mt-2">${cat.saved.toLocaleString()} <span class="text-xs font-normal text-slate-400">${t.tokensUnit}</span></p>
+            <div class="w-full bg-surface-900 rounded-full h-1 mt-2.5 overflow-hidden">
+              <div class="bg-gradient-to-r from-brand-600 to-emerald-400 h-1 rounded-full transition-all duration-500" style="width: ${sharePct}%"></div>
+            </div>
+          </div>
+          <div class="mt-3 pt-2 border-t border-surface-700/50 text-[11px] text-slate-400 flex items-center justify-between">
+            <span>${t.labelExecuted}</span>
+            <span class="font-mono text-slate-300 font-medium">${cat.count} ${displayUnit}</span>
+          </div>
+        `;
+        catGrid.appendChild(card);
+      });
+    }
+
+    async function toggleIDE(name, enable) {
+      try {
+        const res = await fetch('/api/toggle-ide', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, enable })
+        });
+        const data = await res.json();
+        if (data.ok) {
+          showToast(`${name}: ${data.msg}`);
+          renderDashboard(data.status);
+        } else {
+          showToast(data.msg, 'error');
+        }
+      } catch (e) {
+        showToast(`Failed modifying ${name}`, 'error');
+      }
+    }
+
+    async function toggleAll(enable) {
+      try {
+        const res = await fetch('/api/toggle-all', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ enable })
+        });
+        const data = await res.json();
+        showToast(data.msg);
+        renderDashboard(data.status);
+      } catch (e) {
+        showToast('Operation failed', 'error');
+      }
+    }
+
+    async function toggleOutput(compact) {
+      try {
+        const res = await fetch('/api/toggle-output', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ compact })
+        });
+        const data = await res.json();
+        showToast(data.msg);
+        renderDashboard(data.status);
+      } catch (e) {
+        showToast('Failed toggling output mode', 'error');
+      }
+    }
+
+    async function pruneCache() {
+      const t = i18n[currentLang];
+      try {
+        const res = await fetch('/api/prune-cache', { method: 'POST' });
+        const data = await res.json();
+        showToast(data.msg, data.ok ? 'success' : 'error');
+        if (data.status) renderDashboard(data.status);
+      } catch (e) {
+        showToast(t.toastCacheFail, 'error');
+      }
+    }
+
+    async function clearCache() {
+      const t = i18n[currentLang];
+      if (!confirm(t.confirmClearCache)) return;
+      try {
+        const res = await fetch('/api/clear-cache', { method: 'POST' });
+        const data = await res.json();
+        showToast(data.msg, data.ok ? 'success' : 'error');
+        if (data.status) renderDashboard(data.status);
+      } catch (e) {
+        showToast(t.toastClearFail, 'error');
+      }
+    }
+
+    async function resetStats() {
+      const t = i18n[currentLang];
+      if (!confirm(t.confirmReset)) return;
+      try {
+        const res = await fetch('/api/reset-stats', { method: 'POST' });
+        const data = await res.json();
+        showToast(t.toastResetSuccess);
+        renderDashboard(data.status);
+      } catch (e) {
+        showToast(t.toastResetFail, 'error');
+      }
+    }
+
+    async function shutdownServer() {
+      const t = i18n[currentLang];
+      try {
+        await fetch('/api/shutdown', { method: 'POST' });
+        document.body.innerHTML = `
+          <div class="min-h-screen flex items-center justify-center p-6 text-center">
+            <div class="glass-card rounded-2xl p-8 max-w-md w-full space-y-4">
+              <span class="text-4xl">👋</span>
+              <h2 class="text-xl font-bold text-white">${t.splashClosedTitle}</h2>
+              <p class="text-xs text-slate-400">
+                ${t.splashClosedDesc}
+              </p>
+              <p class="text-xs text-brand-400 font-mono">${t.splashClosedNote}</p>
+            </div>
+          </div>
+        `;
+        setTimeout(() => window.close(), 1200);
+      } catch (e) {
+        window.close();
+      }
+    }
+
+    // Initialize Language System and auto-poll
+    applyLanguage(currentLang);
+    fetchStatus();
+    setInterval(fetchStatus, 3000);
+  </script>
+</body>
+</html>
