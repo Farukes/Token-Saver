@@ -62,6 +62,14 @@ enum Commands {
         port: u16,
     },
 
+    /// Check for updates and automatically upgrade Token-Saver to the latest release
+    #[command(alias = "upgrade")]
+    Update {
+        /// Force re-installation even if already on latest version
+        #[arg(short, long)]
+        force: bool,
+    },
+
     // --- Secondary & Technical Commands (hidden from default help to avoid clutter) ---
     /// Reset all cumulative telemetry counters
     #[command(hide = true)]
@@ -382,6 +390,9 @@ async fn main() {
             println!("🧹 Pruning L2 SQLite cache (max_entries: {max_entries}, ttl: {ttl_days} days)...");
             println!("✅ Cache pruned successfully.");
         }
+        Some(Commands::Update { force }) => {
+            handle_update(*force);
+        }
         None => {
             // When run without arguments:
             // If user double-clicks or runs interactively in terminal -> open Web UI in browser!
@@ -403,4 +414,161 @@ async fn main() {
             }
         }
     }
+}
+
+fn handle_update(force: bool) {
+    let current_version = env!("CARGO_PKG_VERSION");
+    println!("============================================================");
+    println!("🔄 TOKEN-SAVER AUTOMATIC UPDATE MANAGER (RUST)");
+    println!("============================================================");
+    println!("Current Binary Version : v{current_version}");
+    println!("Checking for latest release on GitHub / Crates.io...");
+
+    let github_url = "https://api.github.com/repos/Farukes/Token-Saver/releases/latest";
+    let latest_tag = match ureq::get(github_url)
+        .set("User-Agent", &format!("token-saver/{current_version}"))
+        .timeout(std::time::Duration::from_secs(5))
+        .call()
+    {
+        Ok(resp) => {
+            if let Ok(json) = resp.into_json::<serde_json::Value>() {
+                json.get("tag_name")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.trim_start_matches('v').to_string())
+            } else {
+                None
+            }
+        }
+        Err(_) => None,
+    };
+
+    let latest_version = latest_tag.as_deref().unwrap_or(current_version);
+    println!("Latest Remote Release  : v{latest_version}");
+
+    if latest_version == current_version && !force {
+        println!("\n✨ Token-Saver is already on the latest version!");
+        println!("   (No action needed. Current: v{current_version})");
+        return;
+    }
+
+    if latest_version != current_version {
+        println!("\n🚀 New version detected: v{latest_version} (installed: v{current_version})");
+    }
+
+    let current_exe = std::env::current_exe().unwrap_or_default();
+    let current_exe_str = current_exe.to_string_lossy().to_lowercase();
+    let is_cargo = current_exe_str.contains(".cargo");
+
+    if is_cargo {
+        println!("\n📦 Running: cargo install token-saver --force...");
+        let status = std::process::Command::new("cargo")
+            .args(["install", "token-saver", "--force"])
+            .status();
+
+        match status {
+            Ok(s) if s.success() => {
+                println!("\n🎉 Token-Saver has been successfully updated via Cargo to v{latest_version}!");
+                println!("💡 Tip: Restart any open AI coding sessions or IDE windows to load updated middleware.");
+            }
+            Ok(s) => {
+                eprintln!("\n❌ Cargo update command failed with exit code: {:?}", s.code());
+                std::process::exit(1);
+            }
+            Err(e) => {
+                eprintln!("\n❌ Failed to run cargo: {e}");
+                std::process::exit(1);
+            }
+        }
+        return;
+    }
+
+    // Standalone binary self-replacement
+    println!("\n📦 Checking standalone binary release assets from GitHub...");
+    #[cfg(target_os = "windows")]
+    let asset_keyword = "windows";
+    #[cfg(target_os = "macos")]
+    let asset_keyword = "macos";
+    #[cfg(target_os = "linux")]
+    let asset_keyword = "linux";
+
+    let download_url = match ureq::get(github_url)
+        .set("User-Agent", &format!("token-saver/{current_version}"))
+        .timeout(std::time::Duration::from_secs(5))
+        .call()
+    {
+        Ok(resp) => {
+            if let Ok(json) = resp.into_json::<serde_json::Value>() {
+                json.get("assets")
+                    .and_then(|v| v.as_array())
+                    .and_then(|assets| {
+                        assets.iter().find(|a| {
+                            let name = a.get("name").and_then(|n| n.as_str()).unwrap_or("").to_lowercase();
+                            name.contains(asset_keyword) || name == "token-saver.exe" || name == "token-saver"
+                        })
+                    })
+                    .and_then(|a| a.get("browser_download_url").and_then(|u| u.as_str()).map(|s| s.to_string()))
+            } else {
+                None
+            }
+        }
+        Err(_) => None,
+    };
+
+    if let Some(url) = download_url {
+        println!("⬇️ Downloading new binary from: {url}");
+        match ureq::get(&url)
+            .set("User-Agent", &format!("token-saver/{current_version}"))
+            .timeout(std::time::Duration::from_secs(60))
+            .call()
+        {
+            Ok(resp) => {
+                let mut bytes = Vec::new();
+                use std::io::Read;
+                if resp.into_reader().read_to_end(&mut bytes).is_ok() && !bytes.is_empty() {
+                    #[cfg(target_os = "windows")]
+                    {
+                        let old_exe = current_exe.with_extension("exe.old");
+                        let _ = std::fs::remove_file(&old_exe);
+                        if let Err(e) = std::fs::rename(&current_exe, &old_exe) {
+                            eprintln!("❌ Failed to rename current executable: {e}");
+                            std::process::exit(1);
+                        }
+                        if let Err(e) = std::fs::write(&current_exe, &bytes) {
+                            eprintln!("❌ Failed to write new binary: {e}");
+                            let _ = std::fs::rename(&old_exe, &current_exe);
+                            std::process::exit(1);
+                        }
+                        let _ = std::fs::remove_file(&old_exe);
+                    }
+                    #[cfg(not(target_os = "windows"))]
+                    {
+                        let tmp_exe = current_exe.with_extension("tmp");
+                        if let Err(e) = std::fs::write(&tmp_exe, &bytes) {
+                            eprintln!("❌ Failed to write new binary: {e}");
+                            std::process::exit(1);
+                        }
+                        use std::os::unix::fs::PermissionsExt;
+                        let _ = std::fs::set_permissions(&tmp_exe, std::fs::Permissions::from_mode(0o755));
+                        if let Err(e) = std::fs::rename(&tmp_exe, &current_exe) {
+                            eprintln!("❌ Failed to replace executable: {e}");
+                            std::process::exit(1);
+                        }
+                    }
+
+                    println!("\n🎉 Token-Saver executable successfully updated to v{latest_version}!");
+                    println!("💡 Tip: Restart any open AI coding sessions or IDE windows to load updated middleware.");
+                    return;
+                }
+            }
+            Err(e) => {
+                eprintln!("⚠️ Download error: {e}");
+            }
+        }
+    }
+
+    println!("\n💡 Tip: You can also update Token-Saver via your package manager:");
+    println!("   • Cargo   : cargo install token-saver --force");
+    println!("   • Winget  : winget upgrade token-saver");
+    println!("   • Homebrew: brew upgrade token-saver");
+    println!("   • Python  : pip install --upgrade token-saver-engine");
 }

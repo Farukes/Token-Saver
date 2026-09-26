@@ -195,6 +195,18 @@ def main() -> None:
         help="Evict entries older than N days (default: 30)",
     )
 
+    # Subcommand: update / upgrade
+    update_parser = subparsers.add_parser(
+        "update",
+        aliases=["upgrade"],
+        help="Check for updates and automatically upgrade Token-Saver to the latest release",
+    )
+    update_parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Force reinstallation even if already on the latest version",
+    )
+
     # If called with no arguments, default to launching the MCP server
     if len(sys.argv) == 1:
         from token_saver.server import mcp
@@ -470,6 +482,57 @@ def main() -> None:
         from token_saver.ui.server import start_ui_server
         start_ui_server(port=args.port, open_browser=not args.no_open)
 
+    elif args.subcommand in ("update", "upgrade"):
+        import json
+        import subprocess
+        import urllib.request
+        from token_saver import __version__
+
+        print("=" * 60)
+        print("🔄 TOKEN-SAVER AUTOMATIC UPDATE MANAGER")
+        print("=" * 60)
+        print(f"Current Engine Version : v{__version__}")
+        print("Checking for latest release on PyPI...")
+
+        latest_version = None
+        try:
+            req = urllib.request.Request(
+                "https://pypi.org/pypi/token-saver-engine/json",
+                headers={"User-Agent": f"token-saver/{__version__}"},
+            )
+            with urllib.request.urlopen(req, timeout=5) as response:
+                data = json.loads(response.read().decode("utf-8"))
+                latest_version = data.get("info", {}).get("version")
+        except Exception as e:
+            print(f"Note: Could not reach PyPI index directly ({e}). Proceeding to pip upgrade check...")
+
+        if latest_version:
+            print(f"Latest PyPI Release    : v{latest_version}")
+
+        if latest_version and latest_version == __version__ and not getattr(args, "force", False):
+            print("\n✨ Token-Saver is already on the latest version!")
+            print(f"   (No action needed. Current: v{__version__})")
+            return
+
+        if latest_version and latest_version != __version__:
+            print(f"\n🚀 New version detected: v{latest_version} (installed: v{__version__})")
+        print("\n📦 Upgrading token-saver-engine via pip...")
+
+        try:
+            cmd = [sys.executable, "-m", "pip", "install", "--upgrade", "token-saver-engine"]
+            if getattr(args, "force", False):
+                cmd.append("--force-reinstall")
+            res = subprocess.run(cmd, capture_output=True, text=True)
+            if res.returncode == 0:
+                target_v = latest_version or "latest"
+                print(f"\n🎉 Token-Saver has been successfully updated to v{target_v}!")
+                print("💡 Tip: Restart any open AI coding sessions or IDE windows to load updated middleware.")
+            else:
+                print(f"\n❌ Pip update command returned error:\n{res.stderr or res.stdout}")
+                sys.exit(res.returncode)
+        except Exception as e:
+            print(f"\n❌ Failed to execute pip updater: {e}")
+            sys.exit(1)
 
 
 if __name__ == "__main__":

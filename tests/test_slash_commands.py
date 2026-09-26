@@ -49,3 +49,23 @@ def test_install_all_slash_commands(tmp_path: Path):
         assert len(results) == 2
         for name, ok, msg in results:
             assert ok
+
+
+def test_cli_update_subcommand(capsys):
+    from token_saver.__main__ import main
+    import sys
+
+    # Simulate running 'token-saver update' when already up to date
+    with patch.object(sys, "argv", ["token-saver", "update"]):
+        with patch("urllib.request.urlopen") as mock_url:
+            from unittest.mock import MagicMock
+            mock_resp = MagicMock()
+            mock_resp.read.return_value = b'{"info": {"version": "1.0.0"}}'
+            mock_resp.__enter__.return_value = mock_resp
+            mock_url.return_value = mock_resp
+
+            main()
+
+            captured = capsys.readouterr()
+            assert "TOKEN-SAVER AUTOMATIC UPDATE MANAGER" in captured.out
+            assert "already on the latest version" in captured.out
